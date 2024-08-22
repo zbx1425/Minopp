@@ -1,5 +1,7 @@
 package cn.zbx1425.minopp.game;
 
+import net.minecraft.network.chat.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,9 +31,20 @@ public record Card(Family family, Suit suit, int number) {
         return deck;
     }
 
-    public boolean canPlayOn(Card card) {
-        if (suit == Suit.WILD) return true;
-        return suit == card.suit || number == card.number;
+    public boolean canPlayOn(Card topCard) {
+        if (topCard.family == Family.DRAW) {
+            // Draw 2 and Wild Draw 4 can only be played on Draw 2 and Wild Draw 4.
+            return family == topCard.family && number == topCard.number;
+        }
+        if (suit == Suit.WILD) {
+            // Wild cards can be played on any card.
+            return true;
+        }
+        return suit == topCard.suit || number == topCard.number;
+    }
+
+    public Component getDisplayName() {
+        return Component.translatable("game.minopp.card." + family.name().toLowerCase() + "." + suit.name().toLowerCase() + "." + number);
     }
 
     public enum Suit {
