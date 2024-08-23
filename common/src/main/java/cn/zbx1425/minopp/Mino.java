@@ -1,9 +1,34 @@
 package cn.zbx1425.minopp;
 
+import cn.zbx1425.minopp.block.BlockEntityMinoTable;
+import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.platform.RegistriesWrapper;
+import cn.zbx1425.minopp.platform.RegistryObject;
+import cn.zbx1425.minopp.platform.ServerPlatform;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class Mino {
     public static final String MOD_ID = "minopp";
+    public static final Logger LOGGER = LoggerFactory.getLogger("Mino++");
 
-    public static void init() {
-        // Write common init code here.
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+
+    public static final RegistryObject<Block> BLOCK_MINO_TABLE = new RegistryObject<>(BlockMinoTable::new);
+    public static final RegistryObject<BlockEntityType<BlockEntityMinoTable>> BLOCK_ENTITY_TYPE_MINO_TABLE = new RegistryObject<>(() ->
+            ServerPlatform.createBlockEntityType(BlockEntityMinoTable::new, BLOCK_MINO_TABLE.get()));
+
+    public static void init(RegistriesWrapper registries) {
+        final ResourceKey<CreativeModeTab> FUNCTIONAL_BLOCKS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
+                ResourceLocation.withDefaultNamespace("functional_blocks"));
+        registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE, FUNCTIONAL_BLOCKS);
     }
 }

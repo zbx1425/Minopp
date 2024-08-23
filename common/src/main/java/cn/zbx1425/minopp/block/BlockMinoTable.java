@@ -1,0 +1,106 @@
+package cn.zbx1425.minopp.block;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class BlockMinoTable extends Block implements EntityBlock {
+
+    public static final EnumProperty<TablePartType> PART = EnumProperty.create("part", TablePartType.class);
+
+    public BlockMinoTable() {
+        super(BlockBehaviour.Properties.of());
+    }
+
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext blockPlaceContext) {
+        BlockPos firstPartPos = blockPlaceContext.getClickedPos();
+        Level level = blockPlaceContext.getLevel();
+        for (int i = 0; i < 4; i++) {
+            TablePartType part = TablePartType.values()[i];
+            BlockPos thisPartPos = firstPartPos.offset(part.xOff, 0, part.zOff);
+            boolean isPlaceable = level.getBlockState(thisPartPos).canBeReplaced(blockPlaceContext)
+                    && level.getWorldBorder().isWithinBounds(thisPartPos);
+            if (!isPlaceable) return null;
+        }
+        return this.defaultBlockState().setValue(PART, TablePartType.X_LESS_Z_LESS);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos blockPos, BlockState blockState, @Nullable LivingEntity livingEntity, ItemStack itemStack) {
+        super.setPlacedBy(level, blockPos, blockState, livingEntity, itemStack);
+        if (!level.isClientSide) {
+            for (int i = 1; i < 4; i++) {
+                TablePartType thisPart = TablePartType.values()[i];
+                BlockPos thisPartPos = blockPos.offset(thisPart.xOff, 0, thisPart.zOff);
+                level.setBlock(thisPartPos, this.defaultBlockState().setValue(PART, thisPart), 3);
+            }
+        }
+    }
+
+    @Override
+    protected @NotNull BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
+        BlockPos firstPartPos = getCore(blockState, blockPos);
+        for (int i = 0; i < 4; i++) {
+            TablePartType thisPart = TablePartType.values()[i];
+            BlockPos thisPartPos = firstPartPos.offset(thisPart.xOff, 0, thisPart.zOff);
+            if (!levelAccessor.getBlockState(thisPartPos).is(this)) {
+                return Blocks.AIR.defaultBlockState();
+            }
+        }
+        return super.updateShape(blockState, direction, blockState2, levelAccessor, blockPos, blockPos2);
+    }
+
+    public static BlockPos getCore(BlockState blockState, BlockPos blockPos) {
+        TablePartType part = blockState.getValue(PART);
+        return blockPos.offset(-part.xOff, 0, -part.zOff);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(PART);
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+        if (blockState.getValue(PART) != TablePartType.X_LESS_Z_LESS) return null;
+        return new BlockEntityMinoTable(blockPos, blockState);
+    }
+
+    public enum TablePartType implements StringRepresentable {
+        X_LESS_Z_LESS,
+        X_LESS_Z_MORE,
+        X_MORE_Z_LESS,
+        X_MORE_Z_MORE;
+
+        public final int xOff;
+        public final int zOff;
+
+        TablePartType() {
+            this.xOff = this.ordinal() / 2;
+            this.zOff = this.ordinal() % 2;
+        }
+
+        @Override
+        public @NotNull String getSerializedName() {
+            return this.name().toLowerCase();
+        }
+    }
+}

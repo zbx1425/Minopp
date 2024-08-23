@@ -18,7 +18,7 @@
       "cn.zbx1425.minopp.fabric.MinoFabric"
     ],
     "client": [
-      "cn.zbx1425.minopp.fabric.client.MinoFabricClient"
+      "cn.zbx1425.minopp.fabric.MinoFabricClient"
     ]
   },
   "mixins": [

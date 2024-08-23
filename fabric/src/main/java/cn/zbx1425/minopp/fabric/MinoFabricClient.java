@@ -1,4 +1,4 @@
-package cn.zbx1425.minopp.fabric.client;
+package cn.zbx1425.minopp.fabric;
 
 import net.fabricmc.api.ClientModInitializer;
 
