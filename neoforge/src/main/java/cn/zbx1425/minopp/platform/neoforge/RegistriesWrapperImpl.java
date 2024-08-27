@@ -1,10 +1,11 @@
-package cn.zbx1425.minopp.neoforge.platform;
+package cn.zbx1425.minopp.platform.neoforge;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
@@ -34,6 +35,7 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, Mino.MOD_ID);
     private static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, Mino.MOD_ID);
     private static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(BuiltInRegistries.SOUND_EVENT, Mino.MOD_ID);
+    private static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES = DeferredRegister.create(BuiltInRegistries.DATA_COMPONENT_TYPE, Mino.MOD_ID);
 
     @Override
     public void registerBlock(String id, RegistryObject<Block> block) {
@@ -54,7 +56,9 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
     public void registerItem(String id, RegistryObject<GroupedItem> item) {
         ITEMS.register(id, () -> {
             final GroupedItem itemObject = item.get();
-            registerCreativeModeTab(itemObject.tabSupplier.get(), itemObject);
+            if (itemObject.tabSupplier.get() != null) {
+                registerCreativeModeTab(itemObject.tabSupplier.get(), itemObject);
+            }
             return itemObject;
         });
     }
@@ -74,6 +78,10 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
         SOUND_EVENTS.register(id, () -> soundEvent);
     }
 
+    @Override
+    public void registerDataComponentType(String id, RegistryObject<DataComponentType<?>> componentType) {
+        DATA_COMPONENT_TYPES.register(id, componentType::get);
+    }
 
     public final List<KeyMapping> keyMappings = new ArrayList<>();
 
@@ -83,6 +91,7 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
         BLOCK_ENTITY_TYPES.register(eventBus);
         ENTITY_TYPES.register(eventBus);
         SOUND_EVENTS.register(eventBus);
+        DATA_COMPONENT_TYPES.register(eventBus);
     }
 
 

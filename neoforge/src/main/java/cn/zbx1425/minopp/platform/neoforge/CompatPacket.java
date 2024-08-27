@@ -1,4 +1,4 @@
-package cn.zbx1425.minopp.neoforge.platform;
+package cn.zbx1425.minopp.platform.neoforge;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.FriendlyByteBuf;

@@ -2,9 +2,8 @@ package cn.zbx1425.minopp.neoforge;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
-import cn.zbx1425.minopp.neoforge.platform.ClientProxy;
-import cn.zbx1425.minopp.neoforge.platform.CompatPacketRegistry;
-import cn.zbx1425.minopp.neoforge.platform.RegistriesWrapperImpl;
+import cn.zbx1425.minopp.platform.neoforge.CompatPacketRegistry;
+import cn.zbx1425.minopp.platform.neoforge.RegistriesWrapperImpl;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -27,6 +26,7 @@ public final class MinoNeoForge {
         eventBus.register(ModEventBusListener.class);
         if (FMLEnvironment.dist.isClient()) {
             MinoClient.init();
+            eventBus.register(ClientProxy.ModEventBusListener.class);
             NeoForge.EVENT_BUS.register(ClientProxy.ForgeEventBusListener.class);
         }
     }

@@ -15,17 +15,16 @@ import java.util.*;
 
 public class BlockEntityMinoTable extends BlockEntity {
 
-    public Map<Direction, CardPlayer> players = new HashMap<>(Map.of(
-            Direction.NORTH, null,
-            Direction.EAST, null,
-            Direction.SOUTH, null,
-            Direction.WEST, null
-    ));
+    public Map<Direction, CardPlayer> players = new HashMap<>();
     public CardGame game = null;
     public ActionMessage state = ActionMessage.NO_GAME;
 
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
         super(Mino.BLOCK_ENTITY_TYPE_MINO_TABLE.get(), blockPos, blockState);
+        players.put(Direction.NORTH, null);
+        players.put(Direction.EAST, null);
+        players.put(Direction.SOUTH, null);
+        players.put(Direction.WEST, null);
     }
 
     @Override

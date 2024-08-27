@@ -1,4 +1,4 @@
-package cn.zbx1425.minopp.neoforge.platform;
+package cn.zbx1425.minopp.platform.neoforge;
 
 import cn.zbx1425.minopp.neoforge.MinoNeoForge;
 import cn.zbx1425.minopp.platform.ServerPlatform;
