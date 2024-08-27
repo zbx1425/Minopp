@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.game;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -63,5 +64,17 @@ public record Card(Family family, Suit suit, int number) {
         SKIP,
         REVERSE,
         DRAW
+    }
+
+    public Card(CompoundTag tag) {
+        this(Family.valueOf(tag.getString("family")), Suit.valueOf(tag.getString("suit")), tag.getInt("number"));
+    }
+
+    public CompoundTag toTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("family", family.name());
+        tag.putString("suit", suit.name());
+        tag.putInt("number", number);
+        return tag;
     }
 }

@@ -1,46 +1,67 @@
 package cn.zbx1425.minopp.game;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 
 import java.util.*;
 
 public class CardGame {
 
-    public List<CardPlayer> players = new ArrayList<>();
+    public List<CardPlayer> players;
     public int currentPlayer;
 
     public int drawCount;
     public boolean isSkipping;
     public PlayerActionPhase currentPlayerPhase;
 
-    public boolean isGameActive;
     public boolean isAntiClockwise;
 
     public List<Card> deck = new ArrayList<>();
     public Card topCard;
 
-    public ActionReport playCard(UUID player, Card card, Card.Suit wildSelection) {
-        if (!isGameActive) return ActionReport.NO_GAME;
+    public CardGame(List<CardPlayer> players) {
+        this.players = players;
+    }
 
+    public ActionMessage initiate(int initialCardCount) {
+        if (players.size() < 2) return ActionMessage.NO_GAME;
+        currentPlayer = new Random().nextInt(players.size());
+        drawCount = 0;
+        isSkipping = false;
+        currentPlayerPhase = PlayerActionPhase.DISCARD_HAND;
+        isAntiClockwise = false;
+        deck = Card.createDeck();
+        Collections.shuffle(deck);
+        for (int i = 0; i < initialCardCount; i++) {
+            for (CardPlayer player : players) {
+                player.hand.add(deck.removeLast());
+            }
+        }
+        topCard = deck.removeLast();
+        return new ActionMessage(this, null).message(Component.translatable("game.minopp.play.initiate_success"));
+    }
+
+    public ActionMessage playCard(UUID player, Card card, Card.Suit wildSelection) {
         CardPlayer cardPlayer = players.stream().filter(p -> p.uuid.equals(player)).findFirst().orElse(null);
-        ActionReport report = new ActionReport(this, cardPlayer, card);
+        ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (cardPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
-        if (!cardPlayer.hand.contains(card)) return report.fail(Component.translatable("game.minopp.play.no_card"));
+        if (cardPlayer == null) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
+        if (!cardPlayer.hand.contains(card)) return report.ephemeral(Component.translatable("game.minopp.play.no_card"));
 
         if (currentPlayerPhase == PlayerActionPhase.DRAW) {
-            return report.fail(Component.translatable("game.minopp.play.must_draw"));
+            return report.ephemeral(Component.translatable("game.minopp.play.must_draw"));
         }
 
         // Cut
         if (topCard.equals(card) && playerIndex != currentPlayer) {
             doDiscardCard(cardPlayer, card);
             advanceTurn();
-            return report.cutSuccess();
+            return report.cut();
         }
 
-        if (playerIndex != currentPlayer) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
-        if (!topCard.canPlayOn(card)) return report.fail(Component.translatable("game.minopp.play.invalid_card"));
+        if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
+        if (!topCard.canPlayOn(card)) return report.ephemeral(Component.translatable("game.minopp.play.invalid_card"));
         doDiscardCard(cardPlayer, card);
 
         if (card.suit() == Card.Suit.WILD) {
@@ -54,20 +75,18 @@ public class CardGame {
 
         advanceTurn();
 
-        return report.playSuccess();
+        return report.played();
     }
 
-    public ActionReport playNoCard(UUID player) {
-        if (!isGameActive) return ActionReport.NO_GAME;
-
+    public ActionMessage playNoCard(UUID player) {
         CardPlayer cardPlayer = players.stream().filter(p -> p.uuid.equals(player)).findFirst().orElse(null);
-        ActionReport report = new ActionReport(this, cardPlayer, null);
+        ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (cardPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
-        if (playerIndex != currentPlayer) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
+        if (cardPlayer == null) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
+        if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
 
         if (currentPlayerPhase == PlayerActionPhase.DRAW) {
-            return report.fail(Component.translatable("game.minopp.play.must_draw"));
+            return report.ephemeral(Component.translatable("game.minopp.play.must_draw"));
         }
 
         if (currentPlayerPhase == PlayerActionPhase.DISCARD_HAND) {
@@ -76,24 +95,22 @@ public class CardGame {
             advanceTurn();
         }
 
-        return report.noCardSuccess();
+        return report.playedNoCard();
     }
 
-    public ActionReport drawCard(UUID player) {
-        if (!isGameActive) return ActionReport.NO_GAME;
-
+    public ActionMessage drawCard(UUID player) {
         CardPlayer cardPlayer = players.stream().filter(p -> p.uuid.equals(player)).findFirst().orElse(null);
-        ActionReport report = new ActionReport(this, cardPlayer, null);
+        ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (cardPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
-        if (playerIndex != currentPlayer) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
-        if (currentPlayerPhase != PlayerActionPhase.DRAW) return report.fail(Component.translatable("game.minopp.play.no_draw"));
+        if (cardPlayer == null) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
+        if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
+        if (currentPlayerPhase != PlayerActionPhase.DRAW) return report.ephemeral(Component.translatable("game.minopp.play.no_draw"));
 
         int drawCount = this.drawCount == 0 ? 1 : this.drawCount;
         doDrawCard(cardPlayer, drawCount);
         this.drawCount = 0;
         currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
-        return report.drawSuccess(drawCount);
+        return report.drew(drawCount);
     }
 
     private void doDiscardCard(CardPlayer player, Card card) {
@@ -121,5 +138,33 @@ public class CardGame {
         DISCARD_HAND,
         DRAW,
         DISCARD_DRAWN,
+    }
+
+    public CardGame(CompoundTag tag) {
+        currentPlayer = tag.getInt("currentPlayer");
+        drawCount = tag.getInt("drawCount");
+        isSkipping = tag.getBoolean("isSkipping");
+        currentPlayerPhase = PlayerActionPhase.valueOf(tag.getString("currentPlayerPhase"));
+        isAntiClockwise = tag.getBoolean("isAntiClockwise");
+        deck = tag.getList("deck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList();
+        topCard = new Card(tag.getCompound("topCard"));
+        players = new ArrayList<>(tag.getList("players", CompoundTag.TAG_COMPOUND).stream().map(t -> new CardPlayer((CompoundTag)t)).toList());
+    }
+
+    public CompoundTag toTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("currentPlayer", currentPlayer);
+        tag.putInt("drawCount", drawCount);
+        tag.putBoolean("isSkipping", isSkipping);
+        tag.putString("currentPlayerPhase", currentPlayerPhase.name());
+        tag.putBoolean("isAntiClockwise", isAntiClockwise);
+        ListTag deckTag = new ListTag();
+        deckTag.addAll(deck.stream().map(Card::toTag).toList());
+        tag.put("deck", deckTag);
+        tag.put("topCard", topCard.toTag());
+        ListTag playersTag = new ListTag();
+        playersTag.addAll(players.stream().map(CardPlayer::toTag).toList());
+        tag.put("players", playersTag);
+        return tag;
     }
 }
