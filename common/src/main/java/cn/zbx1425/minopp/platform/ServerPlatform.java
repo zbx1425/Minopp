@@ -1,9 +1,14 @@
 package cn.zbx1425.minopp.platform;
 
 
+import com.mojang.serialization.Codec;
 import dev.architectury.injectables.annotations.ExpectPlatform;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,6 +29,12 @@ public class ServerPlatform {
     @ExpectPlatform
     public static <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(BlockEntitySupplier<T> supplier, Block block) {
         throw new AssertionError();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> DataComponentType<T> createDataComponentType(Codec<T> codec, StreamCodec<ByteBuf, T> streamCodec) {
+        return (DataComponentType<T>) DataComponentType.builder().persistent((Codec<Object>)codec)
+                .networkSynchronized((StreamCodec<? super RegistryFriendlyByteBuf, Object>)streamCodec).build();
     }
 
     @ExpectPlatform

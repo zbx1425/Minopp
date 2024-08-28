@@ -37,8 +37,9 @@ public final class Mino {
 
     public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS = new RegistryObject<>(ItemHandCards::new);
     public static final RegistryObject<DataComponentType<ItemHandCards.CardGameBindingComponent>> DATA_COMPONENT_TYPE_CARD_GAME_BINDING = new RegistryObject<>(() ->
-            (DataComponentType<ItemHandCards.CardGameBindingComponent>)(Object)
-            DataComponentType.builder().persistent((Codec<Object>)(Object)ItemHandCards.COMPONENT_CODEC).networkSynchronized((StreamCodec<ByteBuf, Object>)(Object)ItemHandCards.COMPONENT_STREAM_CODEC).build());
+            ServerPlatform.createDataComponentType(ItemHandCards.CardGameBindingComponent.CODEC, ItemHandCards.CardGameBindingComponent.STREAM_CODEC));
+    public static final RegistryObject<DataComponentType<Integer>> DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX = new RegistryObject<>(() ->
+            ServerPlatform.createDataComponentType(Codec.INT, StreamCodec.unit(0)));
 
     public static void init(RegistriesWrapper registries) {
         final ResourceKey<CreativeModeTab> FUNCTIONAL_BLOCKS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
@@ -46,6 +47,7 @@ public final class Mino {
         registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE, FUNCTIONAL_BLOCKS);
         registries.registerBlockEntityType("mino_table", BLOCK_ENTITY_TYPE_MINO_TABLE);
         registries.registerItem("hand_cards", ITEM_HAND_CARDS);
-        registries.registerDataComponentType("card_game_binding", (RegistryObject<DataComponentType<?>>)(Object)DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
+        registries.registerDataComponentType("card_game_binding", DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
+        registries.registerDataComponentType("client_hand_index", DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX);
     }
 }

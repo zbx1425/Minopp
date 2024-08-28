@@ -24,7 +24,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         BlockPos tablePos = null;
         LocalPlayer player = Minecraft.getInstance().player;
         if (player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) {
-            tablePos = player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.COMPONENT_EMPTY)
+            tablePos = player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY)
                     .tablePos().orElse(null);
         }
         HitResult hitResult = Minecraft.getInstance().hitResult;

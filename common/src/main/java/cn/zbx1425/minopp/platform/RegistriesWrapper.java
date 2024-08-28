@@ -24,6 +24,6 @@ public interface RegistriesWrapper {
 
     void registerSoundEvent(String id, SoundEvent soundEvent);
 
-    void registerDataComponentType(String id, RegistryObject<DataComponentType<?>> componentType);
+    <T> void registerDataComponentType(String id, RegistryObject<DataComponentType<T>> componentType);
 
 }

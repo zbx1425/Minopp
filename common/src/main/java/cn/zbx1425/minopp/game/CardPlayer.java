@@ -6,6 +6,7 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class CardPlayer {
@@ -18,6 +19,11 @@ public class CardPlayer {
     public CardPlayer(Player mcPlayer) {
         this.uuid = mcPlayer.getGameProfile().getId();
         this.name = mcPlayer.getGameProfile().getName();
+    }
+
+    public CardPlayer(UUID uuid, String name) {
+        this.uuid = uuid;
+        this.name = name;
     }
 
     public CardPlayer(CompoundTag tag) {
@@ -34,5 +40,18 @@ public class CardPlayer {
         handTag.addAll(hand.stream().map(Card::toTag).toList());
         tag.put("hand", handTag);
         return tag;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CardPlayer that = (CardPlayer) o;
+        return Objects.equals(uuid, that.uuid) && Objects.equals(name, that.name) && Objects.equals(hand, that.hand);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid, name, hand);
     }
 }

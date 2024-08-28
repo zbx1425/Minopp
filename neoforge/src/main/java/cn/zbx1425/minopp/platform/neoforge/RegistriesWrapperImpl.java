@@ -79,7 +79,7 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
     }
 
     @Override
-    public void registerDataComponentType(String id, RegistryObject<DataComponentType<?>> componentType) {
+    public <T> void registerDataComponentType(String id, RegistryObject<DataComponentType<T>> componentType) {
         DATA_COMPONENT_TYPES.register(id, componentType::get);
     }
 

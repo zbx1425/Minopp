@@ -1,11 +1,19 @@
 package cn.zbx1425.minopp.block;
 
+import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.item.ItemHandCards;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -16,6 +24,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +34,48 @@ public class BlockMinoTable extends Block implements EntityBlock {
     public static final EnumProperty<TablePartType> PART = EnumProperty.create("part", TablePartType.class);
 
     public BlockMinoTable() {
-        super(BlockBehaviour.Properties.of());
+        super(BlockBehaviour.Properties.of().noOcclusion());
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+        if (itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
+            BlockEntity blockEntity = level.getBlockEntity(getCore(blockState, blockPos));
+            if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
+                if (tableEntity.game == null) {
+                    joinPlayerToTable(blockState, blockPos, tableEntity, player);
+                }
+            }
+            return ItemInteractionResult.SUCCESS;
+        }
+        return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
+        BlockEntity blockEntity = level.getBlockEntity(getCore(blockState, blockPos));
+        if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
+            if (tableEntity.game == null) {
+                joinPlayerToTable(blockState, blockPos, tableEntity, player);
+                return InteractionResult.SUCCESS;
+            }
+        }
+        return super.useWithoutItem(blockState, level, blockPos, player, blockHitResult);
+    }
+
+    private void joinPlayerToTable(BlockState blockState, BlockPos blockPos, BlockEntityMinoTable tableEntity, Player player) {
+        BlockPos centerPos = getCore(blockState, blockPos).offset(1, 0, 1);
+        Vec3 playerOffset = player.position().subtract(centerPos.getX(), centerPos.getY(), centerPos.getZ());
+        Direction playerDirection = Direction.fromYRot(player.getYRot()).getOpposite();
+        // Remove the player from the table if they are at a different direction
+        CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
+        for (Direction checkDir : tableEntity.players.keySet()) {
+            if (checkDir != playerDirection && cardPlayer.equals(tableEntity.players.get(checkDir))) {
+                tableEntity.players.put(checkDir, null);
+            }
+        }
+        tableEntity.players.put(playerDirection, cardPlayer);
+        tableEntity.setChanged();
     }
 
     @Nullable
@@ -102,5 +153,15 @@ public class BlockMinoTable extends Block implements EntityBlock {
         public @NotNull String getSerializedName() {
             return this.name().toLowerCase();
         }
+    }
+
+    @Override
+    protected float getShadeBrightness(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+        return 1.0F;
+    }
+
+    @Override
+    protected boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+        return true;
     }
 }
