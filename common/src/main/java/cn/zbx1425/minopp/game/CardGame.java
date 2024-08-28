@@ -24,7 +24,7 @@ public class CardGame {
         this.players = players;
     }
 
-    public ActionMessage initiate(int initialCardCount) {
+    public ActionMessage initiate(CardPlayer cardPlayer, int initialCardCount) {
         if (players.size() < 2) return ActionMessage.NO_GAME;
         currentPlayer = new Random().nextInt(players.size());
         drawCount = 0;
@@ -39,14 +39,13 @@ public class CardGame {
             }
         }
         topCard = deck.removeLast();
-        return new ActionMessage(this, null).message(Component.translatable("game.minopp.play.initiate_success"));
+        return new ActionMessage(this, cardPlayer).gameStarted();
     }
 
-    public ActionMessage playCard(UUID player, Card card, Card.Suit wildSelection) {
-        CardPlayer cardPlayer = players.stream().filter(p -> p.uuid.equals(player)).findFirst().orElse(null);
+    public ActionMessage playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection) {
         ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (cardPlayer == null) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
+        if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
         if (!cardPlayer.hand.contains(card)) return report.ephemeral(Component.translatable("game.minopp.play.no_card"));
 
         if (currentPlayerPhase == PlayerActionPhase.DRAW) {
@@ -78,11 +77,10 @@ public class CardGame {
         return report.played();
     }
 
-    public ActionMessage playNoCard(UUID player) {
-        CardPlayer cardPlayer = players.stream().filter(p -> p.uuid.equals(player)).findFirst().orElse(null);
+    public ActionMessage playNoCard(CardPlayer cardPlayer) {
         ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (cardPlayer == null) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
+        if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
         if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
 
         if (currentPlayerPhase == PlayerActionPhase.DRAW) {
@@ -98,11 +96,10 @@ public class CardGame {
         return report.playedNoCard();
     }
 
-    public ActionMessage drawCard(UUID player) {
-        CardPlayer cardPlayer = players.stream().filter(p -> p.uuid.equals(player)).findFirst().orElse(null);
+    public ActionMessage drawCard(CardPlayer cardPlayer) {
         ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (cardPlayer == null) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
+        if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
         if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
         if (currentPlayerPhase != PlayerActionPhase.DRAW) return report.ephemeral(Component.translatable("game.minopp.play.no_draw"));
 

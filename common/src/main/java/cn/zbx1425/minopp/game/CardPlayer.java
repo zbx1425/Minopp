@@ -47,11 +47,11 @@ public class CardPlayer {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CardPlayer that = (CardPlayer) o;
-        return Objects.equals(uuid, that.uuid) && Objects.equals(name, that.name) && Objects.equals(hand, that.hand);
+        return Objects.equals(uuid, that.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, name, hand);
+        return Objects.hash(uuid);
     }
 }

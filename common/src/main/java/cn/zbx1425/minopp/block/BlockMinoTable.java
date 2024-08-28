@@ -5,6 +5,9 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -29,6 +32,8 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class BlockMinoTable extends Block implements EntityBlock {
 
     public static final EnumProperty<TablePartType> PART = EnumProperty.create("part", TablePartType.class);
@@ -42,40 +47,59 @@ public class BlockMinoTable extends Block implements EntityBlock {
         if (itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockEntity blockEntity = level.getBlockEntity(getCore(blockState, blockPos));
             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
-                if (tableEntity.game == null) {
-                    joinPlayerToTable(blockState, blockPos, tableEntity, player);
+                if (tableEntity.game != null) {
+
                 }
             }
-            return ItemInteractionResult.SUCCESS;
         }
         return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
-        BlockEntity blockEntity = level.getBlockEntity(getCore(blockState, blockPos));
+        BlockPos corePos = getCore(blockState, blockPos);
+        BlockEntity blockEntity = level.getBlockEntity(corePos);
         if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
+            CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
+            if (player.isSecondaryUseActive() && blockState.getValue(PART) == TablePartType.X_MORE_Z_MORE) {
+                if (level.isClientSide) return InteractionResult.SUCCESS;
+                List<CardPlayer> playersList = tableEntity.getPlayersList();
+                if (!playersList.contains(cardPlayer)) {
+                    player.displayClientMessage(Component.translatable("minopp.table.not_joined"), true);
+                    return InteractionResult.FAIL;
+                }
+                if (playersList.size() < 2) {
+                    player.displayClientMessage(Component.translatable("minopp.table.no_enough_player"), true);
+                    return InteractionResult.FAIL;
+                }
+                // Start or end the game
+                if (tableEntity.game == null) {
+                    tableEntity.startGame(cardPlayer);
+                    level.sendBlockUpdated(corePos, blockState, blockState, 2);
+                } else {
+                    tableEntity.destroyGame(cardPlayer);
+                    level.sendBlockUpdated(corePos, blockState, blockState, 2);
+                }
+            }
             if (tableEntity.game == null) {
-                joinPlayerToTable(blockState, blockPos, tableEntity, player);
+                if (level.isClientSide) return InteractionResult.SUCCESS;
+
+                // Join player to table
+                BlockPos centerPos = corePos.offset(1, 0, 1);
+                Vec3 playerOffset = player.position().subtract(centerPos.getX(), centerPos.getY(), centerPos.getZ());
+                Direction playerDirection = Direction.fromYRot(Mth.atan2(playerOffset.z, playerOffset.x) * 180 / Math.PI - 90);
+                for (Direction checkDir : tableEntity.players.keySet()) {
+                    if (checkDir != playerDirection && cardPlayer.equals(tableEntity.players.get(checkDir))) {
+                        tableEntity.players.put(checkDir, null);
+                    }
+                }
+                tableEntity.players.put(playerDirection, cardPlayer);
+                tableEntity.setChanged();
+                level.sendBlockUpdated(corePos, blockState, blockState, 2);
                 return InteractionResult.SUCCESS;
             }
         }
-        return super.useWithoutItem(blockState, level, blockPos, player, blockHitResult);
-    }
-
-    private void joinPlayerToTable(BlockState blockState, BlockPos blockPos, BlockEntityMinoTable tableEntity, Player player) {
-        BlockPos centerPos = getCore(blockState, blockPos).offset(1, 0, 1);
-        Vec3 playerOffset = player.position().subtract(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-        Direction playerDirection = Direction.fromYRot(player.getYRot()).getOpposite();
-        // Remove the player from the table if they are at a different direction
-        CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
-        for (Direction checkDir : tableEntity.players.keySet()) {
-            if (checkDir != playerDirection && cardPlayer.equals(tableEntity.players.get(checkDir))) {
-                tableEntity.players.put(checkDir, null);
-            }
-        }
-        tableEntity.players.put(playerDirection, cardPlayer);
-        tableEntity.setChanged();
+        return InteractionResult.FAIL;
     }
 
     @Nullable

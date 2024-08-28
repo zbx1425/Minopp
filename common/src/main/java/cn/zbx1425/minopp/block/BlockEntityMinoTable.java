@@ -8,8 +8,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -19,12 +24,12 @@ public class BlockEntityMinoTable extends BlockEntity {
     public CardGame game = null;
     public ActionMessage state = ActionMessage.NO_GAME;
 
+    public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
         super(Mino.BLOCK_ENTITY_TYPE_MINO_TABLE.get(), blockPos, blockState);
-        players.put(Direction.NORTH, null);
-        players.put(Direction.EAST, null);
-        players.put(Direction.SOUTH, null);
-        players.put(Direction.WEST, null);
+        for (Direction direction : PLAYER_ORDER) {
+            players.put(direction, null);
+        }
     }
 
     @Override
@@ -47,9 +52,11 @@ public class BlockEntityMinoTable extends BlockEntity {
     protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
         super.loadAdditional(compoundTag, provider);
         CompoundTag playersTag = compoundTag.getCompound("players");
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : PLAYER_ORDER) {
             if (playersTag.contains(direction.getSerializedName())) {
                 players.put(direction, new CardPlayer(playersTag.getCompound(direction.getSerializedName())));
+            } else {
+                players.put(direction, null);
             }
         }
         if (compoundTag.contains("game")) {
@@ -58,5 +65,40 @@ public class BlockEntityMinoTable extends BlockEntity {
             game = null;
         }
         state = new ActionMessage(compoundTag.getCompound("state"));
+    }
+
+    public List<CardPlayer> getPlayersList() {
+        // Return a list of players in the order of NORTH, EAST, SOUTH, WEST, without null elements
+        List<CardPlayer> playersList = new ArrayList<>();
+        for (Direction direction : PLAYER_ORDER) {
+            if (players.get(direction) != null) {
+                playersList.add(players.get(direction));
+            }
+        }
+        return playersList;
+    }
+
+    public void startGame(CardPlayer player) {
+        game = new CardGame(getPlayersList());
+        state = game.initiate(player, 7);
+        setChanged();
+    }
+
+    public void destroyGame(CardPlayer player) {
+        game = null;
+        state = new ActionMessage(null, player).gameDestroyed();
+        setChanged();
+    }
+
+    @Override
+    public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, provider);
+        return tag;
+    }
+
+    @Nullable @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 }

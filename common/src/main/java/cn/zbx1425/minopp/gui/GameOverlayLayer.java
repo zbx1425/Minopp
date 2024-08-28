@@ -3,6 +3,7 @@ package cn.zbx1425.minopp.gui;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -56,6 +57,11 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                 direction = direction.getClockWise();
                 y += font.lineHeight;
             }
+        } else {
+            CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayer);
+            guiGraphics.drawString(font, "Current Player: " + currentPlayer.name, x, y, 0xFFFFFFFF);
+            y += font.lineHeight;
+            guiGraphics.drawString(font, "State: " + tableEntity.state.message.getString(), x, y, 0xFFFFFFFF);
         }
     }
 
