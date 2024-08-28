@@ -46,7 +46,7 @@ public class CardGame {
         ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
         if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
-        if (!cardPlayer.hand.contains(card)) return report.ephemeral(Component.translatable("game.minopp.play.no_card"));
+        if (!cardPlayer.hand.contains(card)) return report.ephemeral(Component.translatable("game.minopp.play.not_your_card"));
 
         if (currentPlayerPhase == PlayerActionPhase.DRAW) {
             return report.ephemeral(Component.translatable("game.minopp.play.must_draw"));

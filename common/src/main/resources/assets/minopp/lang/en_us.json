@@ -1,3 +1,17 @@
 {
+  "game.minopp.play.no_player": "You're not a part of the game.",
+  "game.minopp.play.no_enough_player": "Not enough players to start the game.",
+  "game.minopp.play.not_your_turn": "It's not your turn.",
+  "game.minopp.play.not_your_card": "You don't have this card.",
+  "game.minopp.play.must_draw": "You must draw a card right now.",
+  "game.minopp.play.invalid_card": "This card doesn't apply to the top card.",
+  "game.minopp.play.no_draw": "You can't draw a card right now.",
 
+  "game.minopp.play.played": "%1$s played %2$s.",
+  "game.minopp.play.draw": "%1$s drew %2$s card(s).",
+  "game.minopp.play.played_no_card": "%1$s passed.",
+  "game.minopp.play.game_destroyed": "%1$s requested the game to stop.",
+  "game.minopp.play.game_started": "%1$s requested the game to start.",
+  "game.minopp.play.game_won": "%1$s won the game.",
+  "game.minopp.play.no_game": "Game inactive."
 }

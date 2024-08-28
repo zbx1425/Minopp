@@ -65,11 +65,11 @@ public class BlockMinoTable extends Block implements EntityBlock {
                 if (level.isClientSide) return InteractionResult.SUCCESS;
                 List<CardPlayer> playersList = tableEntity.getPlayersList();
                 if (!playersList.contains(cardPlayer)) {
-                    player.displayClientMessage(Component.translatable("minopp.table.not_joined"), true);
+                    player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
                     return InteractionResult.FAIL;
                 }
                 if (playersList.size() < 2) {
-                    player.displayClientMessage(Component.translatable("minopp.table.no_enough_player"), true);
+                    player.displayClientMessage(Component.translatable("game.minopp.play.no_enough_player"), true);
                     return InteractionResult.FAIL;
                 }
                 // Start or end the game
@@ -88,12 +88,14 @@ public class BlockMinoTable extends Block implements EntityBlock {
                 BlockPos centerPos = corePos.offset(1, 0, 1);
                 Vec3 playerOffset = player.position().subtract(centerPos.getX(), centerPos.getY(), centerPos.getZ());
                 Direction playerDirection = Direction.fromYRot(Mth.atan2(playerOffset.z, playerOffset.x) * 180 / Math.PI - 90);
+                boolean quitting = false;
                 for (Direction checkDir : tableEntity.players.keySet()) {
-                    if (checkDir != playerDirection && cardPlayer.equals(tableEntity.players.get(checkDir))) {
+                    if (cardPlayer.equals(tableEntity.players.get(checkDir))) {
                         tableEntity.players.put(checkDir, null);
+                        if (checkDir == playerDirection) quitting = true;
                     }
                 }
-                tableEntity.players.put(playerDirection, cardPlayer);
+                if (!quitting) tableEntity.players.put(playerDirection, cardPlayer);
                 tableEntity.setChanged();
                 level.sendBlockUpdated(corePos, blockState, blockState, 2);
                 return InteractionResult.SUCCESS;
