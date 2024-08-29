@@ -13,11 +13,13 @@ public record Card(Family family, Suit suit, int number) {
         List<Card> deck = new ArrayList<>();
         // Numbers
         for (Suit suit : Suit.values()) {
+            if (suit == Suit.WILD) continue;
             for (int i = 0; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i));
             for (int i = 1; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i));
         }
         // Skip, Reverse, Draw 2
         for (Suit suit : Suit.values()) {
+            if (suit == Suit.WILD) continue;
             for (int i = 0; i < 2; i++) {
                 deck.add(new Card(Family.SKIP, suit, -101));
                 deck.add(new Card(Family.REVERSE, suit, -102));
@@ -45,17 +47,24 @@ public record Card(Family family, Suit suit, int number) {
     }
 
     public Component getDisplayName() {
-        return Component.translatable("game.minopp.card." + family.name().toLowerCase() + "." + suit.name().toLowerCase() + "." + number);
+        return Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(),
+                Component.translatable("game.minopp.card.family." + family.name().toLowerCase(), Math.abs(number)));
     }
 
     public enum Suit {
 
-        RED,
-        YELLOW,
-        GREEN,
-        BLUE,
+        RED(0xFFBE0C00),
+        YELLOW(0xFFE7D004),
+        GREEN(0xFF328A10),
+        BLUE(0xFF1254AB),
 
-        WILD
+        WILD(0xFF1E1A19);
+
+        public final int color;
+
+        Suit(int color) {
+            this.color = color;
+        }
     }
 
     public enum Family {

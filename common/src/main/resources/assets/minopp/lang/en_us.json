@@ -13,5 +13,16 @@
   "game.minopp.play.game_destroyed": "%1$s requested the game to stop.",
   "game.minopp.play.game_started": "%1$s requested the game to start.",
   "game.minopp.play.game_won": "%1$s won the game.",
-  "game.minopp.play.no_game": "Game inactive."
+  "game.minopp.play.no_game": "Game inactive.",
+
+  "game.minopp.card.suit.red": "Redstone %s",
+  "game.minopp.card.suit.green": "Emerald %s",
+  "game.minopp.card.suit.blue": "Diamond %s",
+  "game.minopp.card.suit.yellow": "Gold %s",
+  "game.minopp.card.suit.wild": "Wild %s",
+
+  "game.minopp.card.family.number": "%d",
+  "game.minopp.card.family.skip": "Skip",
+  "game.minopp.card.family.reverse": "Reverse",
+  "game.minopp.card.family.draw": "Draw +%d"
 }
