@@ -1,9 +1,12 @@
 package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.gui.WildSelectionScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -64,8 +67,12 @@ public class BlockMinoTable extends Block implements EntityBlock {
                     } else if (handIndex == realPlayer.hand.size()) {
                         C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
                     } else {
-                        int clampedHandIndex = Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1);
-                        C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, realPlayer.hand.get(clampedHandIndex), null);
+                        Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
+                        if (selectedCard.suit() == Card.Suit.WILD) {
+                            Minecraft.getInstance().setScreen(new WildSelectionScreen(corePos, playerWithoutHand, selectedCard));
+                        } else {
+                            C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, null);
+                        }
                     }
                 }
             }

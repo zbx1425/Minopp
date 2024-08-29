@@ -22,8 +22,10 @@
   "game.minopp.card.suit.yellow": "Gold %s",
   "game.minopp.card.suit.wild": "Wild %s",
 
-  "game.minopp.card.family.number": "%d",
+  "game.minopp.card.family.number": "%s",
   "game.minopp.card.family.skip": "Skip",
   "game.minopp.card.family.reverse": "Reverse",
-  "game.minopp.card.family.draw": "Draw +%d"
+  "game.minopp.card.family.draw": "Draw +%s",
+
+  "gui.minopp.wild_selection.title": "Select a color"
 }

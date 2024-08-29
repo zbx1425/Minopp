@@ -55,7 +55,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         int x = 20, y = 20;
         Font font = Minecraft.getInstance().font;
-        guiGraphics.drawString(font, "Game Inactive", x, y, 0xFFFFFFFF);
+        guiGraphics.drawString(font, tableEntity.state.message, x, y, 0xFFFFFFFF);
         y += font.lineHeight * 2;
         Direction direction = Direction.NORTH;
         for (int i = 0; i < 4; i++) {
@@ -75,7 +75,14 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayer);
         guiGraphics.drawString(font, "DEBUG", x, y, 0xFFFFFFFF);
         y += font.lineHeight;
-        guiGraphics.drawString(font, "Current Player: " + currentPlayer.name, x, y, 0xFFFFFFFF);
+        LocalPlayer player = Minecraft.getInstance().player;
+        CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
+        if (currentPlayer.equals(cardPlayer)) {
+            guiGraphics.drawString(font, "It's your turn!", x, y,
+                    (System.currentTimeMillis() % 400 < 200) ? 0xFFFFFFFF : 0xFFFFFF00);
+        } else {
+            guiGraphics.drawString(font, "It's " + currentPlayer.name + "'s turn", x, y, 0xFFFFFFFF);
+        }
         y += font.lineHeight;
         guiGraphics.drawString(font, "Phase: " + tableEntity.game.currentPlayerPhase.name(), x, y, 0xFFFFFFFF);
         y += font.lineHeight;
@@ -84,7 +91,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         guiGraphics.drawString(font, "Draw Accumulation: " + tableEntity.game.drawCount, x, y, 0xFFFFFFFF);
         y += font.lineHeight * 2;
 
-        guiGraphics.drawString(font, "Top Card: " + tableEntity.game.topCard.getDisplayName().getString(), x, y, 0xFFFFFFFF);
+        guiGraphics.drawString(font, "Top Card: " + tableEntity.game.topCard.getDisplayName().getString(), x, y, tableEntity.game.topCard.suit().color);
         y += font.lineHeight * 2;
 
         guiGraphics.drawString(font, tableEntity.state.message, x, y, 0xFFFFFFFF);

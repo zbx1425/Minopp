@@ -48,7 +48,8 @@ public record Card(Family family, Suit suit, int number) {
 
     public Component getDisplayName() {
         return Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(),
-                Component.translatable("game.minopp.card.family." + family.name().toLowerCase(), Math.abs(number)));
+                Component.translatable("game.minopp.card.family." + family.name().toLowerCase(),
+                        family == Family.DRAW ? -number : number));
     }
 
     public enum Suit {
