@@ -49,19 +49,29 @@ public class CardGame {
         if (!cardPlayer.hand.contains(card)) return report.ephemeral(Component.translatable("game.minopp.play.not_your_card"));
 
         if (currentPlayerPhase == PlayerActionPhase.DRAW) {
-            return report.ephemeral(Component.translatable("game.minopp.play.must_draw"));
+            if (playerIndex != currentPlayer) {
+                return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
+            } else {
+                return report.ephemeral(Component.translatable("game.minopp.play.must_draw"));
+            }
         }
 
         // Cut
         if (topCard.equals(card) && playerIndex != currentPlayer) {
             doDiscardCard(cardPlayer, card);
+            if (cardPlayer.hand.isEmpty()) {
+                return report.gameWon();
+            }
             advanceTurn();
             return report.cut();
         }
 
         if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
-        if (!topCard.canPlayOn(card)) return report.ephemeral(Component.translatable("game.minopp.play.invalid_card"));
+        if (!card.canPlayOn(topCard)) return report.ephemeral(Component.translatable("game.minopp.play.invalid_card"));
         doDiscardCard(cardPlayer, card);
+        if (cardPlayer.hand.isEmpty()) {
+            return report.gameWon();
+        }
 
         if (card.suit() == Card.Suit.WILD) {
             topCard = new Card(topCard.family(), wildSelection, topCard.number());
@@ -69,7 +79,7 @@ public class CardGame {
         switch (card.family()) {
             case SKIP -> isSkipping = true;
             case REVERSE -> isAntiClockwise = !isAntiClockwise;
-            case DRAW -> drawCount += card.number();
+            case DRAW -> drawCount -= card.number();
         }
 
         advanceTurn();
@@ -104,8 +114,16 @@ public class CardGame {
         if (currentPlayerPhase != PlayerActionPhase.DRAW) return report.ephemeral(Component.translatable("game.minopp.play.no_draw"));
 
         int drawCount = this.drawCount == 0 ? 1 : this.drawCount;
+        if (deck.size() < drawCount) {
+            return report.deckDepleted();
+        }
         doDrawCard(cardPlayer, drawCount);
-        this.drawCount = 0;
+        if (this.drawCount > 0) {
+            // The draw card has already performed penalty
+            // Next player doesn't have to also use draw to counteract
+            this.topCard = new Card(Card.Family.NUMBER, topCard.suit(), topCard.number());
+            this.drawCount = 0;
+        }
         currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
         return report.drew(drawCount);
     }
@@ -131,6 +149,10 @@ public class CardGame {
         isSkipping = false;
     }
 
+    public CardPlayer deAmputate(CardPlayer playerWithoutHand) {
+        return players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
+    }
+
     public enum PlayerActionPhase {
         DISCARD_HAND,
         DRAW,
@@ -143,7 +165,7 @@ public class CardGame {
         isSkipping = tag.getBoolean("isSkipping");
         currentPlayerPhase = PlayerActionPhase.valueOf(tag.getString("currentPlayerPhase"));
         isAntiClockwise = tag.getBoolean("isAntiClockwise");
-        deck = tag.getList("deck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList();
+        deck = new ArrayList<>(tag.getList("deck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
         topCard = new Card(tag.getCompound("topCard"));
         players = new ArrayList<>(tag.getList("players", CompoundTag.TAG_COMPOUND).stream().map(t -> new CardPlayer((CompoundTag)t)).toList());
     }

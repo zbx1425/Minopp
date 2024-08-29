@@ -8,11 +8,12 @@
   "game.minopp.play.no_draw": "You can't draw a card right now.",
 
   "game.minopp.play.played": "%1$s played %2$s.",
-  "game.minopp.play.draw": "%1$s drew %2$s card(s).",
+  "game.minopp.play.drew": "%1$s drew %2$s card(s).",
   "game.minopp.play.played_no_card": "%1$s passed.",
   "game.minopp.play.game_destroyed": "%1$s requested the game to stop.",
   "game.minopp.play.game_started": "%1$s requested the game to start.",
-  "game.minopp.play.game_won": "%1$s won the game.",
+  "game.minopp.play.game_won": "%1$s won the game!",
+  "game.minopp.play.deck_depleted": "You have somehow drew the entire deck onto your hands. The game now ends.",
   "game.minopp.play.no_game": "Game inactive.",
 
   "game.minopp.card.suit.red": "Redstone %s",

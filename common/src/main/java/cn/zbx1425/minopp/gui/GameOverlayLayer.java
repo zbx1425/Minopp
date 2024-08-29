@@ -73,9 +73,26 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         int x = 20, y = 20;
         Font font = Minecraft.getInstance().font;
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayer);
+        guiGraphics.drawString(font, "DEBUG", x, y, 0xFFFFFFFF);
+        y += font.lineHeight;
         guiGraphics.drawString(font, "Current Player: " + currentPlayer.name, x, y, 0xFFFFFFFF);
         y += font.lineHeight;
-        guiGraphics.drawString(font, "State: " + tableEntity.state.message.getString(), x, y, 0xFFFFFFFF);
+        guiGraphics.drawString(font, "Phase: " + tableEntity.game.currentPlayerPhase.name(), x, y, 0xFFFFFFFF);
+        y += font.lineHeight;
+        guiGraphics.drawString(font, "Direction: " + (tableEntity.game.isAntiClockwise ? "ACW" : "CW"), x, y, 0xFFFFFFFF);
+        y += font.lineHeight;
+        guiGraphics.drawString(font, "Draw Accumulation: " + tableEntity.game.drawCount, x, y, 0xFFFFFFFF);
+        y += font.lineHeight * 2;
+
+        guiGraphics.drawString(font, "Top Card: " + tableEntity.game.topCard.getDisplayName().getString(), x, y, 0xFFFFFFFF);
+        y += font.lineHeight * 2;
+
+        guiGraphics.drawString(font, tableEntity.state.message, x, y, 0xFFFFFFFF);
+        y += font.lineHeight;
+        if (tableEntity.clientEphemeral != null) {
+            guiGraphics.drawString(font, tableEntity.clientEphemeral.message, x, y, 0xFFFFFFFF);
+            y += font.lineHeight;
+        }
     }
 
     private void renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
@@ -102,20 +119,29 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         if (tableEntity.game == null) return;
         CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
         if (realPlayer == null) return;
+        if (clientHandIndex > realPlayer.hand.size()) {
+            clientHandIndex = realPlayer.hand.size();
+            player.getMainHandItem().set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), clientHandIndex);
+        }
 
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
         int handSize = realPlayer.hand.size();
-        int selectedCardYRaw = height - ((CARD_HEIGHT * 3 / 2) + CARD_V_SPACING * (handSize - clientHandIndex));
+        int selectedCardYRaw = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - clientHandIndex));
         int cardDrawOffset = selectedCardYRaw < 20 ? 20 - selectedCardYRaw : 0;
-        for (int i = 0; i < handSize; i++) {
-            Card card = realPlayer.hand.get(i);
-            int x = width - 20 - CARD_WIDTH;
-            int y = height - ((CARD_HEIGHT * 3 / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
+        for (int i = 0; i <= handSize; i++) {
+            int x = width - 20 - CARD_WIDTH - (i == clientHandIndex ? 20 : 0);
+            int y = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
             guiGraphics.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0xFF222222);
             guiGraphics.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
-            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);
-            guiGraphics.drawString(font, card.getDisplayName(), x + 5, y + 5, 0xFFDDDDDD);
+            if (i == handSize) {
+                guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, 0xFF555555);
+                guiGraphics.drawString(font, "Pass", x + 5, y + 5, 0xFFDDDDDD);
+            } else {
+                Card card = realPlayer.hand.get(i);
+                guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);
+                guiGraphics.drawString(font, card.getDisplayName(), x + 5, y + 5, 0xFFDDDDDD);
+            }
         }
     }
 

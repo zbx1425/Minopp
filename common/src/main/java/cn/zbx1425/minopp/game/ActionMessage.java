@@ -10,10 +10,12 @@ public class ActionMessage {
     private CardPlayer initiator;
 
     public boolean isEphemeral = false;
+    public boolean gameShouldFinish = false;
     public Component message;
 
     public ActionMessage(CardGame game, CardPlayer player) {
         this.initiator = player;
+        this.gameShouldFinish = false;
         this.game = game;
     }
 
@@ -56,7 +58,13 @@ public class ActionMessage {
     }
 
     public ActionMessage gameWon() {
+        gameShouldFinish = true;
         return message(Component.translatable("game.minopp.play.game_won", initiator.name));
+    }
+
+    public ActionMessage deckDepleted() {
+        gameShouldFinish = true;
+        return message(Component.translatable("game.minopp.play.deck_depleted"));
     }
 
     public static final ActionMessage NO_GAME = new ActionMessage(null, null)
@@ -64,6 +72,7 @@ public class ActionMessage {
 
     public ActionMessage(CompoundTag tag) {
         this.isEphemeral = tag.getBoolean("isEphemeral");
+        this.gameShouldFinish = false;
         this.message = Component.Serializer.fromJson(tag.getString("message"), DummyLookupProvider.INSTANCE);
     }
 

@@ -24,6 +24,8 @@ public class BlockEntityMinoTable extends BlockEntity {
     public CardGame game = null;
     public ActionMessage state = ActionMessage.NO_GAME;
 
+    public ActionMessage clientEphemeral = null;
+
     public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
         super(Mino.BLOCK_ENTITY_TYPE_MINO_TABLE.get(), blockPos, blockState);
@@ -86,6 +88,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     public void destroyGame(CardPlayer player) {
         game = null;
+        players.values().forEach(p -> { if (p != null) p.hand.clear(); });
         state = new ActionMessage(null, player).gameDestroyed();
         setChanged();
     }

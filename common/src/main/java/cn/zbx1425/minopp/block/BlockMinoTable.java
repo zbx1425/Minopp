@@ -3,6 +3,7 @@ package cn.zbx1425.minopp.block;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.network.C2SPlayCardPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -44,11 +45,28 @@ public class BlockMinoTable extends Block implements EntityBlock {
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
-        if (itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
-            BlockEntity blockEntity = level.getBlockEntity(getCore(blockState, blockPos));
+        if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
+            BlockPos corePos = getCore(blockState, blockPos);
+            ItemHandCards.CardGameBindingComponent gameBinding = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY);
+//            if (gameBinding.tablePos().isEmpty() || !gameBinding.tablePos().get().equals(corePos)) {
+//                player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
+//                return ItemInteractionResult.FAIL;
+//            }
+            int handIndex = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
+            CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
+            BlockEntity blockEntity = level.getBlockEntity(corePos);
             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                 if (tableEntity.game != null) {
-
+                    CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
+                    if (realPlayer == null) return ItemInteractionResult.FAIL;
+                    if (blockState.getValue(PART) == TablePartType.X_LESS_Z_LESS) {
+                        C2SPlayCardPacket.Client.sendDrawCardC2S(corePos, playerWithoutHand);
+                    } else if (handIndex == realPlayer.hand.size()) {
+                        C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
+                    } else {
+                        int clampedHandIndex = Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1);
+                        C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, realPlayer.hand.get(clampedHandIndex), null);
+                    }
                 }
             }
         }
@@ -80,6 +98,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                     tableEntity.destroyGame(cardPlayer);
                     level.sendBlockUpdated(corePos, blockState, blockState, 2);
                 }
+                return InteractionResult.SUCCESS;
             }
             if (tableEntity.game == null) {
                 if (level.isClientSide) return InteractionResult.SUCCESS;

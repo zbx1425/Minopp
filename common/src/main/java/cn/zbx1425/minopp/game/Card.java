@@ -36,7 +36,7 @@ public record Card(Family family, Suit suit, int number) {
 
     public boolean canPlayOn(Card topCard) {
         if (topCard.family == Family.DRAW) {
-            // Draw 2 and Wild Draw 4 can only be played on Draw 2 and Wild Draw 4.
+            // Draw 2 and Wild Draw 4 can only be resolved by playing another Draw 2 or Wild Draw 4.
             return family == topCard.family && number == topCard.number;
         }
         if (suit == Suit.WILD) {
