@@ -6,7 +6,7 @@ import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-public record Card(Family family, Suit suit, int number) {
+public record Card(Family family, Suit suit, int number, Card actualCard) {
 
     public static List<Card> createDeck() {
         // Create a deck of UNO cards.
@@ -14,22 +14,22 @@ public record Card(Family family, Suit suit, int number) {
         // Numbers
         for (Suit suit : Suit.values()) {
             if (suit == Suit.WILD) continue;
-            for (int i = 0; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i));
-            for (int i = 1; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i));
+            for (int i = 0; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i, null));
+            for (int i = 1; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i, null));
         }
         // Skip, Reverse, Draw 2
         for (Suit suit : Suit.values()) {
             if (suit == Suit.WILD) continue;
             for (int i = 0; i < 2; i++) {
-                deck.add(new Card(Family.SKIP, suit, -101));
-                deck.add(new Card(Family.REVERSE, suit, -102));
-                deck.add(new Card(Family.DRAW, suit, -2));
+                deck.add(new Card(Family.SKIP, suit, -101, null));
+                deck.add(new Card(Family.REVERSE, suit, -102, null));
+                deck.add(new Card(Family.DRAW, suit, -2, null));
             }
         }
         // Wild, Wild Draw 4
         for (int i = 0; i < 4; i++) {
-            deck.add(new Card(Family.NUMBER, Suit.WILD, -1));
-            deck.add(new Card(Family.DRAW, Suit.WILD, -4));
+            deck.add(new Card(Family.NUMBER, Suit.WILD, -1, null));
+            deck.add(new Card(Family.DRAW, Suit.WILD, -4, null));
         }
         return deck;
     }
@@ -47,6 +47,7 @@ public record Card(Family family, Suit suit, int number) {
     }
 
     public Component getDisplayName() {
+        if (actualCard != null) return actualCard.getDisplayName();
         return Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(),
                 Component.translatable("game.minopp.card.family." + family.name().toLowerCase(),
                         family == Family.DRAW ? -number : number));
@@ -77,7 +78,8 @@ public record Card(Family family, Suit suit, int number) {
     }
 
     public Card(CompoundTag tag) {
-        this(Family.valueOf(tag.getString("family")), Suit.valueOf(tag.getString("suit")), tag.getInt("number"));
+        this(Family.valueOf(tag.getString("family")), Suit.valueOf(tag.getString("suit")), tag.getInt("number"),
+                tag.contains("actualCard") ? new Card(tag.getCompound("actualCard")) : null);
     }
 
     public CompoundTag toTag() {
@@ -85,6 +87,7 @@ public record Card(Family family, Suit suit, int number) {
         tag.putString("family", family.name());
         tag.putString("suit", suit.name());
         tag.putInt("number", number);
+        if (actualCard != null) tag.put("actualCard", actualCard.toTag());
         return tag;
     }
 }

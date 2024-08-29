@@ -74,7 +74,7 @@ public class CardGame {
         }
 
         if (card.suit() == Card.Suit.WILD) {
-            topCard = new Card(topCard.family(), wildSelection, topCard.number());
+            topCard = new Card(topCard.family(), wildSelection, topCard.number(), topCard);
         }
         switch (card.family()) {
             case SKIP -> isSkipping = true;
@@ -121,7 +121,7 @@ public class CardGame {
         if (this.drawCount > 0) {
             // The draw card has already performed penalty
             // Next player doesn't have to also use draw to counteract
-            this.topCard = new Card(Card.Family.NUMBER, topCard.suit(), topCard.number());
+            this.topCard = new Card(Card.Family.NUMBER, topCard.suit(), topCard.number(), topCard);
             this.drawCount = 0;
         }
         currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
@@ -129,7 +129,7 @@ public class CardGame {
     }
 
     private void doDiscardCard(CardPlayer player, Card card) {
-        deck.add(topCard);
+        deck.add(topCard.actualCard() != null ? topCard.actualCard() : topCard);
         topCard = card;
         player.hand.remove(card);
     }
