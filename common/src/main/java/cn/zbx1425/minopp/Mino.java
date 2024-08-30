@@ -44,12 +44,15 @@ public final class Mino {
     public static final RegistryObject<DataComponentType<Integer>> DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX = new RegistryObject<>(() ->
             ServerPlatform.createDataComponentType(Codec.INT, ByteBufCodecs.INT));
 
+    public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(ItemHandCards::new);
+
     public static void init(RegistriesWrapper registries) {
         final ResourceKey<CreativeModeTab> FUNCTIONAL_BLOCKS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
                 ResourceLocation.withDefaultNamespace("functional_blocks"));
         registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE, FUNCTIONAL_BLOCKS);
         registries.registerBlockEntityType("mino_table", BLOCK_ENTITY_TYPE_MINO_TABLE);
         registries.registerItem("hand_cards", ITEM_HAND_CARDS);
+        registries.registerItem("hand_cards_model_placeholder", ITEM_HAND_CARDS_MODEL_PLACEHOLDER);
         registries.registerDataComponentType("card_game_binding", DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
         registries.registerDataComponentType("client_hand_index", DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX);
 

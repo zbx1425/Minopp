@@ -178,6 +178,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     public static BlockPos getCore(BlockState blockState, BlockPos blockPos) {
+        if (!blockState.is(Mino.BLOCK_MINO_TABLE.get())) return blockPos;
         TablePartType part = blockState.getValue(PART);
         return blockPos.offset(-part.xOff, 0, -part.zOff);
     }

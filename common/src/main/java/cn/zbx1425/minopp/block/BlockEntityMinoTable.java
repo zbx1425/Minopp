@@ -113,8 +113,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                     if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
                     ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
                             ItemHandCards.CardGameBindingComponent.EMPTY);
-                    if (gameBinding.player().isEmpty() && cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())
-                        || gameBinding.player().isPresent() && cardPlayer.uuid.equals(gameBinding.player().get())) {
+                    if (cardPlayer.uuid.equals(gameBinding.player())) {
                         // We've found an applicable hand card item
                         if (gameBinding.tablePos().isEmpty()) {
                             // It's not bound, bind it
@@ -130,7 +129,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                         // We've found a player, but no applicable hand card item, give them one
                         ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                         ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                Optional.empty(), Optional.of(getBlockPos()));
+                                mcPlayer.getGameProfile().getId(), Optional.of(getBlockPos()));
                         handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
                         playerFound = mcPlayer.getInventory().add(handCard);
                     }
@@ -159,7 +158,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                 ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
                         ItemHandCards.CardGameBindingComponent.EMPTY);
                 if (gameBinding.tablePos().isPresent() && gameBinding.tablePos().get().equals(getBlockPos())) {
-                    if (gameBinding.player().isEmpty()) {
+                    if (gameBinding.player().equals(mcPlayer.getGameProfile().getId())) {
                         // Default item, just remove
                         mcPlayer.getInventory().removeItem(invItem);
                     } else {

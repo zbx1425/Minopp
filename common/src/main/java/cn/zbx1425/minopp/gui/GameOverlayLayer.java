@@ -170,6 +170,11 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         for (int i = 0; i <= handSize; i++) {
             int x = width - 20 - CARD_WIDTH - (i == clientHandIndex ? 20 : 0);
             int y = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
+            if (i == clientHandIndex && i < handSize) {
+                Card card = realPlayer.hand.get(i);
+                Component cardName = card.getDisplayName();
+                guiGraphics.drawString(font, cardName, x - font.width(cardName) - 10, y + 10, 0xFFFFFFDD);
+            }
             guiGraphics.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0xFF222222);
             guiGraphics.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
             if (i == handSize) {

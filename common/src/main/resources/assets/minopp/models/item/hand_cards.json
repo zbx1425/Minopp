@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "minopp:item/hand_cards"
-  }
+  "parent": "minecraft:builtin/entity"
 }

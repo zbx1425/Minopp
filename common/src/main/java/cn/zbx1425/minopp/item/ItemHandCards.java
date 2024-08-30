@@ -39,20 +39,20 @@ public class ItemHandCards extends GroupedItem {
     public static CardPlayer getCardPlayer(Player player) {
         if (player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) {
             CardGameBindingComponent component = player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), CardGameBindingComponent.EMPTY);
-            return component.player.map(uuid -> new CardPlayer(uuid, uuid.toString().substring(0, 8))).orElseGet(() -> new CardPlayer(player));
+            return new CardPlayer(component.player, component.player.toString().substring(0, 8));
         } else {
             return new CardPlayer(player);
         }
     }
 
-    public record CardGameBindingComponent(Optional<UUID> player, Optional<BlockPos> tablePos) {
-        public static final CardGameBindingComponent EMPTY = new CardGameBindingComponent(Optional.empty(), Optional.empty());
+    public record CardGameBindingComponent(UUID player, Optional<BlockPos> tablePos) {
+        public static final CardGameBindingComponent EMPTY = new CardGameBindingComponent(UUID.randomUUID(), Optional.empty());
         public static final Codec<CardGameBindingComponent> CODEC = RecordCodecBuilder.create(it -> it.group(
-                UUIDUtil.CODEC.optionalFieldOf("player").forGetter(CardGameBindingComponent::player),
+                UUIDUtil.CODEC.fieldOf("player").forGetter(CardGameBindingComponent::player),
                 BlockPos.CODEC.optionalFieldOf("tablePos").forGetter(CardGameBindingComponent::tablePos)
         ).apply(it, CardGameBindingComponent::new));
         public static final StreamCodec<ByteBuf, CardGameBindingComponent> STREAM_CODEC = StreamCodec.composite(
-                UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), CardGameBindingComponent::player,
+                UUIDUtil.STREAM_CODEC, CardGameBindingComponent::player,
                 BlockPos.STREAM_CODEC.apply(ByteBufCodecs::optional), CardGameBindingComponent::tablePos,
                 CardGameBindingComponent::new
         );

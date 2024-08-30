@@ -59,7 +59,7 @@ public final class MinoNeoForge {
                         ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                         UUID uuid = UUID.randomUUID();
                         stack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                                new ItemHandCards.CardGameBindingComponent(Optional.of(uuid), Optional.empty()));
+                                new ItemHandCards.CardGameBindingComponent(uuid, Optional.empty()));
                         stack.set(DataComponents.CUSTOM_NAME, Component.literal("Test Card " + uuid.toString().substring(0, 8)));
                         context.getSource().getPlayerOrException().getInventory().add(stack);
                         return 1;
