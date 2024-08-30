@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.platform.ServerPlatform;
+import com.mojang.datafixers.util.Pair;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -20,12 +21,7 @@ public class S2CActionEphemeralPacket {
     public static void sendS2C(ServerPlayer target, BlockPos gamePos, ActionMessage message) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
         packet.writeBlockPos(gamePos);
-        if (message == null) {
-            packet.writeBoolean(false);
-        } else {
-            packet.writeBoolean(true);
-            packet.writeNbt(message.toTag());
-        }
+        packet.writeNbt(message.toTag());
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
     }
 
@@ -33,9 +29,9 @@ public class S2CActionEphemeralPacket {
 
         public static void handleS2C(FriendlyByteBuf packet) {
             BlockPos gamePos = packet.readBlockPos();
-            ActionMessage message = packet.readBoolean() ? new ActionMessage(Objects.requireNonNull(packet.readNbt())) : null;
+            ActionMessage message = new ActionMessage(Objects.requireNonNull(packet.readNbt()));
             if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-                tableEntity.clientEphemeral = message;
+                tableEntity.clientMessageList.add(new Pair<>(message, System.currentTimeMillis() + 4000));
             }
         }
     }

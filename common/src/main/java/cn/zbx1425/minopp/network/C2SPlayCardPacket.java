@@ -53,7 +53,6 @@ public class C2SPlayCardPacket {
                 tableEntity.destroyGame(cardPlayer);
                 tableEntity.state = result;
             } else {
-                S2CActionEphemeralPacket.sendS2C(player, gamePos, null);
                 tableEntity.state = result;
             }
             tableEntity.setChanged();

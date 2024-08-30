@@ -3,9 +3,11 @@ package cn.zbx1425.minopp.gui;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -15,10 +17,16 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+
+import java.util.Iterator;
+import java.util.ListIterator;
 
 public class GameOverlayLayer implements LayeredDraw.Layer {
 
@@ -55,8 +63,15 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         int x = 20, y = 20;
         Font font = Minecraft.getInstance().font;
-        guiGraphics.drawString(font, tableEntity.state.message, x, y, 0xFFFFFFFF);
+        for (String part : tableEntity.state.message.getString().split("\n")) {
+            guiGraphics.drawString(font, Component.literal(part), x, y, 0xFFFFFFFF);
+            y += font.lineHeight;
+        }
+        y += font.lineHeight;
+        guiGraphics.drawString(font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
         y += font.lineHeight * 2;
+        guiGraphics.drawString(font, Component.translatable("gui.minopp.play.player_seats"), x, y, 0xFFAAAAAA);
+        y += font.lineHeight;
         Direction direction = Direction.NORTH;
         for (int i = 0; i < 4; i++) {
             if (tableEntity.players.get(direction) != null) {
@@ -73,32 +88,47 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         int x = 20, y = 20;
         Font font = Minecraft.getInstance().font;
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayer);
-        guiGraphics.drawString(font, "DEBUG", x, y, 0xFFFFFFFF);
+        guiGraphics.drawString(font, Component.translatable("gui.minopp.play.game_active"), x, y, 0xFF7090FF);
         y += font.lineHeight;
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         if (currentPlayer.equals(cardPlayer)) {
-            guiGraphics.drawString(font, "It's your turn!", x, y,
+            guiGraphics.drawString(font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
                     (System.currentTimeMillis() % 400 < 200) ? 0xFFFFFFFF : 0xFFFFFF00);
         } else {
-            guiGraphics.drawString(font, "It's " + currentPlayer.name + "'s turn", x, y, 0xFFFFFFFF);
+            guiGraphics.drawString(font, Component.translatable("gui.minopp.play.turn_other", currentPlayer.name), x, y, 0xFFAAAAAA);
         }
         y += font.lineHeight;
-        guiGraphics.drawString(font, "Phase: " + tableEntity.game.currentPlayerPhase.name(), x, y, 0xFFFFFFFF);
-        y += font.lineHeight;
-        guiGraphics.drawString(font, "Direction: " + (tableEntity.game.isAntiClockwise ? "ACW" : "CW"), x, y, 0xFFFFFFFF);
-        y += font.lineHeight;
-        guiGraphics.drawString(font, "Draw Accumulation: " + tableEntity.game.drawCount, x, y, 0xFFFFFFFF);
+        MutableComponent auxInfo = Component.translatable("gui.minopp.play.direction." + (tableEntity.game.isAntiClockwise ? "ccw" : "cw"));
+        if (tableEntity.game.drawCount > 0) {
+            auxInfo = auxInfo.append(", ").append(Component.translatable("gui.minopp.play.draw_accumulate", tableEntity.game.drawCount));
+        }
+        guiGraphics.drawString(font, auxInfo, x, y, 0xFFAAAAAA);
         y += font.lineHeight * 2;
 
-        guiGraphics.drawString(font, "Top Card: " + tableEntity.game.topCard.getDisplayName().getString(), x, y, tableEntity.game.topCard.suit().color);
+        MutableComponent topCardInfo = Component.translatable("gui.minopp.play.top_card", tableEntity.game.topCard.getDisplayName().getString());
+        if (tableEntity.game.topCard.getActualCard().suit() == Card.Suit.WILD) {
+            topCardInfo.append(", ").append(Component.translatable("gui.minopp.play.top_card_wild_color",
+                    Component.translatable("game.minopp.card.suit." + tableEntity.game.topCard.suit().name().toLowerCase())));
+        }
+        guiGraphics.drawString(font, topCardInfo, x, y, 0xFFFFFFDD);
         y += font.lineHeight * 2;
 
-        guiGraphics.drawString(font, tableEntity.state.message, x, y, 0xFFFFFFFF);
-        y += font.lineHeight;
-        if (tableEntity.clientEphemeral != null) {
-            guiGraphics.drawString(font, tableEntity.clientEphemeral.message, x, y, 0xFFFFFFFF);
+        for (String part : tableEntity.state.message.getString().split("\n")) {
+            guiGraphics.drawString(font, Component.literal(part), x, y, 0xFFFFFFFF);
             y += font.lineHeight;
+        }
+        for (ListIterator<Pair<ActionMessage, Long>> it = tableEntity.clientMessageList.listIterator(tableEntity.clientMessageList.size()); it.hasPrevious(); ) {
+            Pair<ActionMessage, Long> entry = it.previous();
+            long currentTime = System.currentTimeMillis();
+            if (entry.getSecond() - 200 < currentTime) {
+                it.remove();
+            } else {
+                int color = entry.getFirst().isEphemeral ? 0x00FF0000 : 0x00AAAAAA;
+                int alpha = Mth.clamp(0 ,0xFF, (int)(0xFF * (entry.getSecond() - currentTime) / 1000));
+                guiGraphics.drawString(font, entry.getFirst().message, x, y, alpha << 24 | color);
+                y += font.lineHeight;
+            }
         }
     }
 
@@ -147,7 +177,11 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             } else {
                 Card card = realPlayer.hand.get(i);
                 guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);
-                guiGraphics.drawString(font, card.getDisplayName(), x + 5, y + 5, 0xFFDDDDDD);
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate(x + 5, y + 5, 0);
+                guiGraphics.pose().scale(1.5f, 1.5f, 0);
+                guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFDDDDDD);
+                guiGraphics.pose().popPose();
             }
         }
     }

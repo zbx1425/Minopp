@@ -4,6 +4,8 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
+import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -24,7 +26,7 @@ public class BlockEntityMinoTable extends BlockEntity {
     public CardGame game = null;
     public ActionMessage state = ActionMessage.NO_GAME;
 
-    public ActionMessage clientEphemeral = null;
+    public List<Pair<ActionMessage, Long>> clientMessageList = new ArrayList<>();
 
     public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
@@ -61,12 +63,22 @@ public class BlockEntityMinoTable extends BlockEntity {
                 players.put(direction, null);
             }
         }
+        CardGame previousGame = game;
         if (compoundTag.contains("game")) {
             game = new CardGame(compoundTag.getCompound("game"));
         } else {
             game = null;
         }
-        state = new ActionMessage(compoundTag.getCompound("state"));
+        ActionMessage newState = new ActionMessage(compoundTag.getCompound("state"));
+        if (!newState.equals(state)) {
+            if (previousGame == null && game != null) {
+                clientMessageList.clear();
+            } else {
+                clientMessageList.add(new Pair<>(state, System.currentTimeMillis() + 12000));
+            }
+            state = newState;
+            clientMessageList.removeIf(entry -> entry.getFirst().isEphemeral);
+        }
     }
 
     public List<CardPlayer> getPlayersList() {

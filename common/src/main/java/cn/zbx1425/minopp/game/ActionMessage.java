@@ -3,6 +3,9 @@ package cn.zbx1425.minopp.game;
 import cn.zbx1425.minopp.platform.DummyLookupProvider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+
+import java.util.Objects;
 
 public class ActionMessage {
 
@@ -45,8 +48,12 @@ public class ActionMessage {
                 initiator.name, drawCount));
     }
 
-    public ActionMessage playedNoCard() {
-        return message(Component.translatable("game.minopp.play.played_no_card", initiator.name));
+    public ActionMessage playedNoCard(boolean drawn) {
+        if (drawn) {
+            return message(Component.translatable("game.minopp.play.played_no_drawn_card", initiator.name));
+        } else {
+            return message(Component.translatable("game.minopp.play.played_no_card", initiator.name));
+        }
     }
 
     public ActionMessage gameDestroyed() {
@@ -59,12 +66,19 @@ public class ActionMessage {
 
     public ActionMessage gameWon() {
         gameShouldFinish = true;
-        return message(Component.translatable("game.minopp.play.game_won", initiator.name));
+        MutableComponent result = Component.translatable("game.minopp.play.game_won", initiator.name);
+        for (CardPlayer player : game.players) {
+            if (!player.equals(initiator)) {
+                result = result.append("\n")
+                        .append(Component.translatable("game.minopp.play.game_nearly_won", player.name, player.hand.size()));
+            }
+        }
+        return message(result);
     }
 
-    public ActionMessage deckDepleted() {
+    public ActionMessage panic(Component message) {
         gameShouldFinish = true;
-        return message(Component.translatable("game.minopp.play.deck_depleted"));
+        return message(message);
     }
 
     public static final ActionMessage NO_GAME = new ActionMessage(null, null)
@@ -81,5 +95,18 @@ public class ActionMessage {
         tag.putBoolean("isEphemeral", isEphemeral);
         tag.putString("message", Component.Serializer.toJson(message, DummyLookupProvider.INSTANCE));
         return tag;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ActionMessage that = (ActionMessage) o;
+        return isEphemeral == that.isEphemeral && Objects.equals(message, that.message);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(isEphemeral, message);
     }
 }

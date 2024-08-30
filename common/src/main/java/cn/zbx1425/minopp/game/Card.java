@@ -48,9 +48,19 @@ public record Card(Family family, Suit suit, int number, Card actualCard) {
 
     public Component getDisplayName() {
         if (actualCard != null) return actualCard.getDisplayName();
-        return Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(),
-                Component.translatable("game.minopp.card.family." + family.name().toLowerCase(),
-                        family == Family.DRAW ? -number : number));
+        return Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase())
+                .append(" ").append(Component.translatable("game.minopp.card.family." + family.name().toLowerCase(),
+                        family == Family.DRAW ? -number : (suit == Suit.WILD ? "" : number)));
+    }
+
+    public Component getCardFaceName() {
+        if (actualCard != null) return actualCard.getCardFaceName();
+        return Component.translatable("game.minopp.card.family." + family.name().toLowerCase(),
+                        family == Family.DRAW ? -number : (suit == Suit.WILD ? "" : number));
+    }
+
+    public Card getActualCard() {
+        return actualCard == null ? this : actualCard;
     }
 
     public enum Suit {

@@ -107,7 +107,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (tableEntity.game == null) {
+            if (tableEntity.game == null && !player.isSecondaryUseActive()) {
                 if (level.isClientSide) return InteractionResult.SUCCESS;
 
                 // Join player to table
