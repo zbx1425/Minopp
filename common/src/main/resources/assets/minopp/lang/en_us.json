@@ -48,6 +48,11 @@
   "gui.minopp.play.top_card": "Top Card: %s",
   "gui.minopp.play.top_card_wild_color": "Color is %s",
 
+  "gui.minopp.play.cursor.play": "§aPlay",
+  "gui.minopp.play.cursor.pass": "§cPass",
+  "gui.minopp.play.cursor.pass_draw": "§cPass (Draw)",
+  "gui.minopp.play.cursor.draw": "§cDraw",
+
   "gui.minopp.seats.title": "Participants Seated on the Table",
   "gui.minopp.seats.start": "§aStart Game",
   "gui.minopp.seats.stop": "§cEmergency Stop",

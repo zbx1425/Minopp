@@ -49,7 +49,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         Random discardRandom = new Random(1);
         for (int ci = 0; ci < blockEntity.game.discardDeck.size(); ci++) {
             poseStack.pushPose();
-            poseStack.translate(discardRandom.nextFloat() * 1.5 - 0.75, discardRandom.nextFloat() * 1.5 - 0.75, discardRandom.nextFloat() * 1 / 32f);
+            poseStack.translate(discardRandom.nextFloat() * 2.4 - 1.2, discardRandom.nextFloat() * 2.4 - 1.2, ci / 64f);
             poseStack.mulPose(Axis.ZP.rotation(discardRandom.nextFloat() * 2 * (float)Math.PI));
             itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
                     poseStack, multiBufferSource, i, (ci == blockEntity.game.discardDeck.size() - 1) ? 655360 : j, model);

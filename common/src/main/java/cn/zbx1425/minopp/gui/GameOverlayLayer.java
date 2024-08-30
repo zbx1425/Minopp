@@ -27,6 +27,7 @@ import net.minecraft.world.phys.HitResult;
 
 import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.Random;
 
 public class GameOverlayLayer implements LayeredDraw.Layer {
 
@@ -117,6 +118,23 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                 y += font.lineHeight;
             }
         }
+
+        if (Minecraft.getInstance().hitResult.getType() == HitResult.Type.BLOCK) {
+            BlockPos hitPos = ((BlockHitResult) Minecraft.getInstance().hitResult).getBlockPos();
+            BlockState hitState = Minecraft.getInstance().level.getBlockState(hitPos);
+            if (hitState.is(Mino.BLOCK_MINO_TABLE.get())) {
+                boolean isDraw = hitState.getValue(BlockMinoTable.PART) == BlockMinoTable.TablePartType.X_LESS_Z_LESS;
+                if (currentPlayer.equals(cardPlayer)) {
+//                    Component cursorMessage = switch (tableEntity.game.currentPlayerPhase) {
+//                        case DISCARD_HAND -> Component.translatable("gui.minopp.play.cursor.")
+//                    }
+                    Component cursorMessage = isDraw ? Component.translatable("gui.minopp.play.cursor.draw") : Component.translatable("gui.minopp.play.cursor.play");
+                    int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+                    int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+                    guiGraphics.drawCenteredString(font, cursorMessage, width / 2, height / 2 - 16, 0xFFFFFFDD);
+                }
+            }
+        }
     }
 
     private void renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
@@ -153,8 +171,9 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         int handSize = realPlayer.hand.size();
         int selectedCardYRaw = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - clientHandIndex));
         int cardDrawOffset = selectedCardYRaw < 20 ? 20 - selectedCardYRaw : 0;
+        Random cardRandom = new Random(handSize);
         for (int i = 0; i <= handSize; i++) {
-            int x = width - 20 - CARD_WIDTH - (i == clientHandIndex ? 20 : 0);
+            int x = width - 20 - CARD_WIDTH - (i == clientHandIndex ? 20 : 0) + cardRandom.nextInt(-6, 7);
             int y = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
             if (i == clientHandIndex && i < handSize) {
                 Card card = realPlayer.hand.get(i);

@@ -48,6 +48,11 @@
   "gui.minopp.play.top_card": "上张牌：%s",
   "gui.minopp.play.top_card_wild_color": "颜色是 %s",
 
+  "gui.minopp.play.cursor.play": "§a出牌",
+  "gui.minopp.play.cursor.pass": "§c不出",
+  "gui.minopp.play.cursor.pass_draw": "§c不出 (抽牌)",
+  "gui.minopp.play.cursor.draw": "§c抽牌",
+
   "gui.minopp.seats.title": "本桌入座情况",
   "gui.minopp.seats.start": "§a起动",
   "gui.minopp.seats.stop": "§c紧急停止",
