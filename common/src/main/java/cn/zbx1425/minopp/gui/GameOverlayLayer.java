@@ -173,7 +173,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             guiGraphics.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
             if (i == handSize) {
                 guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, 0xFF555555);
-                guiGraphics.drawString(font, "Pass", x + 5, y + 5, 0xFFDDDDDD);
+                guiGraphics.drawString(font, Component.translatable("gui.minopp.play.pass"), x + 5, y + 5, 0xFFDDDDDD);
             } else {
                 Card card = realPlayer.hand.get(i);
                 guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);

@@ -31,7 +31,8 @@
   "game.minopp.card.family.draw": "+%s",
 
   "gui.minopp.wild_selection.title": "Select a color",
-  "gui.minopp.play.start_hint": "Lift GAME E-STOP BUTTON (Shift+Right Click) to start a new game.",
+  "gui.minopp.play.pass": "Pass",
+  "gui.minopp.play.start_hint": "Lift GAME E-STOP BUTTON (Shift+Right Click with empty hand) to start a new game.",
   "gui.minopp.play.player_seats": "Players on this table:",
   "gui.minopp.play.game_active": "Mino++ Game",
   "gui.minopp.play.turn_other": "It's %s's turn.",
