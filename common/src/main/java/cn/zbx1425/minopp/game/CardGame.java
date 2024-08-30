@@ -18,6 +18,7 @@ public class CardGame {
     public boolean isAntiClockwise;
 
     public List<Card> deck = new ArrayList<>();
+    public List<Card> discardDeck = new ArrayList<>();
     public Card topCard;
 
     public CardGame(List<CardPlayer> players) {
@@ -122,9 +123,16 @@ public class CardGame {
 
         int drawCount = this.drawCount == 0 ? 1 : this.drawCount;
         if (deck.size() < drawCount) {
+            Collections.shuffle(discardDeck);
+            deck.addAll(discardDeck);
+            discardDeck.clear();
+        }
+        if (deck.size() < drawCount) {
             return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
         }
-        doDrawCard(cardPlayer, drawCount);
+        for (int i = 0; i < drawCount; i++) {
+            cardPlayer.hand.add(deck.removeLast());
+        }
         if (this.drawCount > 0) {
             // The draw card has already performed penalty
             // Next player doesn't have to also use draw to counteract
@@ -136,16 +144,9 @@ public class CardGame {
     }
 
     private void doDiscardCard(CardPlayer player, Card card) {
-        deck.add(topCard.getActualCard());
+        discardDeck.add(topCard.getActualCard());
         topCard = card;
         player.hand.remove(card);
-    }
-
-    private void doDrawCard(CardPlayer player, int count) {
-        Collections.shuffle(deck);
-        for (int i = 0; i < count; i++) {
-            player.hand.add(deck.removeLast());
-        }
     }
 
     private void advanceTurn() {
@@ -173,6 +174,7 @@ public class CardGame {
         currentPlayerPhase = PlayerActionPhase.valueOf(tag.getString("currentPlayerPhase"));
         isAntiClockwise = tag.getBoolean("isAntiClockwise");
         deck = new ArrayList<>(tag.getList("deck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
+        discardDeck = new ArrayList<>(tag.getList("discardDeck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
         topCard = new Card(tag.getCompound("topCard"));
         players = new ArrayList<>(tag.getList("players", CompoundTag.TAG_COMPOUND).stream().map(t -> new CardPlayer((CompoundTag)t)).toList());
     }
@@ -187,6 +189,9 @@ public class CardGame {
         ListTag deckTag = new ListTag();
         deckTag.addAll(deck.stream().map(Card::toTag).toList());
         tag.put("deck", deckTag);
+        ListTag discardDeckTag = new ListTag();
+        discardDeckTag.addAll(discardDeck.stream().map(Card::toTag).toList());
+        tag.put("discardDeck", discardDeckTag);
         tag.put("topCard", topCard.toTag());
         ListTag playersTag = new ListTag();
         playersTag.addAll(players.stream().map(CardPlayer::toTag).toList());
