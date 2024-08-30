@@ -65,8 +65,6 @@ public class BlockMinoTable extends Block implements EntityBlock {
                     CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
                     if (realPlayer == null) return ItemInteractionResult.FAIL;
                     if (blockState.getValue(PART) == TablePartType.X_LESS_Z_LESS) {
-                        C2SPlayCardPacket.Client.sendDrawCardC2S(corePos, playerWithoutHand);
-                    } else if (handIndex == realPlayer.hand.size()) {
                         C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
                     } else {
                         Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));

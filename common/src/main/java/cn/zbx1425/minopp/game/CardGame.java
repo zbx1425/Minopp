@@ -55,14 +55,6 @@ public class CardGame {
         if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
         if (!cardPlayer.hand.contains(card)) return report.ephemeral(Component.translatable("game.minopp.play.not_your_card"));
 
-        if (currentPlayerPhase == PlayerActionPhase.DRAW) {
-            if (playerIndex != currentPlayer) {
-                return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
-            } else {
-                return report.ephemeral(Component.translatable("game.minopp.play.must_draw"));
-            }
-        }
-
         // Cut
         if (topCard.equals(card) && playerIndex != currentPlayer) {
             doDiscardCard(cardPlayer, card);
@@ -100,47 +92,34 @@ public class CardGame {
         if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
         if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
 
-        if (currentPlayerPhase == PlayerActionPhase.DRAW) {
-            return report.ephemeral(Component.translatable("game.minopp.play.must_draw"));
-        }
-
         boolean drawn = currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN;
         if (currentPlayerPhase == PlayerActionPhase.DISCARD_HAND) {
-            currentPlayerPhase = PlayerActionPhase.DRAW;
+            // Draw card
+            int drawCount = this.drawCount == 0 ? 1 : this.drawCount;
+            if (deck.size() < drawCount) {
+                Collections.shuffle(discardDeck);
+                deck.addAll(discardDeck);
+                discardDeck.clear();
+            }
+            if (deck.size() < drawCount) {
+                return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
+            }
+            for (int i = 0; i < drawCount; i++) {
+                cardPlayer.hand.add(deck.removeLast());
+            }
+            if (this.drawCount > 0) {
+                // The draw card has already performed penalty
+                // Next player doesn't have to also use draw to counteract
+                this.topCard = new Card(Card.Family.NUMBER, topCard.suit(), topCard.number(), topCard.getActualCard());
+                this.drawCount = 0;
+            }
+            currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
+            return report.drew(drawCount);
         } else if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN) {
             advanceTurn();
         }
 
         return report.playedNoCard(drawn);
-    }
-
-    public ActionMessage drawCard(CardPlayer cardPlayer) {
-        ActionMessage report = new ActionMessage(this, cardPlayer);
-        int playerIndex = players.indexOf(cardPlayer);
-        if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
-        if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
-        if (currentPlayerPhase != PlayerActionPhase.DRAW) return report.ephemeral(Component.translatable("game.minopp.play.no_draw"));
-
-        int drawCount = this.drawCount == 0 ? 1 : this.drawCount;
-        if (deck.size() < drawCount) {
-            Collections.shuffle(discardDeck);
-            deck.addAll(discardDeck);
-            discardDeck.clear();
-        }
-        if (deck.size() < drawCount) {
-            return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
-        }
-        for (int i = 0; i < drawCount; i++) {
-            cardPlayer.hand.add(deck.removeLast());
-        }
-        if (this.drawCount > 0) {
-            // The draw card has already performed penalty
-            // Next player doesn't have to also use draw to counteract
-            this.topCard = new Card(Card.Family.NUMBER, topCard.suit(), topCard.number(), topCard.getActualCard());
-            this.drawCount = 0;
-        }
-        currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
-        return report.drew(drawCount);
     }
 
     private void doDiscardCard(CardPlayer player, Card card) {
@@ -150,11 +129,19 @@ public class CardGame {
     }
 
     private void advanceTurn() {
+        CardPlayer previousPlayer = players.get(currentPlayer);
+        if (previousPlayer.hand.size() == 1) {
+            previousPlayer.serverMinoStartTime = System.currentTimeMillis();
+        }
+
         currentPlayerPhase = PlayerActionPhase.DISCARD_HAND;
         if (isSkipping) currentPlayer = (currentPlayer + (isAntiClockwise ? -1 : 1)) % players.size();
         currentPlayer = (currentPlayer + (isAntiClockwise ? -1 : 1)) % players.size();
         if (currentPlayer < 0) currentPlayer += players.size();
         isSkipping = false;
+
+        CardPlayer currentPlayerPlayer = players.get(currentPlayer);
+        currentPlayerPlayer.serverHasShoutedMino = false;
     }
 
     public CardPlayer deAmputate(CardPlayer playerWithoutHand) {
@@ -163,7 +150,6 @@ public class CardGame {
 
     public enum PlayerActionPhase {
         DISCARD_HAND,
-        DRAW,
         DISCARD_DRAWN,
     }
 

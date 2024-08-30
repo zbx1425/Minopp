@@ -45,7 +45,6 @@ public class C2SPlayCardPacket {
                         result = tableEntity.game.playCard(cardPlayer, card, wildSelection);
                     }
                     case 1 -> result = tableEntity.game.playNoCard(cardPlayer);
-                    case 2 -> result = tableEntity.game.drawCard(cardPlayer);
                     default -> result = ActionMessage.NO_GAME;
                 }
                 if (result.isEphemeral) {
@@ -80,14 +79,6 @@ public class C2SPlayCardPacket {
             packet.writeBlockPos(gamePos);
             packet.writeUUID(player.uuid);
             packet.writeInt(1);
-            ClientPlatform.sendPacketToServer(ID, packet);
-        }
-
-        public static void sendDrawCardC2S(BlockPos gamePos, CardPlayer player) {
-            FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
-            packet.writeBlockPos(gamePos);
-            packet.writeUUID(player.uuid);
-            packet.writeInt(2);
             ClientPlatform.sendPacketToServer(ID, packet);
         }
     }

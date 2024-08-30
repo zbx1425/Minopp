@@ -6,7 +6,6 @@ import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import com.mojang.datafixers.util.Pair;
-import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -15,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -101,11 +99,11 @@ public class BlockEntityMinoTable extends BlockEntity {
     private static final int PLAYER_RANGE = 20;
 
     public void startGame(CardPlayer player) {
-        List<CardPlayer> players = getPlayersList();
-        if (players.size() < 2) return;
+        List<CardPlayer> playerList = getPlayersList();
+        if (playerList.size() < 2) return;
 
         // Give hand card items to players
-        for (CardPlayer cardPlayer : players) {
+        for (CardPlayer cardPlayer : playerList) {
             boolean playerFound = false;
             for (Player mcPlayer : level.players()) {
                 if (mcPlayer.position().distanceToSqr(Vec3.atCenterOf(getBlockPos())) > PLAYER_RANGE * PLAYER_RANGE) continue;
@@ -143,6 +141,11 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
         }
 
+        players.values().forEach(p -> { if (p != null) {
+            p.hand.clear();
+            p.serverHasShoutedMino = false;
+            p.serverMinoStartTime = 0;
+        } });
         game = new CardGame(getPlayersList());
         state = game.initiate(player, 7);
         setChanged();
@@ -171,7 +174,11 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
         }
 
-        players.values().forEach(p -> { if (p != null) p.hand.clear(); });
+        players.values().forEach(p -> { if (p != null) {
+            p.hand.clear();
+            p.serverHasShoutedMino = false;
+            p.serverMinoStartTime = 0;
+        } });
         state = new ActionMessage(null, player).gameDestroyed();
         setChanged();
     }

@@ -123,12 +123,15 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             BlockPos hitPos = ((BlockHitResult) Minecraft.getInstance().hitResult).getBlockPos();
             BlockState hitState = Minecraft.getInstance().level.getBlockState(hitPos);
             if (hitState.is(Mino.BLOCK_MINO_TABLE.get())) {
-                boolean isDraw = hitState.getValue(BlockMinoTable.PART) == BlockMinoTable.TablePartType.X_LESS_Z_LESS;
+                boolean isPass = hitState.getValue(BlockMinoTable.PART) == BlockMinoTable.TablePartType.X_LESS_Z_LESS;
                 if (currentPlayer.equals(cardPlayer)) {
-//                    Component cursorMessage = switch (tableEntity.game.currentPlayerPhase) {
-//                        case DISCARD_HAND -> Component.translatable("gui.minopp.play.cursor.")
-//                    }
-                    Component cursorMessage = isDraw ? Component.translatable("gui.minopp.play.cursor.draw") : Component.translatable("gui.minopp.play.cursor.play");
+                    Component cursorMessage = switch (tableEntity.game.currentPlayerPhase) {
+                        case DISCARD_HAND -> isPass ? Component.translatable("gui.minopp.play.cursor.pass_draw")
+                                : Component.translatable("gui.minopp.play.cursor.play");
+                        case DISCARD_DRAWN -> isPass ? Component.translatable("gui.minopp.play.cursor.pass")
+                                : Component.translatable("gui.minopp.play.cursor.play");
+                    };
+//                    Component cursorMessage = isDraw ? Component.translatable("gui.minopp.play.cursor.draw") : Component.translatable("gui.minopp.play.cursor.play");
                     int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
                     int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
                     guiGraphics.drawCenteredString(font, cursorMessage, width / 2, height / 2 - 16, 0xFFFFFFDD);
@@ -161,8 +164,8 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         if (tableEntity.game == null) return;
         CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
         if (realPlayer == null) return;
-        if (clientHandIndex > realPlayer.hand.size()) {
-            clientHandIndex = realPlayer.hand.size();
+        if (clientHandIndex > realPlayer.hand.size() - 1) {
+            clientHandIndex = realPlayer.hand.size() - 1;
             player.getMainHandItem().set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), clientHandIndex);
         }
 
@@ -172,28 +175,24 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         int selectedCardYRaw = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - clientHandIndex));
         int cardDrawOffset = selectedCardYRaw < 20 ? 20 - selectedCardYRaw : 0;
         Random cardRandom = new Random(handSize);
-        for (int i = 0; i <= handSize; i++) {
+        for (int i = 0; i < handSize; i++) {
             int x = width - 20 - CARD_WIDTH - (i == clientHandIndex ? 20 : 0) + cardRandom.nextInt(-6, 7);
             int y = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
-            if (i == clientHandIndex && i < handSize) {
+            if (i == clientHandIndex) {
                 Card card = realPlayer.hand.get(i);
                 Component cardName = card.getDisplayName();
                 guiGraphics.drawString(font, cardName, x - font.width(cardName) - 10, y + 10, 0xFFFFFFDD);
             }
             guiGraphics.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0xFF222222);
             guiGraphics.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
-            if (i == handSize) {
-                guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, 0xFF555555);
-                guiGraphics.drawString(font, Component.translatable("gui.minopp.play.pass"), x + 5, y + 5, 0xFFDDDDDD);
-            } else {
-                Card card = realPlayer.hand.get(i);
-                guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);
-                guiGraphics.pose().pushPose();
-                guiGraphics.pose().translate(x + 5, y + 5, 0);
-                guiGraphics.pose().scale(1.5f, 1.5f, 0);
-                guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFDDDDDD);
-                guiGraphics.pose().popPose();
-            }
+
+            Card card = realPlayer.hand.get(i);
+            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(x + 5, y + 5, 0);
+            guiGraphics.pose().scale(1.5f, 1.5f, 0);
+            guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFDDDDDD);
+            guiGraphics.pose().popPose();
         }
     }
 
