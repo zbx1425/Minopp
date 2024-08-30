@@ -4,17 +4,23 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.item.ItemHandCards;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +98,52 @@ public class BlockEntityMinoTable extends BlockEntity {
         return playersList;
     }
 
+    private static final int PLAYER_RANGE = 20;
+
     public void startGame(CardPlayer player) {
+        List<CardPlayer> players = getPlayersList();
+        if (players.size() < 2) return;
+
+        // Give hand card items to players
+        for (CardPlayer cardPlayer : players) {
+            boolean playerFound = false;
+            for (Player mcPlayer : level.players()) {
+                if (mcPlayer.position().distanceToSqr(Vec3.atCenterOf(getBlockPos())) > PLAYER_RANGE * PLAYER_RANGE) continue;
+                for (ItemStack invItem : mcPlayer.getInventory().items) {
+                    if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
+                    ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
+                            ItemHandCards.CardGameBindingComponent.EMPTY);
+                    if (gameBinding.player().isEmpty() && cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())
+                        || gameBinding.player().isPresent() && cardPlayer.uuid.equals(gameBinding.player().get())) {
+                        // We've found an applicable hand card item
+                        if (gameBinding.tablePos().isEmpty()) {
+                            // It's not bound, bind it
+                            ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
+                                    gameBinding.player(), Optional.of(getBlockPos()));
+                            invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                            playerFound = true;
+                        }
+                    }
+                }
+                if (!playerFound) {
+                    if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
+                        // We've found a player, but no applicable hand card item, give them one
+                        ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
+                        ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
+                                Optional.empty(), Optional.of(getBlockPos()));
+                        handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                        playerFound = mcPlayer.getInventory().add(handCard);
+                    }
+                }
+                if (!playerFound) {
+                    // No player found or no hand card item given, destroy the game
+                    destroyGame(player);
+                    state = new ActionMessage(null, player).panic(Component.translatable("game.minopp.play.player_unavailable"));
+                    return;
+                }
+            }
+        }
+
         game = new CardGame(getPlayersList());
         state = game.initiate(player, 7);
         setChanged();
@@ -100,6 +151,27 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     public void destroyGame(CardPlayer player) {
         game = null;
+
+        // Remove hand card items from players
+        for (Player mcPlayer : level.players()) {
+            for (ItemStack invItem : mcPlayer.getInventory().items) {
+                if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
+                ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
+                        ItemHandCards.CardGameBindingComponent.EMPTY);
+                if (gameBinding.tablePos().isPresent() && gameBinding.tablePos().get().equals(getBlockPos())) {
+                    if (gameBinding.player().isEmpty()) {
+                        // Default item, just remove
+                        mcPlayer.getInventory().removeItem(invItem);
+                    } else {
+                        // Unbind
+                        ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
+                                gameBinding.player(), Optional.empty());
+                        invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                    }
+                }
+            }
+        }
+
         players.values().forEach(p -> { if (p != null) p.hand.clear(); });
         state = new ActionMessage(null, player).gameDestroyed();
         setChanged();

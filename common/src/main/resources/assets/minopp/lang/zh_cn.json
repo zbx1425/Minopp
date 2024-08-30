@@ -1,4 +1,7 @@
 {
+  "block.minopp.mino_table": "Mino++ 游戏桌",
+  "item.minopp.hand_cards": "Mino++ 手牌",
+
   "game.minopp.play.no_player": "你不在这局游戏里面。",
   "game.minopp.play.no_enough_player": "玩家人数不足以开始对局。",
   "game.minopp.play.not_your_turn": "现在还没轮到你。",

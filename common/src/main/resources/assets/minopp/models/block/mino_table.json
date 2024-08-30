@@ -1,7 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"1": "minopp:block/table_green"
+		"1": "minopp:block/table_green",
+		"particle": "minopp:block/table_green"
 	},
 	"elements": [
 		{

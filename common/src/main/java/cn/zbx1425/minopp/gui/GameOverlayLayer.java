@@ -57,7 +57,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         } else {
             renderGameActive(guiGraphics, deltaTracker, tableEntity);
         }
-        renderHandCards(guiGraphics, deltaTracker, tableEntity);
+        renderHandCards(guiGraphics, deltaTracker);
     }
 
     private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
@@ -74,10 +74,11 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         y += font.lineHeight;
         Direction direction = Direction.NORTH;
         for (int i = 0; i < 4; i++) {
+            guiGraphics.drawString(font, direction.getName().toUpperCase(), x, y, 0xFFAAAAAA);
             if (tableEntity.players.get(direction) != null) {
-                guiGraphics.drawString(font, direction.getSerializedName() + ": " + tableEntity.players.get(direction).name, x, y, 0xFFFFFFFF);
+                guiGraphics.drawString(font, tableEntity.players.get(direction).name, x + 40, y, 0xFFFFFFCC);
             } else {
-                guiGraphics.drawString(font, direction.getSerializedName() + ": Empty", x, y, 0xFFFFFFFF);
+                guiGraphics.drawString(font, "-", x + 40, y, 0xFFAAAAAA);
             }
             direction = direction.getClockWise();
             y += font.lineHeight;
@@ -132,7 +133,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         }
     }
 
-    private void renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    private void renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Font font = Minecraft.getInstance().font;
         LocalPlayer player = Minecraft.getInstance().player;
         ClientLevel level = Minecraft.getInstance().level;
@@ -143,10 +144,10 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                     .tablePos().orElse(null);
             clientHandIndex = player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
         }
-//        if (tablePos == null) return;
-//        BlockState blockState = level.getBlockState(tablePos);
-//        tablePos = BlockMinoTable.getCore(blockState, tablePos);
-//        BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(tablePos);
+        if (tablePos == null) return;
+        BlockState blockState = level.getBlockState(tablePos);
+        tablePos = BlockMinoTable.getCore(blockState, tablePos);
+        BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(tablePos);
         CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
 
         final int CARD_V_SPACING = 20;
