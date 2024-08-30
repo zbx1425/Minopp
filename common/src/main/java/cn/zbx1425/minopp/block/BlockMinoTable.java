@@ -69,7 +69,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                     } else {
                         Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
                         if (selectedCard.suit() == Card.Suit.WILD) {
-                            Minecraft.getInstance().setScreen(new WildSelectionScreen(corePos, playerWithoutHand, selectedCard));
+                            Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard);
                         } else {
                             C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, null);
                         }
@@ -78,6 +78,13 @@ public class BlockMinoTable extends Block implements EntityBlock {
             }
         }
         return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
+    }
+
+    private static class Client {
+
+        private static void openWildSelectionScreen(BlockPos corePos, CardPlayer player, Card selectedCard) {
+            Minecraft.getInstance().setScreen(new WildSelectionScreen(corePos, player, selectedCard));
+        }
     }
 
     @Override
