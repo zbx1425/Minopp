@@ -134,12 +134,12 @@ public class BlockEntityMinoTable extends BlockEntity {
                         playerFound = mcPlayer.getInventory().add(handCard);
                     }
                 }
-                if (!playerFound) {
-                    // No player found or no hand card item given, destroy the game
-                    destroyGame(player);
-                    state = new ActionMessage(null, player).panic(Component.translatable("game.minopp.play.player_unavailable"));
-                    return;
-                }
+            }
+            if (!playerFound) {
+                // No player found or no hand card item given, destroy the game
+                destroyGame(player);
+                state = new ActionMessage(null, player).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name));
+                return;
             }
         }
 

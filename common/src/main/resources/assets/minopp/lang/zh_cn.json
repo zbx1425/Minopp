@@ -2,8 +2,8 @@
   "block.minopp.mino_table": "Mino++ 游戏桌",
   "item.minopp.hand_cards": "Mino++ 手牌",
 
-  "game.minopp.play.no_player": "你不在这局游戏里面。",
-  "game.minopp.play.no_enough_player": "玩家人数不足以开始对局。",
+  "game.minopp.play.no_player": "你不在此对局中。",
+  "game.minopp.play.no_enough_player": "人数不足以开始对局。",
   "game.minopp.play.not_your_turn": "现在还没轮到你。",
   "game.minopp.play.not_your_card": "你没有这张牌。",
   "game.minopp.play.must_draw": "现在你必须从牌堆抽牌。",
@@ -14,13 +14,14 @@
   "game.minopp.play.drew": "%1$s 抽了 %2$s 张牌。",
   "game.minopp.play.played_no_card": "%1$s 不出牌。",
   "game.minopp.play.played_no_drawn_card": "%1$s 没有出抽到的牌。",
-  "game.minopp.play.game_destroyed": "%1$s 提议停止游戏。",
-  "game.minopp.play.game_started": "%1$s 提议开始游戏。",
+  "game.minopp.play.game_destroyed": "%1$s 停止了对局。",
+  "game.minopp.play.game_started": "%1$s 提议开始。",
+  "game.minopp.play.seats_reset": "%1$s 清空了座位。请重新入座。",
   "game.minopp.play.game_won": "§6%1$s 胜利！恭喜你！",
   "game.minopp.play.game_nearly_won": "%1$s 还剩 %2$s 张牌。",
-  "game.minopp.play.deck_depleted": "你们把所有牌全都抽到手上了，游戏不再进行。",
-  "game.minopp.play.player_unavailable": "玩家 %1$s 不能进入游戏，请重新入座。",
-  "game.minopp.play.no_game": "游戏未获使能。",
+  "game.minopp.play.deck_depleted": "你们把所有牌全都抽到手上了，本局不再进行。",
+  "game.minopp.play.player_unavailable": "%1$s 现在似乎不在，请重新入座。",
+  "game.minopp.play.no_game": "对局未获使能。",
 
   "game.minopp.card.suit.red": "§c红石",
   "game.minopp.card.suit.green": "§a宝石",
@@ -35,8 +36,7 @@
 
   "gui.minopp.wild_selection.title": "选择颜色",
   "gui.minopp.play.pass": "不出",
-  "gui.minopp.play.start_hint": "抬起对局急停按钮 (空手Shift+右键) 开始新一局游戏。",
-  "gui.minopp.play.player_seats": "入座本桌的玩家：",
+  "gui.minopp.play.start_hint": "走到桌子旁，右键以加入对局。",
   "gui.minopp.play.game_active": "Mino++ 对局",
   "gui.minopp.play.turn_other": "现在轮到 %s。",
   "gui.minopp.play.discard_hand": "轮到你了！请出牌。",
@@ -46,5 +46,10 @@
   "gui.minopp.play.direction.ccw": "逆时针",
   "gui.minopp.play.draw_accumulate": "累计抽牌数：%s",
   "gui.minopp.play.top_card": "上张牌：%s",
-  "gui.minopp.play.top_card_wild_color": "颜色是 %s"
+  "gui.minopp.play.top_card_wild_color": "颜色是 %s",
+
+  "gui.minopp.seats.title": "本桌入座情况",
+  "gui.minopp.seats.start": "§a起动",
+  "gui.minopp.seats.stop": "§c紧急停止",
+  "gui.minopp.seats.reset": "§6清空座位"
 }

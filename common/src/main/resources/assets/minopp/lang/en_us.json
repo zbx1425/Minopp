@@ -3,7 +3,7 @@
   "item.minopp.hand_cards": "Mino++ Hand Cards",
 
   "game.minopp.play.no_player": "You're not a part of the game.",
-  "game.minopp.play.no_enough_player": "Not enough players to start the game.",
+  "game.minopp.play.no_enough_player": "Not enough participants to start the game.",
   "game.minopp.play.not_your_turn": "It's not your turn.",
   "game.minopp.play.not_your_card": "You don't have this card.",
   "game.minopp.play.must_draw": "You must draw a card right now.",
@@ -14,8 +14,9 @@
   "game.minopp.play.drew": "%1$s drew %2$s card(s).",
   "game.minopp.play.played_no_card": "%1$s passed.",
   "game.minopp.play.played_no_drawn_card": "%1$s didn't play the drawn card(s).",
-  "game.minopp.play.game_destroyed": "%1$s requested the game to stop.",
+  "game.minopp.play.game_destroyed": "%1$s stopped the game.",
   "game.minopp.play.game_started": "%1$s requested the game to start.",
+  "game.minopp.play.seats_reset": "%1$s reset the seats. Please reallocate seats.",
   "game.minopp.play.game_won": "§6%1$s WON THE GAME! Congratulations!",
   "game.minopp.play.game_nearly_won": "%1$s has %2$s card(s) left.",
   "game.minopp.play.deck_depleted": "You have somehow drew the entire deck onto your hands. The game now ends.",
@@ -35,8 +36,7 @@
 
   "gui.minopp.wild_selection.title": "Select a color",
   "gui.minopp.play.pass": "Pass",
-  "gui.minopp.play.start_hint": "Lift GAME E-STOP BUTTON (Shift+Right Click with empty hand) to start a new game.",
-  "gui.minopp.play.player_seats": "Players on this table:",
+  "gui.minopp.play.start_hint": "Stand beside the table and right-click to join.",
   "gui.minopp.play.game_active": "Mino++ Game",
   "gui.minopp.play.turn_other": "It's %s's turn.",
   "gui.minopp.play.discard_hand": "It's your turn! Please play a card.",
@@ -46,5 +46,10 @@
   "gui.minopp.play.direction.ccw": "Counter-Clockwise",
   "gui.minopp.play.draw_accumulate": "Draw Count: %s",
   "gui.minopp.play.top_card": "Top Card: %s",
-  "gui.minopp.play.top_card_wild_color": "Color is %s"
+  "gui.minopp.play.top_card_wild_color": "Color is %s",
+
+  "gui.minopp.seats.title": "Participants Seated on the Table",
+  "gui.minopp.seats.start": "§aStart Game",
+  "gui.minopp.seats.stop": "§cEmergency Stop",
+  "gui.minopp.seats.reset": "Reset"
 }

@@ -33,6 +33,7 @@ public class WildSelectionScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        clearWidgets();
         int xOff = (width - PANEL_WIDTH) / 2;
         int yOff = (height - PANEL_HEIGHT) / 2;
 
@@ -60,7 +61,8 @@ public class WildSelectionScreen extends Screen {
         int yOff = (height - PANEL_HEIGHT) / 2;
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(0, 0, -100);
-        guiGraphics.fill(xOff, yOff, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0x70000000);
+        guiGraphics.fill(xOff + MARGIN, yOff + MARGIN, xOff + PANEL_WIDTH + MARGIN, yOff + PANEL_HEIGHT + MARGIN, 0x66000000);
+        guiGraphics.fill(xOff, yOff, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0xFF313031);
         guiGraphics.fill(xOff, yOff + PANEL_HEIGHT - BTN_HEIGHT, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0x66546E7A);
         guiGraphics.drawCenteredString(font, title, width / 2, yOff + MARGIN, 0xFFFFFFFF);
         guiGraphics.pose().popPose();

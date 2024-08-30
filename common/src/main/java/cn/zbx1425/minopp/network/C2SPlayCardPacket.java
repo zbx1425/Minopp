@@ -27,38 +27,40 @@ public class C2SPlayCardPacket {
         ServerLevel level = player.serverLevel();
         UUID playerUuid = packet.readUUID();
         int actionType = packet.readInt();
-        Card card = null;
-        int wildSelectionOrdinal = -1;
-        if (actionType == 0) {
-            card = new Card(Objects.requireNonNull(packet.readNbt()));
-            wildSelectionOrdinal = packet.readInt();
-        }
-        if (level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-            if (tableEntity.game == null) return;
-            CardPlayer cardPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(playerUuid)).findFirst().orElse(null);
-            if (cardPlayer == null) return;
-            ActionMessage result;
-            switch (actionType) {
-                case 0 -> {
-                    Card.Suit wildSelection = wildSelectionOrdinal == -1 ? null : Card.Suit.values()[wildSelectionOrdinal];
-                    result = tableEntity.game.playCard(cardPlayer, card, wildSelection);
+        server.execute(() -> {
+            Card card = null;
+            int wildSelectionOrdinal = -1;
+            if (actionType == 0) {
+                card = new Card(Objects.requireNonNull(packet.readNbt()));
+                wildSelectionOrdinal = packet.readInt();
+            }
+            if (level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
+                if (tableEntity.game == null) return;
+                CardPlayer cardPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(playerUuid)).findFirst().orElse(null);
+                if (cardPlayer == null) return;
+                ActionMessage result;
+                switch (actionType) {
+                    case 0 -> {
+                        Card.Suit wildSelection = wildSelectionOrdinal == -1 ? null : Card.Suit.values()[wildSelectionOrdinal];
+                        result = tableEntity.game.playCard(cardPlayer, card, wildSelection);
+                    }
+                    case 1 -> result = tableEntity.game.playNoCard(cardPlayer);
+                    case 2 -> result = tableEntity.game.drawCard(cardPlayer);
+                    default -> result = ActionMessage.NO_GAME;
                 }
-                case 1 -> result = tableEntity.game.playNoCard(cardPlayer);
-                case 2 -> result = tableEntity.game.drawCard(cardPlayer);
-                default -> result = ActionMessage.NO_GAME;
+                if (result.isEphemeral) {
+                    S2CActionEphemeralPacket.sendS2C(player, gamePos, result);
+                } else if (result.gameShouldFinish) {
+                    tableEntity.destroyGame(cardPlayer);
+                    tableEntity.state = result;
+                } else {
+                    tableEntity.state = result;
+                }
+                tableEntity.setChanged();
+                BlockState blockState = level.getBlockState(gamePos);
+                level.sendBlockUpdated(gamePos, blockState, blockState, 2);
             }
-            if (result.isEphemeral) {
-                S2CActionEphemeralPacket.sendS2C(player, gamePos, result);
-            } else if (result.gameShouldFinish) {
-                tableEntity.destroyGame(cardPlayer);
-                tableEntity.state = result;
-            } else {
-                tableEntity.state = result;
-            }
-            tableEntity.setChanged();
-            BlockState blockState = level.getBlockState(gamePos);
-            level.sendBlockUpdated(gamePos, blockState, blockState, 2);
-        }
+        });
     }
 
     public static class Client {

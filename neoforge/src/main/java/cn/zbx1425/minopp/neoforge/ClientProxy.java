@@ -3,10 +3,12 @@ package cn.zbx1425.minopp.neoforge;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
 import cn.zbx1425.minopp.platform.neoforge.ClientPlatformImpl;
+import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -39,6 +41,11 @@ public class ClientProxy {
                     return HandCardsWithoutLevelRenderer.INSTANCE.get();
                 }
             }, Mino.ITEM_HAND_CARDS.get());
+        }
+
+        @SubscribeEvent
+        public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+            event.registerBlockEntityRenderer(Mino.BLOCK_ENTITY_TYPE_MINO_TABLE.get(), BlockEntityMinoTableRenderer::new);
         }
     }
 

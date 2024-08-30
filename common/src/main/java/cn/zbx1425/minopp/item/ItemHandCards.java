@@ -29,10 +29,9 @@ import java.util.UUID;
 public class ItemHandCards extends GroupedItem {
     
     public ItemHandCards() {
-        super(() -> null, p -> p
+        super(() -> null, p -> p.stacksTo(1)
                 .component(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), CardGameBindingComponent.EMPTY)
-                .component(DataComponents.MAX_STACK_SIZE, 1)
-                .component(DataComponents.CAN_PLACE_ON, new AdventureModePredicate(List.of(BlockPredicate.Builder.block().of(Mino.BLOCK_MINO_TABLE.get()).build()), false))
+//                .component(DataComponents.CAN_PLACE_ON, new AdventureModePredicate(List.of(BlockPredicate.Builder.block().of(Mino.BLOCK_MINO_TABLE.get()).build()), false))
         );
     }
 

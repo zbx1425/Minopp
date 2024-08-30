@@ -61,7 +61,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     }
 
     private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
-        int x = 20, y = 20;
+        int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
         for (String part : tableEntity.state.message.getString().split("\n")) {
             guiGraphics.drawString(font, Component.literal(part), x, y, 0xFFFFFFFF);
@@ -69,24 +69,10 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         }
         y += font.lineHeight;
         guiGraphics.drawString(font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
-        y += font.lineHeight * 2;
-        guiGraphics.drawString(font, Component.translatable("gui.minopp.play.player_seats"), x, y, 0xFFAAAAAA);
-        y += font.lineHeight;
-        Direction direction = Direction.NORTH;
-        for (int i = 0; i < 4; i++) {
-            guiGraphics.drawString(font, direction.getName().toUpperCase(), x, y, 0xFFAAAAAA);
-            if (tableEntity.players.get(direction) != null) {
-                guiGraphics.drawString(font, tableEntity.players.get(direction).name, x + 40, y, 0xFFFFFFCC);
-            } else {
-                guiGraphics.drawString(font, "-", x + 40, y, 0xFFAAAAAA);
-            }
-            direction = direction.getClockWise();
-            y += font.lineHeight;
-        }
     }
 
     private void renderGameActive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
-        int x = 20, y = 20;
+        int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayer);
         guiGraphics.drawString(font, Component.translatable("gui.minopp.play.game_active"), x, y, 0xFF7090FF);

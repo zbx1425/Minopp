@@ -30,9 +30,11 @@ public class S2CActionEphemeralPacket {
         public static void handleS2C(FriendlyByteBuf packet) {
             BlockPos gamePos = packet.readBlockPos();
             ActionMessage message = new ActionMessage(Objects.requireNonNull(packet.readNbt()));
-            if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-                tableEntity.clientMessageList.add(new Pair<>(message, System.currentTimeMillis() + 4000));
-            }
+            Minecraft.getInstance().execute(() -> {
+                if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
+                    tableEntity.clientMessageList.add(new Pair<>(message, System.currentTimeMillis() + 4000));
+                }
+            });
         }
     }
 }

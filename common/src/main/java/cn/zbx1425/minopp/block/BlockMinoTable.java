@@ -3,6 +3,7 @@ package cn.zbx1425.minopp.block;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.gui.SeatControlScreen;
 import cn.zbx1425.minopp.gui.WildSelectionScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
@@ -51,15 +52,16 @@ public class BlockMinoTable extends Block implements EntityBlock {
         if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockPos corePos = getCore(blockState, blockPos);
             ItemHandCards.CardGameBindingComponent gameBinding = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY);
-//            if (gameBinding.tablePos().isEmpty() || !gameBinding.tablePos().get().equals(corePos)) {
-//                player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
-//                return ItemInteractionResult.FAIL;
-//            }
             int handIndex = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
             CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
             BlockEntity blockEntity = level.getBlockEntity(corePos);
             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                 if (tableEntity.game != null) {
+                    if (gameBinding.tablePos().isEmpty() || !gameBinding.tablePos().get().equals(corePos)) {
+                        player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
+                        return ItemInteractionResult.FAIL;
+                    }
+
                     CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
                     if (realPlayer == null) return ItemInteractionResult.FAIL;
                     if (blockState.getValue(PART) == TablePartType.X_LESS_Z_LESS) {
@@ -74,6 +76,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                             C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, null);
                         }
                     }
+                    return ItemInteractionResult.SUCCESS;
                 }
             }
         }
@@ -85,6 +88,10 @@ public class BlockMinoTable extends Block implements EntityBlock {
         private static void openWildSelectionScreen(BlockPos corePos, CardPlayer player, Card selectedCard) {
             Minecraft.getInstance().setScreen(new WildSelectionScreen(corePos, player, selectedCard));
         }
+
+        private static void openSeatControlScreen(BlockPos corePos) {
+            Minecraft.getInstance().setScreen(new SeatControlScreen(corePos));
+        }
     }
 
     @Override
@@ -93,42 +100,22 @@ public class BlockMinoTable extends Block implements EntityBlock {
         BlockEntity blockEntity = level.getBlockEntity(corePos);
         if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
             CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
-            if (player.isSecondaryUseActive() && blockState.getValue(PART) == TablePartType.X_MORE_Z_MORE) {
-                if (level.isClientSide) return InteractionResult.SUCCESS;
-                List<CardPlayer> playersList = tableEntity.getPlayersList();
-                if (!playersList.contains(cardPlayer)) {
-                    player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
-                    return InteractionResult.FAIL;
-                }
-                if (playersList.size() < 2) {
-                    player.displayClientMessage(Component.translatable("game.minopp.play.no_enough_player"), true);
-                    return InteractionResult.FAIL;
-                }
-                // Start or end the game
-                if (tableEntity.game == null) {
-                    tableEntity.startGame(cardPlayer);
-                    level.sendBlockUpdated(corePos, blockState, blockState, 2);
-                } else {
-                    tableEntity.destroyGame(cardPlayer);
-                    level.sendBlockUpdated(corePos, blockState, blockState, 2);
-                }
+            if (level.isClientSide) {
+                Client.openSeatControlScreen(corePos);
                 return InteractionResult.SUCCESS;
             }
-            if (tableEntity.game == null && !player.isSecondaryUseActive()) {
-                if (level.isClientSide) return InteractionResult.SUCCESS;
 
+            if (tableEntity.game == null) {
                 // Join player to table
                 BlockPos centerPos = corePos.offset(1, 0, 1);
                 Vec3 playerOffset = player.position().subtract(centerPos.getX(), centerPos.getY(), centerPos.getZ());
                 Direction playerDirection = Direction.fromYRot(Mth.atan2(playerOffset.z, playerOffset.x) * 180 / Math.PI - 90);
-                boolean quitting = false;
                 for (Direction checkDir : tableEntity.players.keySet()) {
                     if (cardPlayer.equals(tableEntity.players.get(checkDir))) {
                         tableEntity.players.put(checkDir, null);
-                        if (checkDir == playerDirection) quitting = true;
                     }
                 }
-                if (!quitting) tableEntity.players.put(playerDirection, cardPlayer);
+                tableEntity.players.put(playerDirection, cardPlayer);
                 tableEntity.setChanged();
                 level.sendBlockUpdated(corePos, blockState, blockState, 2);
                 return InteractionResult.SUCCESS;
