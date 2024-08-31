@@ -27,11 +27,11 @@
   "game.minopp.card.suit.green": "§a宝石",
   "game.minopp.card.suit.blue": "§b钻石",
   "game.minopp.card.suit.yellow": "§6黄金",
-  "game.minopp.card.suit.wild": "§f换色",
+  "game.minopp.card.suit.wild": "§f转色",
 
   "game.minopp.card.family.number": "%s",
-  "game.minopp.card.family.skip": "禁",
-  "game.minopp.card.family.reverse": "转",
+  "game.minopp.card.family.skip": "跳过",
+  "game.minopp.card.family.reverse": "反转",
   "game.minopp.card.family.draw": "+%s",
 
   "gui.minopp.wild_selection.title": "选择颜色",
@@ -48,7 +48,7 @@
   "gui.minopp.play.top_card": "上张牌：%s",
   "gui.minopp.play.top_card_wild_color": "颜色是 %s",
 
-  "gui.minopp.play.cursor.play": "§9出牌",
+  "gui.minopp.play.cursor.play": "出牌",
   "gui.minopp.play.cursor.pass": "§6不出",
   "gui.minopp.play.cursor.pass_draw": "§6不出 (抽牌)",
   "gui.minopp.play.cursor.draw": "§6抽牌",

@@ -52,7 +52,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     poseStack.translate(0, 0, 0.18);
                     for (int k = 0; k < realPlayer.hand.size(); k++) {
                         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-                        itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, false, poseStack, multiBufferSource, i, j,
+                        itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, i, j,
                                 itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));
                         poseStack.translate(0, 0.02, 0.08);
                     }
@@ -63,7 +63,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
             default -> {
                 poseStack.popPose();
                 ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-                itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, false, poseStack, multiBufferSource, i, j,
+                itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, i, j,
                         itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));
                 poseStack.pushPose();
             }

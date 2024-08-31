@@ -48,7 +48,7 @@
   "gui.minopp.play.top_card": "Top Card: %s",
   "gui.minopp.play.top_card_wild_color": "Color is %s",
 
-  "gui.minopp.play.cursor.play": "§9Play",
+  "gui.minopp.play.cursor.play": "Play",
   "gui.minopp.play.cursor.pass": "§6Pass",
   "gui.minopp.play.cursor.pass_draw": "§6Pass (Draw)",
   "gui.minopp.play.cursor.draw": "§6Draw",

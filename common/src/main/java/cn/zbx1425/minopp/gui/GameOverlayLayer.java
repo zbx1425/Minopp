@@ -19,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
@@ -134,11 +135,16 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
 //                    Component cursorMessage = isDraw ? Component.translatable("gui.minopp.play.cursor.draw") : Component.translatable("gui.minopp.play.cursor.play");
                     int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
                     int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
-                    guiGraphics.drawCenteredString(font, cursorMessage, width / 2, height / 2 - 16, 0xFFFFFFDD);
+                    boolean highlight = Minecraft.getInstance().level.getGameTime() % 10L < 5L;
+                    int msgWidth = font.width(cursorMessage);
+                    guiGraphics.fill(width / 2 + 8, height / 2 - 4 - 2, width / 2 + msgWidth + 16, height / 2 + 5 + 2, highlight ? 0x80AAAA66 : 0x80000000);
+                    guiGraphics.drawString(font, cursorMessage, width / 2 + 12, height / 2 - 4, highlight ? 0xFF222222 : 0xFFFFFFDD);
                 }
             }
         }
     }
+
+    private static final ResourceLocation ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
     private void renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Font font = Minecraft.getInstance().font;
@@ -176,7 +182,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         int cardDrawOffset = selectedCardYRaw < 20 ? 20 - selectedCardYRaw : 0;
         Random cardRandom = new Random(handSize);
         for (int i = 0; i < handSize; i++) {
-            int x = width - 20 - CARD_WIDTH - (i == clientHandIndex ? 20 : 0) + cardRandom.nextInt(-6, 7);
+            int x = width - 20 - CARD_WIDTH - (i == clientHandIndex ? 30 : 0) + cardRandom.nextInt(-3, 4);
             int y = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
             if (i == clientHandIndex) {
                 Card card = realPlayer.hand.get(i);
@@ -191,7 +197,15 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             guiGraphics.pose().pushPose();
             guiGraphics.pose().translate(x + 5, y + 5, 0);
             guiGraphics.pose().scale(1.5f, 1.5f, 0);
-            guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFDDDDDD);
+            if (card.family() == Card.Family.REVERSE) {
+                guiGraphics.blit(ATLAS_LOCATION, 0, 0, 208, 0, 10, 10, 256, 128);
+            } else if (card.family() == Card.Family.SKIP) {
+                guiGraphics.blit(ATLAS_LOCATION, 0, 0, 218, 0, 10, 10, 256, 128);
+            } else if (card.suit() == Card.Suit.WILD && card.family() == Card.Family.NUMBER) {
+                guiGraphics.blit(ATLAS_LOCATION, 0, 0, 228, 0, 10, 10, 256, 128);
+            } else {
+                guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFDDDDDD);
+            }
             guiGraphics.pose().popPose();
         }
     }
