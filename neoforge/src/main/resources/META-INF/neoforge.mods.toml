@@ -7,7 +7,7 @@ license = "MIT"
 modId = "minopp"
 version = "${version}"
 displayName = "Minopp"
-authors = "Zbx1425"
+authors = "Zbx1425, MalayP"
 description = '''
 Recreation of a classical card game in Minecraft
 '''

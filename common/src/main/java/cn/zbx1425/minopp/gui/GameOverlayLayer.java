@@ -208,7 +208,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             } else if (card.suit() == Card.Suit.WILD && card.family() == Card.Family.NUMBER) {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 228, 0, 10, 10, 256, 128);
             } else {
-                guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFDDDDDD);
+                guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFFFFFFF);
             }
             guiGraphics.pose().popPose();
         }
