@@ -80,7 +80,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             if (previousGame == null && game != null) {
                 clientMessageList.clear();
             } else {
-                clientMessageList.add(new Pair<>(state, System.currentTimeMillis() + 12000));
+                clientMessageList.add(new Pair<>(state, System.currentTimeMillis() + 16000));
             }
             state = newState;
             clientMessageList.removeIf(entry -> entry.getFirst().type == ActionMessage.Type.EPHEMERAL_INITIATOR);
@@ -149,7 +149,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         } });
         game = new CardGame(getPlayersList());
         state = game.initiate(player, 7);
-        setChanged();
+        sync();
     }
 
     public void destroyGame(CardPlayer player) {
@@ -180,7 +180,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.serverHasShoutedMino = false;
         } });
         state = new ActionMessage(null, player).gameDestroyed();
-        setChanged();
+        sync();
     }
 
     public void sendEphemeralToAll(ActionMessage message) {
@@ -190,6 +190,28 @@ public class BlockEntityMinoTable extends BlockEntity {
                 S2CActionEphemeralPacket.sendS2C((ServerPlayer) mcPlayer, getBlockPos(), message);
             }
         }
+    }
+
+    public void handleActionResult(ActionMessage result, ServerPlayer player) {
+        if (result != null) {
+            if (result.type == ActionMessage.Type.EPHEMERAL_INITIATOR) {
+                S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), result);
+            } else if (result.type == ActionMessage.Type.EPHEMERAL_ALL) {
+                sendEphemeralToAll(result);
+            } else if (result.type == ActionMessage.Type.GAME_END) {
+                destroyGame(ItemHandCards.getCardPlayer(player));
+                state = result;
+            } else {
+                state = result;
+            }
+            sync();
+        }
+    }
+
+    public void sync() {
+        setChanged();
+        BlockState blockState = level.getBlockState(getBlockPos());
+        level.sendBlockUpdated(getBlockPos(), blockState, blockState, 2);
     }
 
     @Override

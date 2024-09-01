@@ -2,6 +2,8 @@ package cn.zbx1425.minopp;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.game.ActionMessage;
+import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
 import cn.zbx1425.minopp.network.C2SSeatControlPacket;
@@ -12,6 +14,7 @@ import cn.zbx1425.minopp.platform.RegistryObject;
 import cn.zbx1425.minopp.platform.ServerPlatform;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -19,6 +22,8 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -60,5 +65,33 @@ public final class Mino {
         ServerPlatform.registerPacket(S2CActionEphemeralPacket.ID);
         ServerPlatform.registerNetworkReceiver(C2SPlayCardPacket.ID, C2SPlayCardPacket::handleC2S);
         ServerPlatform.registerNetworkReceiver(C2SSeatControlPacket.ID, C2SSeatControlPacket::handleC2S);
+    }
+
+    public static void onServerChatMessage(String rawText, ServerPlayer sender) {
+        String normalized = rawText.toLowerCase().replace(" ", "")
+                .replace("!", "").replace("！", "");
+        if (normalized.equals("mino") || normalized.equals("uno") || normalized.equals("minopp")) {
+            BlockPos gamePos = ItemHandCards.getHandCardGamePos(sender);
+            if (gamePos == null) return;
+            if (sender.level().getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
+                if (tableEntity.game == null) return;
+                CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(sender));
+                if (cardPlayer == null) return;
+                ActionMessage result = tableEntity.game.shoutMino(cardPlayer);
+                tableEntity.handleActionResult(result, sender);
+            }
+        }
+    }
+
+    public static void onPlayerHurtPlayer(Player targetPlayer, Player srcPlayer) {
+        BlockPos gamePos = ItemHandCards.getHandCardGamePos(srcPlayer);
+        if (gamePos == null) return;
+        if (srcPlayer.level().getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
+            if (tableEntity.game == null) return;
+            CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(srcPlayer));
+            if (cardPlayer == null) return;
+            ActionMessage result = tableEntity.game.doubtMino(cardPlayer, ItemHandCards.getCardPlayer(targetPlayer).uuid);
+            tableEntity.handleActionResult(result, (ServerPlayer) srcPlayer);
+        }
     }
 }

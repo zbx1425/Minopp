@@ -39,7 +39,6 @@ public class C2SSeatControlPacket {
                     return;
                 }
                 // Start or end the game
-                BlockState blockState = level.getBlockState(gamePos);
                 switch (action) {
                     case 1 -> tableEntity.startGame(cardPlayer);
                     case 0 -> tableEntity.destroyGame(cardPlayer);
@@ -49,10 +48,9 @@ public class C2SSeatControlPacket {
                             tableEntity.players.put(checkDir, null);
                         }
                         tableEntity.state.panic(Component.translatable("game.minopp.play.seats_reset", cardPlayer.name));
+                        tableEntity.sync();
                     }
                 }
-                tableEntity.setChanged();
-                level.sendBlockUpdated(gamePos, blockState, blockState, 2);
             }
         });
     }

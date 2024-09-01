@@ -32,7 +32,7 @@ public class S2CActionEphemeralPacket {
             ActionMessage message = new ActionMessage(Objects.requireNonNull(packet.readNbt()));
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-                    tableEntity.clientMessageList.add(new Pair<>(message, System.currentTimeMillis() + 4000));
+                    tableEntity.clientMessageList.add(new Pair<>(message, System.currentTimeMillis() + 8000));
                 }
             });
         }

@@ -25,35 +25,33 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Random;
 
 public class GameOverlayLayer implements LayeredDraw.Layer {
 
     @Override
     public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
-        BlockPos tablePos = null;
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) {
-            tablePos = player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY)
-                    .tablePos().orElse(null);
-        }
+        BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
         HitResult hitResult = Minecraft.getInstance().hitResult;
         ClientLevel level = Minecraft.getInstance().level;
-        if (tablePos == null && hitResult.getType() == HitResult.Type.BLOCK) {
+        BlockPos hitResultGamePos = null;
+        if (hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos potentialTablePos = ((BlockHitResult)hitResult).getBlockPos();
             if (level.getBlockState(potentialTablePos).is(Mino.BLOCK_MINO_TABLE.get())) {
-                tablePos = potentialTablePos;
+                hitResultGamePos = BlockMinoTable.getCore(level.getBlockState(potentialTablePos), potentialTablePos);
             }
         }
-        if (tablePos == null) return;
-        BlockState blockState = level.getBlockState(tablePos);
-        tablePos = BlockMinoTable.getCore(blockState, tablePos);
-        BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(tablePos);
+        BlockPos gamePos = (handCardGamePos != null) ? handCardGamePos : hitResultGamePos;
+        if (gamePos == null) return;
+        BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         if (tableEntity == null) return;
 
         if (tableEntity.game == null) {
             renderGameInactive(guiGraphics, deltaTracker, tableEntity);
-        } else {
+        } else if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
+            // Only render active view when the player is looking at the same table as the hand cards
             renderGameActive(guiGraphics, deltaTracker, tableEntity);
         }
         renderHandCards(guiGraphics, deltaTracker);
@@ -152,17 +150,10 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         Font font = Minecraft.getInstance().font;
         LocalPlayer player = Minecraft.getInstance().player;
         ClientLevel level = Minecraft.getInstance().level;
-        BlockPos tablePos = null;
-        int clientHandIndex = 0;
-        if (player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) {
-            tablePos = player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY)
-                    .tablePos().orElse(null);
-            clientHandIndex = player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
-        }
-        if (tablePos == null) return;
-        BlockState blockState = level.getBlockState(tablePos);
-        tablePos = BlockMinoTable.getCore(blockState, tablePos);
-        BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(tablePos);
+        BlockPos gamePos = ItemHandCards.getHandCardGamePos(player);
+        if (gamePos == null) return;
+        int clientHandIndex = ItemHandCards.getClientHandIndex(player);
+        BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
 
         final int CARD_V_SPACING = 20;
@@ -195,9 +186,20 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             guiGraphics.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
 
             Card card = realPlayer.hand.get(i);
-            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);
+            float cardU = switch (card.family()) {
+                case NUMBER -> Math.abs(card.number()) * 16;
+                case SKIP -> 160;
+                case DRAW -> 176;
+                case REVERSE -> 192;
+            };
+            float cardV = card.suit().ordinal() * 25;
+            int cardUW = 16;
+            int cardVH = 25;
+//            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);
+            guiGraphics.blit(ATLAS_LOCATION, x + 5, y + 5, CARD_WIDTH - 10, CARD_HEIGHT - 10,
+                    cardU + 1, cardV + 1, cardUW - 2, cardVH - 2, 256, 128);
             guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(x + 5, y + 5, 0);
+            guiGraphics.pose().translate(x + 7, y + 7, 0);
             guiGraphics.pose().scale(1.5f, 1.5f, 0);
             if (card.family() == Card.Family.REVERSE) {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 208, 0, 10, 10, 256, 128);

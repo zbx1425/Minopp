@@ -34,6 +34,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +46,9 @@ public class BlockMinoTable extends Block implements EntityBlock {
     public static final EnumProperty<TablePartType> PART = EnumProperty.create("part", TablePartType.class);
 
     public BlockMinoTable() {
-        super(BlockBehaviour.Properties.of().noOcclusion());
+        super(BlockBehaviour.Properties.of()
+                .strength(2.0F)
+                .noOcclusion());
     }
 
     @Override
@@ -121,8 +125,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                     }
                 }
                 tableEntity.players.put(playerDirection, cardPlayer);
-                tableEntity.setChanged();
-                level.sendBlockUpdated(corePos, blockState, blockState, 2);
+                tableEntity.sync();
                 return InteractionResult.SUCCESS;
             }
         }
@@ -215,5 +218,12 @@ public class BlockMinoTable extends Block implements EntityBlock {
     @Override
     protected boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
         return true;
+    }
+
+    private static final VoxelShape VOXEL_SHAPE = Block.box(0, 0, 0, 16, 14, 16);
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return VOXEL_SHAPE;
     }
 }

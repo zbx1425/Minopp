@@ -64,21 +64,7 @@ public class C2SPlayCardPacket {
                     case 3 -> result = tableEntity.game.doubtMino(cardPlayer, doubtTargetPlayerUuid);
                     default -> result = ActionMessage.NO_GAME;
                 }
-                if (result != null) {
-                    if (result.type == ActionMessage.Type.EPHEMERAL_INITIATOR) {
-                        S2CActionEphemeralPacket.sendS2C(player, gamePos, result);
-                    } else if (result.type == ActionMessage.Type.EPHEMERAL_ALL) {
-                        tableEntity.sendEphemeralToAll(result);
-                    } else if (result.type == ActionMessage.Type.GAME_END) {
-                        tableEntity.destroyGame(cardPlayer);
-                        tableEntity.state = result;
-                    } else {
-                        tableEntity.state = result;
-                    }
-                }
-                tableEntity.setChanged();
-                BlockState blockState = level.getBlockState(gamePos);
-                level.sendBlockUpdated(gamePos, blockState, blockState, 2);
+                tableEntity.handleActionResult(result, player);
             }
         });
     }
