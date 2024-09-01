@@ -128,7 +128,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                                 : Component.translatable("gui.minopp.play.cursor.play");
                     };
                     Component shoutMessage = Component.translatable("gui.minopp.play.cursor.shout");
-                    boolean isShouting = BlockMinoTable.Client.isShoutModifierHeld();
+                    boolean isShouting = !isPass && BlockMinoTable.Client.isShoutModifierHeld();
                     int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
                     int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
                     boolean highlight = Minecraft.getInstance().level.getGameTime() % 10L < 5L;

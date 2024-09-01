@@ -124,7 +124,7 @@ public class CardGame {
     public ActionMessage shoutMino(CardPlayer realPlayer) {
         ActionMessage report = new ActionMessage(null, realPlayer);
         if (!realPlayer.serverHasShoutedMino) {
-            if (realPlayer.hand.size() <= 2) {
+            if (realPlayer.hand.size() <= 1) {
                 realPlayer.serverHasShoutedMino = true;
                 return report.ephemeralAll(Component.translatable("game.minopp.play.mino_shout", realPlayer.name));
             } else {
