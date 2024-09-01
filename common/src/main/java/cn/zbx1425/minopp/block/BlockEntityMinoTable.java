@@ -5,6 +5,7 @@ import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -81,7 +83,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                 clientMessageList.add(new Pair<>(state, System.currentTimeMillis() + 12000));
             }
             state = newState;
-            clientMessageList.removeIf(entry -> entry.getFirst().isEphemeral);
+            clientMessageList.removeIf(entry -> entry.getFirst().type == ActionMessage.Type.EPHEMERAL_INITIATOR);
         }
     }
 
@@ -144,7 +146,6 @@ public class BlockEntityMinoTable extends BlockEntity {
         players.values().forEach(p -> { if (p != null) {
             p.hand.clear();
             p.serverHasShoutedMino = false;
-            p.serverMinoStartTime = 0;
         } });
         game = new CardGame(getPlayersList());
         state = game.initiate(player, 7);
@@ -177,10 +178,18 @@ public class BlockEntityMinoTable extends BlockEntity {
         players.values().forEach(p -> { if (p != null) {
             p.hand.clear();
             p.serverHasShoutedMino = false;
-            p.serverMinoStartTime = 0;
         } });
         state = new ActionMessage(null, player).gameDestroyed();
         setChanged();
+    }
+
+    public void sendEphemeralToAll(ActionMessage message) {
+        for (CardPlayer player : getPlayersList()) {
+            Player mcPlayer = level.getPlayerByUUID(player.uuid);
+            if (mcPlayer != null) {
+                S2CActionEphemeralPacket.sendS2C((ServerPlayer) mcPlayer, getBlockPos(), message);
+            }
+        }
     }
 
     @Override

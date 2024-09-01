@@ -14,12 +14,14 @@ public class WildSelectionScreen extends Screen {
     private final BlockPos gamePos;
     private final CardPlayer player;
     private final Card handCard;
+    private final boolean shout;
 
-    public WildSelectionScreen(BlockPos gamePos, CardPlayer player, Card handCard) {
+    public WildSelectionScreen(BlockPos gamePos, CardPlayer player, Card handCard, boolean shout) {
         super(Component.translatable("gui.minopp.wild_selection.title"));
         this.gamePos = gamePos;
         this.player = player;
         this.handCard = handCard;
+        this.shout = shout;
     }
 
     int BTN_WIDTH = 60;
@@ -41,6 +43,7 @@ public class WildSelectionScreen extends Screen {
             if (suit == Card.Suit.WILD) continue;
             addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(), "").withColor(suit.color), e -> {
                 C2SPlayCardPacket.Client.sendPlayCardC2S(gamePos, player, handCard, suit);
+                if (shout) C2SPlayCardPacket.Client.sendShoutMinoC2S(gamePos, player);
                 onClose();
             }).pos(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * suit.ordinal(), yOff + MARGIN + 9 + MARGIN).size(BTN_WIDTH, BTN_HEIGHT).build());
         }
@@ -65,6 +68,9 @@ public class WildSelectionScreen extends Screen {
         guiGraphics.fill(xOff, yOff, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0xFF313031);
         guiGraphics.fill(xOff, yOff + PANEL_HEIGHT - BTN_HEIGHT, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0x66546E7A);
         guiGraphics.drawCenteredString(font, title, width / 2, yOff + MARGIN, 0xFFFFFFFF);
+        if (shout) {
+            guiGraphics.drawString(font, Component.translatable("gui.minopp.play.cursor.shout"), xOff + MARGIN, yOff + PANEL_HEIGHT - MARGIN - 9, 0xFFFFFFFF);
+        }
         guiGraphics.pose().popPose();
     }
 }

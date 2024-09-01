@@ -17,7 +17,6 @@ public class CardPlayer {
     public List<Card> hand = new ArrayList<>();
 
     public boolean serverHasShoutedMino = false;
-    public long serverMinoStartTime = 0;
 
     public CardPlayer(Player mcPlayer) {
         this.uuid = mcPlayer.getGameProfile().getId();

@@ -16,17 +16,14 @@ import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
-import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Random;
 
@@ -113,7 +110,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             if (entry.getSecond() - 200 < currentTime) {
                 it.remove();
             } else {
-                int color = entry.getFirst().isEphemeral ? 0x00FF0000 : 0x00AAAAAA;
+                int color = entry.getFirst().type.isEphemeral() ? 0x00FF0000 : 0x00AAAAAA;
                 int alpha = Mth.clamp(0 ,0xFF, (int)(0xFF * (entry.getSecond() - currentTime) / 1000));
                 guiGraphics.drawString(font, entry.getFirst().message, x, y, alpha << 24 | color);
                 y += font.lineHeight;
@@ -132,13 +129,18 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                         case DISCARD_DRAWN -> isPass ? Component.translatable("gui.minopp.play.cursor.pass")
                                 : Component.translatable("gui.minopp.play.cursor.play");
                     };
-//                    Component cursorMessage = isDraw ? Component.translatable("gui.minopp.play.cursor.draw") : Component.translatable("gui.minopp.play.cursor.play");
+                    Component shoutMessage = Component.translatable("gui.minopp.play.cursor.shout");
+                    boolean isShouting = BlockMinoTable.Client.isShoutModifierHeld();
                     int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
                     int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
                     boolean highlight = Minecraft.getInstance().level.getGameTime() % 10L < 5L;
-                    int msgWidth = font.width(cursorMessage);
-                    guiGraphics.fill(width / 2 + 8, height / 2 - 4 - 2, width / 2 + msgWidth + 16, height / 2 + 5 + 2, highlight ? 0x80AAAA66 : 0x80000000);
-                    guiGraphics.drawString(font, cursorMessage, width / 2 + 12, height / 2 - 4, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                    int msgWidth = Math.max(font.width(cursorMessage), isShouting ? font.width(shoutMessage) : 0);
+                    int msgHeight = isShouting ? font.lineHeight * 2 : font.lineHeight;
+                    guiGraphics.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 2, highlight ? 0x80AAAA66 : 0x80000000);
+                    guiGraphics.drawString(font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                    if (isShouting) {
+                        guiGraphics.drawString(font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                    }
                 }
             }
         }

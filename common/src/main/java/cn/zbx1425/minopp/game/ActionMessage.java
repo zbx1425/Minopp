@@ -12,23 +12,28 @@ public class ActionMessage {
     private CardGame game;
     private CardPlayer initiator;
 
-    public boolean isEphemeral = false;
-    public boolean gameShouldFinish = false;
+    public Type type = Type.PERSISTENT;
     public Component message;
 
     public ActionMessage(CardGame game, CardPlayer player) {
         this.initiator = player;
-        this.gameShouldFinish = false;
         this.game = game;
     }
 
     public ActionMessage message(Component message) {
+        this.type = Type.PERSISTENT;
         this.message = message;
         return this;
     }
 
-    public ActionMessage ephemeral(Component message) {
-        this.isEphemeral = true;
+    public ActionMessage fail(Component message) {
+        this.type = Type.EPHEMERAL_INITIATOR;
+        this.message = message;
+        return this;
+    }
+
+    public ActionMessage ephemeralAll(Component message) {
+        this.type = Type.EPHEMERAL_ALL;
         this.message = message;
         return this;
     }
@@ -65,7 +70,7 @@ public class ActionMessage {
     }
 
     public ActionMessage gameWon() {
-        gameShouldFinish = true;
+        type = Type.GAME_END;
         MutableComponent result = Component.translatable("game.minopp.play.game_won", initiator.name);
         for (CardPlayer player : game.players) {
             if (!player.equals(initiator)) {
@@ -77,7 +82,7 @@ public class ActionMessage {
     }
 
     public ActionMessage panic(Component message) {
-        gameShouldFinish = true;
+        type = Type.GAME_END;
         return message(message);
     }
 
@@ -85,14 +90,13 @@ public class ActionMessage {
             .message(Component.translatable("game.minopp.play.no_game"));
 
     public ActionMessage(CompoundTag tag) {
-        this.isEphemeral = tag.getBoolean("isEphemeral");
-        this.gameShouldFinish = false;
+        this.type = Type.valueOf(tag.getString("type"));
         this.message = Component.Serializer.fromJson(tag.getString("message"), DummyLookupProvider.INSTANCE);
     }
 
     public CompoundTag toTag() {
         CompoundTag tag = new CompoundTag();
-        tag.putBoolean("isEphemeral", isEphemeral);
+        tag.putString("type", type.name());
         tag.putString("message", Component.Serializer.toJson(message, DummyLookupProvider.INSTANCE));
         return tag;
     }
@@ -102,11 +106,22 @@ public class ActionMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ActionMessage that = (ActionMessage) o;
-        return isEphemeral == that.isEphemeral && Objects.equals(message, that.message);
+        return type == that.type && Objects.equals(message, that.message);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(isEphemeral, message);
+        return Objects.hash(type, message);
+    }
+
+    public enum Type {
+        PERSISTENT,
+        EPHEMERAL_INITIATOR,
+        EPHEMERAL_ALL,
+        GAME_END;
+
+        public boolean isEphemeral() {
+            return this == EPHEMERAL_INITIATOR || this == EPHEMERAL_ALL;
+        }
     }
 }

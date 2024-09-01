@@ -27,16 +27,31 @@ public class C2SPlayCardPacket {
         ServerLevel level = player.serverLevel();
         UUID playerUuid = packet.readUUID();
         int actionType = packet.readInt();
-        server.execute(() -> {
-            Card card = null;
-            int wildSelectionOrdinal = -1;
-            if (actionType == 0) {
+        final Card card;
+        final int wildSelectionOrdinal;
+        final UUID doubtTargetPlayerUuid;
+        switch (actionType) {
+            case 0 -> {
                 card = new Card(Objects.requireNonNull(packet.readNbt()));
                 wildSelectionOrdinal = packet.readInt();
+                doubtTargetPlayerUuid = null;
             }
+            case 3 -> {
+                card = null;
+                wildSelectionOrdinal = -1;
+                doubtTargetPlayerUuid = packet.readUUID();
+            }
+            default -> {
+                card = null;
+                wildSelectionOrdinal = -1;
+                doubtTargetPlayerUuid = null;
+            }
+        }
+
+        server.execute(() -> {
             if (level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
                 if (tableEntity.game == null) return;
-                CardPlayer cardPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(playerUuid)).findFirst().orElse(null);
+                CardPlayer cardPlayer = tableEntity.game.deAmputate(playerUuid);
                 if (cardPlayer == null) return;
                 ActionMessage result;
                 switch (actionType) {
@@ -45,15 +60,21 @@ public class C2SPlayCardPacket {
                         result = tableEntity.game.playCard(cardPlayer, card, wildSelection);
                     }
                     case 1 -> result = tableEntity.game.playNoCard(cardPlayer);
+                    case 2 -> result = tableEntity.game.shoutMino(cardPlayer);
+                    case 3 -> result = tableEntity.game.doubtMino(cardPlayer, doubtTargetPlayerUuid);
                     default -> result = ActionMessage.NO_GAME;
                 }
-                if (result.isEphemeral) {
-                    S2CActionEphemeralPacket.sendS2C(player, gamePos, result);
-                } else if (result.gameShouldFinish) {
-                    tableEntity.destroyGame(cardPlayer);
-                    tableEntity.state = result;
-                } else {
-                    tableEntity.state = result;
+                if (result != null) {
+                    if (result.type == ActionMessage.Type.EPHEMERAL_INITIATOR) {
+                        S2CActionEphemeralPacket.sendS2C(player, gamePos, result);
+                    } else if (result.type == ActionMessage.Type.EPHEMERAL_ALL) {
+                        tableEntity.sendEphemeralToAll(result);
+                    } else if (result.type == ActionMessage.Type.GAME_END) {
+                        tableEntity.destroyGame(cardPlayer);
+                        tableEntity.state = result;
+                    } else {
+                        tableEntity.state = result;
+                    }
                 }
                 tableEntity.setChanged();
                 BlockState blockState = level.getBlockState(gamePos);
@@ -79,6 +100,23 @@ public class C2SPlayCardPacket {
             packet.writeBlockPos(gamePos);
             packet.writeUUID(player.uuid);
             packet.writeInt(1);
+            ClientPlatform.sendPacketToServer(ID, packet);
+        }
+
+        public static void sendShoutMinoC2S(BlockPos gamePos, CardPlayer player) {
+            FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
+            packet.writeBlockPos(gamePos);
+            packet.writeUUID(player.uuid);
+            packet.writeInt(2);
+            ClientPlatform.sendPacketToServer(ID, packet);
+        }
+
+        public static void sendDoubtMinoC2S(BlockPos gamePos, CardPlayer srcPlayer, CardPlayer targetPlayer) {
+            FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
+            packet.writeBlockPos(gamePos);
+            packet.writeUUID(srcPlayer.uuid);
+            packet.writeInt(3);
+            packet.writeUUID(targetPlayer.uuid);
             ClientPlatform.sendPacketToServer(ID, packet);
         }
     }

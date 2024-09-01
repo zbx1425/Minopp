@@ -69,9 +69,12 @@ public class BlockMinoTable extends Block implements EntityBlock {
                     } else {
                         Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
                         if (selectedCard.suit() == Card.Suit.WILD) {
-                            Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard);
+                            Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, Client.isShoutModifierHeld());
                         } else {
                             C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, null);
+                            if (Client.isShoutModifierHeld()) {
+                                C2SPlayCardPacket.Client.sendShoutMinoC2S(corePos, playerWithoutHand);
+                            }
                         }
                     }
                     return ItemInteractionResult.SUCCESS;
@@ -81,14 +84,18 @@ public class BlockMinoTable extends Block implements EntityBlock {
         return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
     }
 
-    private static class Client {
+    public static class Client {
 
-        private static void openWildSelectionScreen(BlockPos corePos, CardPlayer player, Card selectedCard) {
-            Minecraft.getInstance().setScreen(new WildSelectionScreen(corePos, player, selectedCard));
+        public static void openWildSelectionScreen(BlockPos corePos, CardPlayer player, Card selectedCard, boolean shout) {
+            Minecraft.getInstance().setScreen(new WildSelectionScreen(corePos, player, selectedCard, shout));
         }
 
-        private static void openSeatControlScreen(BlockPos corePos) {
+        public static void openSeatControlScreen(BlockPos corePos) {
             Minecraft.getInstance().setScreen(new SeatControlScreen(corePos));
+        }
+
+        public static boolean isShoutModifierHeld() {
+            return Minecraft.getInstance().options.keySprint.isDown();
         }
     }
 

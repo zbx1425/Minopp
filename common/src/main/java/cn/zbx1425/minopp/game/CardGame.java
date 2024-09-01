@@ -52,8 +52,8 @@ public class CardGame {
     public ActionMessage playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection) {
         ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
-        if (!cardPlayer.hand.contains(card)) return report.ephemeral(Component.translatable("game.minopp.play.not_your_card"));
+        if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
+        if (!cardPlayer.hand.contains(card)) return report.fail(Component.translatable("game.minopp.play.not_your_card"));
 
         // Cut
         if (topCard.equals(card) && playerIndex != currentPlayer) {
@@ -65,8 +65,8 @@ public class CardGame {
             return report.cut();
         }
 
-        if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
-        if (!card.canPlayOn(topCard)) return report.ephemeral(Component.translatable("game.minopp.play.invalid_card"));
+        if (playerIndex != currentPlayer) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
+        if (!card.canPlayOn(topCard)) return report.fail(Component.translatable("game.minopp.play.invalid_card"));
         doDiscardCard(cardPlayer, card);
         if (cardPlayer.hand.isEmpty()) {
             return report.gameWon();
@@ -77,7 +77,13 @@ public class CardGame {
         }
         switch (card.family()) {
             case SKIP -> isSkipping = true;
-            case REVERSE -> isAntiClockwise = !isAntiClockwise;
+            case REVERSE -> {
+                if (players.size() == 2) {
+                    isSkipping = true;
+                } else {
+                    isAntiClockwise = !isAntiClockwise;
+                }
+            }
             case DRAW -> drawCount -= card.number();
         }
 
@@ -89,23 +95,15 @@ public class CardGame {
     public ActionMessage playNoCard(CardPlayer cardPlayer) {
         ActionMessage report = new ActionMessage(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (playerIndex == -1) return report.ephemeral(Component.translatable("game.minopp.play.no_player"));
-        if (playerIndex != currentPlayer) return report.ephemeral(Component.translatable("game.minopp.play.not_your_turn"));
+        if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
+        if (playerIndex != currentPlayer) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
 
         boolean drawn = currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN;
         if (currentPlayerPhase == PlayerActionPhase.DISCARD_HAND) {
             // Draw card
             int drawCount = this.drawCount == 0 ? 1 : this.drawCount;
-            if (deck.size() < drawCount) {
-                Collections.shuffle(discardDeck);
-                deck.addAll(discardDeck);
-                discardDeck.clear();
-            }
-            if (deck.size() < drawCount) {
+            if (!doDrawCard(cardPlayer, drawCount)) {
                 return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
-            }
-            for (int i = 0; i < drawCount; i++) {
-                cardPlayer.hand.add(deck.removeLast());
             }
             if (this.drawCount > 0) {
                 // The draw card has already performed penalty
@@ -122,17 +120,67 @@ public class CardGame {
         return report.playedNoCard(drawn);
     }
 
+
+    public ActionMessage shoutMino(CardPlayer realPlayer) {
+        ActionMessage report = new ActionMessage(null, realPlayer);
+        if (!realPlayer.serverHasShoutedMino) {
+            if (realPlayer.hand.size() <= 2) {
+                realPlayer.serverHasShoutedMino = true;
+                return report.ephemeralAll(Component.translatable("game.minopp.play.mino_shout", realPlayer.name));
+            } else {
+                if (!doDrawCard(realPlayer, 2)) {
+                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
+                }
+                realPlayer.serverHasShoutedMino = true; // Avoid penalty again and again
+                return report.ephemeralAll(Component.translatable("game.minopp.play.mino_shout_invalid", realPlayer.name));
+            }
+        }
+        return null;
+    }
+
+    public ActionMessage doubtMino(CardPlayer realPlayer, UUID targetPlayerWithoutHand) {
+        ActionMessage report = new ActionMessage(null, realPlayer);
+        CardPlayer realTargetPlayer = deAmputate(targetPlayerWithoutHand);
+        if (realTargetPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
+        if (!players.get(currentPlayer).equals(realTargetPlayer)) {
+            return report.fail(Component.translatable("game.minopp.play.doubt_target_playing"));
+        } else if (realPlayer.equals(realTargetPlayer)) {
+            return report.fail(Component.translatable("game.minopp.play.doubt_target_self"));
+        } else if (realTargetPlayer.serverHasShoutedMino) {
+            return report.fail(Component.translatable("game.minopp.play.doubt_target_shouted"));
+        } else if (realPlayer.hand.size() > 1) {
+            return report.fail(Component.translatable("game.minopp.play.doubt_target_hand"));
+        } else {
+            if (!doDrawCard(realTargetPlayer, 2)) {
+                return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
+            }
+            return report.ephemeralAll(Component.translatable("game.minopp.play.doubt_success", realPlayer.name, realTargetPlayer.name));
+        }
+    }
+
     private void doDiscardCard(CardPlayer player, Card card) {
         discardDeck.add(topCard.getActualCard());
         topCard = card;
         player.hand.remove(card);
     }
 
+    private boolean doDrawCard(CardPlayer cardPlayer, int drawCount) {
+        if (deck.size() < drawCount) {
+            Collections.shuffle(discardDeck);
+            deck.addAll(discardDeck);
+            discardDeck.clear();
+        }
+        if (deck.size() < drawCount) {
+            return false;
+        }
+        for (int i = 0; i < drawCount; i++) {
+            cardPlayer.hand.add(deck.removeLast());
+        }
+        return true;
+    }
+
     private void advanceTurn() {
         CardPlayer previousPlayer = players.get(currentPlayer);
-        if (previousPlayer.hand.size() == 1) {
-            previousPlayer.serverMinoStartTime = System.currentTimeMillis();
-        }
 
         currentPlayerPhase = PlayerActionPhase.DISCARD_HAND;
         if (isSkipping) currentPlayer = (currentPlayer + (isAntiClockwise ? -1 : 1)) % players.size();
@@ -146,6 +194,10 @@ public class CardGame {
 
     public CardPlayer deAmputate(CardPlayer playerWithoutHand) {
         return players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
+    }
+
+    public CardPlayer deAmputate(UUID uuid) {
+        return players.stream().filter(p -> p.uuid.equals(uuid)).findFirst().orElse(null);
     }
 
     public enum PlayerActionPhase {

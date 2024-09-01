@@ -23,6 +23,14 @@
   "game.minopp.play.player_unavailable": "Player %1$s is not available. Please reallocate seats.",
   "game.minopp.play.no_game": "Game inactive.",
 
+  "game.minopp.play.mino_shout": "%1$s: §6Mino!",
+  "game.minopp.play.mino_shout_invalid": "%1$s got penalized for randomly shouting Mino.",
+  "game.minopp.play.doubt_success": "%1$s pointed out that %2$s forgot to shout Mino.",
+  "game.minopp.play.doubt_target_playing": "It's still their turn.",
+  "game.minopp.play.doubt_target_self": "You can't doubt yourself.",
+  "game.minopp.play.doubt_target_shouted": "They have already shouted Mino.",
+  "game.minopp.play.doubt_target_hand": "They still have more than one cards in hand.",
+
   "game.minopp.card.suit.red": "§cRedstone",
   "game.minopp.card.suit.green": "§aEmerald",
   "game.minopp.card.suit.blue": "§bDiamond",
@@ -52,6 +60,7 @@
   "gui.minopp.play.cursor.pass": "§6Pass",
   "gui.minopp.play.cursor.pass_draw": "§6Pass (Draw)",
   "gui.minopp.play.cursor.draw": "§6Draw",
+  "gui.minopp.play.cursor.shout": "<§6Mino!§r>",
 
   "gui.minopp.seats.title": "Participants Seated on the Table",
   "gui.minopp.seats.start": "§aStart Game",
