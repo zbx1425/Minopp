@@ -36,7 +36,6 @@ public class SoundQueue {
         synchronized (queue) {
             long time = System.currentTimeMillis();
             for (Event event : events) {
-                if (event.timeOffset == 0) continue;
                 if (event.target.isEmpty() || event.target.get().equals(self.getGameProfile().getId())) {
                     queue.enqueue(new TimedEvent(event, time, origin));
                 }

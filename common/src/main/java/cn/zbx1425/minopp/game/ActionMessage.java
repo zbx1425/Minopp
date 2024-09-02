@@ -29,7 +29,6 @@ public class ActionMessage {
     }
 
     public ActionMessage message(Component message) {
-        this.type = Type.PERSISTENT;
         this.message = message;
         return this;
     }

@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.game;
 
+import cn.zbx1425.minopp.Mino;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -46,7 +47,7 @@ public class CardGame {
             tobeTopCard = deck.removeLast();
         }
         topCard = tobeTopCard;
-        return new ActionMessage(this, cardPlayer).gameStarted();
+        return new ActionMessage(this, cardPlayer).sound(Mino.id("game.play"), 0).gameStarted();
     }
 
     public ActionMessage playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection) {
@@ -57,18 +58,20 @@ public class CardGame {
 
         // Cut
         if (topCard.equals(card) && playerIndex != currentPlayer) {
-            doDiscardCard(cardPlayer, card);
+            doDiscardCard(cardPlayer, card, report);
             if (cardPlayer.hand.isEmpty()) {
+                report.sound(Mino.id("game.win"), 0);
                 return report.gameWon();
             }
-            advanceTurn();
+            advanceTurn(report);
             return report.cut();
         }
 
         if (playerIndex != currentPlayer) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
         if (!card.canPlayOn(topCard)) return report.fail(Component.translatable("game.minopp.play.invalid_card"));
-        doDiscardCard(cardPlayer, card);
+        doDiscardCard(cardPlayer, card, report);
         if (cardPlayer.hand.isEmpty()) {
+            report.sound(Mino.id("game.win"), 0);
             return report.gameWon();
         }
 
@@ -87,7 +90,7 @@ public class CardGame {
             case DRAW -> drawCount -= card.number();
         }
 
-        advanceTurn();
+        advanceTurn(report);
 
         return report.played();
     }
@@ -102,7 +105,7 @@ public class CardGame {
         if (currentPlayerPhase == PlayerActionPhase.DISCARD_HAND) {
             // Draw card
             int drawCount = this.drawCount == 0 ? 1 : this.drawCount;
-            if (!doDrawCard(cardPlayer, drawCount)) {
+            if (!doDrawCard(cardPlayer, drawCount, report)) {
                 return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
             }
             if (this.drawCount > 0) {
@@ -112,9 +115,11 @@ public class CardGame {
                 this.drawCount = 0;
             }
             currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
+            report.sound(Mino.id("game.turn_notice_again"), 500, cardPlayer);
             return report.drew(drawCount);
         } else if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN) {
-            advanceTurn();
+            report.sound(Mino.id("game.pass"), 0);
+            advanceTurn(report);
         }
 
         return report.playedNoCard(drawn);
@@ -126,12 +131,15 @@ public class CardGame {
         if (!realPlayer.serverHasShoutedMino) {
             if (realPlayer.hand.size() <= 1) {
                 realPlayer.serverHasShoutedMino = true;
+                report.sound(Mino.id("game.mino_shout"), 0);
                 return report.ephemeralAll(Component.translatable("game.minopp.play.mino_shout", realPlayer.name));
             } else {
-                if (!doDrawCard(realPlayer, 2)) {
+                if (!doDrawCard(realPlayer, 2, report)) {
                     return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
                 }
                 realPlayer.serverHasShoutedMino = true; // Avoid penalty again and again
+                report.sound(Mino.id("game.mino_shout"), 0);
+                report.sound(Mino.id("game.mino_shout_invalid"), 500);
                 return report.ephemeralAll(Component.translatable("game.minopp.play.mino_shout_invalid", realPlayer.name));
             }
         }
@@ -151,20 +159,22 @@ public class CardGame {
         } else if (realPlayer.hand.size() > 1) {
             return report.fail(Component.translatable("game.minopp.play.doubt_target_hand"));
         } else {
-            if (!doDrawCard(realTargetPlayer, 2)) {
+            if (!doDrawCard(realTargetPlayer, 2, report)) {
                 return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
             }
+            report.sound(Mino.id("game.doubt_success"), 0);
             return report.ephemeralAll(Component.translatable("game.minopp.play.doubt_success", realPlayer.name, realTargetPlayer.name));
         }
     }
 
-    private void doDiscardCard(CardPlayer player, Card card) {
+    private void doDiscardCard(CardPlayer player, Card card, ActionMessage report) {
         discardDeck.add(topCard.getActualCard());
         topCard = card;
         player.hand.remove(card);
+        report.sound(Mino.id("game.play"), 0);
     }
 
-    private boolean doDrawCard(CardPlayer cardPlayer, int drawCount) {
+    private boolean doDrawCard(CardPlayer cardPlayer, int drawCount, ActionMessage report) {
         if (deck.size() < drawCount) {
             Collections.shuffle(discardDeck);
             deck.addAll(discardDeck);
@@ -175,12 +185,16 @@ public class CardGame {
         }
         for (int i = 0; i < drawCount; i++) {
             cardPlayer.hand.add(deck.removeLast());
+            report.sound(Mino.id("game.draw"), 500 * i);
+            if (drawCount > 1) {
+                report.sound(Mino.id("game.draw_multi"), 500 * i + 200);
+            }
         }
         return true;
     }
 
-    private void advanceTurn() {
-        CardPlayer previousPlayer = players.get(currentPlayer);
+    private void advanceTurn(ActionMessage report) {
+//        CardPlayer previousPlayer = players.get(currentPlayer);
 
         currentPlayerPhase = PlayerActionPhase.DISCARD_HAND;
         if (isSkipping) currentPlayer = (currentPlayer + (isAntiClockwise ? -1 : 1)) % players.size();
@@ -190,6 +204,7 @@ public class CardGame {
 
         CardPlayer currentPlayerPlayer = players.get(currentPlayer);
         currentPlayerPlayer.serverHasShoutedMino = false;
+        report.sound(Mino.id("game.turn_notice"), 500, currentPlayerPlayer);
     }
 
     public CardPlayer deAmputate(CardPlayer playerWithoutHand) {
