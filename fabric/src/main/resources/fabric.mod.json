@@ -12,7 +12,7 @@
     "homepage": "www.zbx1425.cn"
   },
   "license": "MIT",
-  "icon": "assets/minopp/icon.png",
+  "icon": "minopp.png",
   "environment": "*",
   "entrypoints": {
     "main": [

@@ -11,7 +11,7 @@ authors = "Zbx1425, MalayP"
 description = '''
 Recreation of a classical card game in Minecraft
 '''
-#logoFile = ""
+logoFile = "minopp.png"
 
 [[dependencies.minopp]]
 modId = "neoforge"
