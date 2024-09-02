@@ -1,17 +1,17 @@
 package cn.zbx1425.minopp.neoforge;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
 import cn.zbx1425.minopp.platform.neoforge.ClientPlatformImpl;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -54,6 +54,12 @@ public class ClientProxy {
         @SubscribeEvent
         public static void onRenderLevelStage(RenderLevelStageEvent event) {
 
+        }
+
+        @SubscribeEvent
+        public static void onClientTick(ClientTickEvent.Pre event) {
+            Level level = Minecraft.getInstance().level;
+            if (level != null) MinoClient.SOUND_QUEUE.tick(level);
         }
 
     }

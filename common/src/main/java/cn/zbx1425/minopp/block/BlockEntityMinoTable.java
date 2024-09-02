@@ -6,6 +6,8 @@ import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
+import cn.zbx1425.minopp.network.S2CEnqueueSoundPacket;
+import cn.zbx1425.minopp.sound.SoundQueue;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,6 +17,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -203,6 +207,16 @@ public class BlockEntityMinoTable extends BlockEntity {
                 state = result;
             } else {
                 state = result;
+            }
+            if (!result.serverSounds.isEmpty()) {
+                MinecraftServer server = ((ServerLevel)level).getServer();
+                for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
+                    if (serverPlayer.level().dimension() == level.dimension()) {
+                        if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(getBlockPos())) <= 16 * 16) {
+                            S2CEnqueueSoundPacket.sendS2C(serverPlayer, result.serverSounds, getBlockPos());
+                        }
+                    }
+                }
             }
             sync();
         }

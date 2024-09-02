@@ -1,11 +1,17 @@
 package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.platform.DummyLookupProvider;
+import cn.zbx1425.minopp.sound.SoundQueue;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class ActionMessage {
 
@@ -14,6 +20,8 @@ public class ActionMessage {
 
     public Type type = Type.PERSISTENT;
     public Component message;
+
+    public List<SoundQueue.Event> serverSounds = new ArrayList<>();
 
     public ActionMessage(CardGame game, CardPlayer player) {
         this.initiator = player;
@@ -29,6 +37,18 @@ public class ActionMessage {
     public ActionMessage fail(Component message) {
         this.type = Type.EPHEMERAL_INITIATOR;
         this.message = message;
+        return this;
+    }
+
+    private static final int SOUND_RANGE = 16;
+
+    public ActionMessage sound(ResourceLocation sound, int timeOffset, CardPlayer target) {
+        serverSounds.add(new SoundQueue.Event(SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE), timeOffset, Optional.of(target.uuid)));
+        return this;
+    }
+
+    public ActionMessage sound(ResourceLocation sound, int timeOffset) {
+        serverSounds.add(new SoundQueue.Event(SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE), timeOffset, Optional.empty()));
         return this;
     }
 
@@ -124,4 +144,6 @@ public class ActionMessage {
             return this == EPHEMERAL_INITIATOR || this == EPHEMERAL_ALL;
         }
     }
+
+    public record TargetedSound(ResourceLocation sound, int timeOffset, CardPlayer target) {}
 }
