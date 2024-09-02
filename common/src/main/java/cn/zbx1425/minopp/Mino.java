@@ -69,20 +69,22 @@ public final class Mino {
         ServerPlatform.registerNetworkReceiver(C2SSeatControlPacket.ID, C2SSeatControlPacket::handleC2S);
     }
 
-    public static void onServerChatMessage(String rawText, ServerPlayer sender) {
+    public static boolean onServerChatMessage(String rawText, ServerPlayer sender) {
         String normalized = rawText.toLowerCase().replace(" ", "")
                 .replace("!", "").replace("！", "");
         if (normalized.equals("mino") || normalized.equals("uno") || normalized.equals("minopp")) {
             BlockPos gamePos = ItemHandCards.getHandCardGamePos(sender);
-            if (gamePos == null) return;
+            if (gamePos == null) return false;
             if (sender.level().getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-                if (tableEntity.game == null) return;
+                if (tableEntity.game == null) return false;
                 CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(sender));
-                if (cardPlayer == null) return;
+                if (cardPlayer == null) return false;
                 ActionMessage result = tableEntity.game.shoutMino(cardPlayer);
                 tableEntity.handleActionResult(result, sender);
+                return true;
             }
         }
+        return false;
     }
 
     public static void onPlayerHurtPlayer(Player targetPlayer, Player srcPlayer) {

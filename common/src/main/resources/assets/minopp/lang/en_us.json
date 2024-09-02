@@ -9,8 +9,10 @@
   "game.minopp.play.must_draw": "You must draw a card right now.",
   "game.minopp.play.invalid_card": "This card doesn't apply to the top card.",
   "game.minopp.play.no_draw": "You can't draw a card right now.",
+  "game.minopp.play.rule_forbid": "The rule forbids you to play this card right now.",
 
   "game.minopp.play.played": "%1$s played %2$s.",
+  "game.minopp.play.cut": "%1$s cut in with %2$s.",
   "game.minopp.play.drew": "%1$s drew %2$s card(s).",
   "game.minopp.play.played_no_card": "%1$s passed.",
   "game.minopp.play.played_no_drawn_card": "%1$s didn't play the drawn card(s).",

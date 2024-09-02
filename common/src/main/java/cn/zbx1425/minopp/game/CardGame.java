@@ -56,19 +56,24 @@ public class CardGame {
         if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
         if (!cardPlayer.hand.contains(card)) return report.fail(Component.translatable("game.minopp.play.not_your_card"));
 
+        boolean isCut = false;
         // Cut
         if (topCard.equals(card) && playerIndex != currentPlayer) {
-            doDiscardCard(cardPlayer, card, report);
-            if (cardPlayer.hand.isEmpty()) {
-                report.sound(Mino.id("game.win"), 0);
-                return report.gameWon();
-            }
-            advanceTurn(report);
-            return report.cut();
+            isCut = true;
+        } else {
+            if (playerIndex != currentPlayer) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
         }
 
-        if (playerIndex != currentPlayer) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
         if (!card.canPlayOn(topCard)) return report.fail(Component.translatable("game.minopp.play.invalid_card"));
+        if (card.suit() == Card.Suit.WILD && card.family() == Card.Family.DRAW) {
+            for (Card otherCard : cardPlayer.hand) {
+                if (otherCard.equals(card)) continue;
+                if (card.canPlayOn(topCard)) {
+                    return report.fail(Component.translatable("game.minopp.play.rule_forbid"));
+                }
+            }
+        }
+        if (isCut) currentPlayer = playerIndex;
         doDiscardCard(cardPlayer, card, report);
         if (cardPlayer.hand.isEmpty()) {
             report.sound(Mino.id("game.win"), 0);
@@ -92,7 +97,7 @@ public class CardGame {
 
         advanceTurn(report);
 
-        return report.played();
+        return isCut ? report.cut() : report.played();
     }
 
     public ActionMessage playNoCard(CardPlayer cardPlayer) {
