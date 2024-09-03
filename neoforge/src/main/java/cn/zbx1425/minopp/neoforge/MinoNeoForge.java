@@ -2,15 +2,10 @@ package cn.zbx1425.minopp.neoforge;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
-import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.MinoCommand;
 import cn.zbx1425.minopp.platform.neoforge.CompatPacketRegistry;
 import cn.zbx1425.minopp.platform.neoforge.RegistriesWrapperImpl;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import net.minecraft.commands.Commands;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -59,24 +54,7 @@ public final class MinoNeoForge {
 
         @SubscribeEvent
         public static void onRegisterCommands(final RegisterCommandsEvent event) {
-            event.getDispatcher().register(Commands.literal("minopp")
-                    .then(Commands.literal("give_test_card").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
-                        .executes(context -> {
-                            ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                            UUID uuid = UUID.randomUUID();
-                            stack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                                    new ItemHandCards.CardGameBindingComponent(uuid, Optional.empty()));
-                            stack.set(DataComponents.CUSTOM_NAME, Component.literal("Test Card " + uuid.toString().substring(0, 8)));
-                            context.getSource().getPlayerOrException().getInventory().add(stack);
-                            return 1;
-                        }))
-                    .then(Commands.literal("shout")
-                        .executes(context -> {
-                            boolean success = Mino.onServerChatMessage("mino", context.getSource().getPlayerOrException());
-                            if (!success) throw new SimpleCommandExceptionType(Component.translatable("game.minopp.play.no_game")).create();
-                            return 1;
-                        }))
-            );
+            MinoCommand.register(event.getDispatcher());
         }
 
         @SubscribeEvent

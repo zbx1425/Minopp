@@ -16,7 +16,7 @@ public class CardPlayer {
 
     public List<Card> hand = new ArrayList<>();
 
-    public boolean serverHasShoutedMino = false;
+    public boolean hasShoutedMino = false;
 
     public CardPlayer(Player mcPlayer) {
         this.uuid = mcPlayer.getGameProfile().getId();
@@ -31,7 +31,8 @@ public class CardPlayer {
     public CardPlayer(CompoundTag tag) {
         this.uuid = tag.getUUID("uuid");
         this.name = tag.getString("name");
-        hand = new ArrayList<>(tag.getList("hand", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
+        this.hand = new ArrayList<>(tag.getList("hand", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
+        this.hasShoutedMino = tag.getBoolean("hasShoutedMino");
     }
 
     public CompoundTag toTag() {
@@ -41,6 +42,7 @@ public class CardPlayer {
         ListTag handTag = new ListTag();
         handTag.addAll(hand.stream().map(Card::toTag).toList());
         tag.put("hand", handTag);
+        tag.putBoolean("hasShoutedMino", hasShoutedMino);
         return tag;
     }
 

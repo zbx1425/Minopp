@@ -7,7 +7,6 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEnqueueSoundPacket;
-import cn.zbx1425.minopp.sound.SoundQueue;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -149,7 +148,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
         players.values().forEach(p -> { if (p != null) {
             p.hand.clear();
-            p.serverHasShoutedMino = false;
+            p.hasShoutedMino = false;
         } });
         game = new CardGame(getPlayersList());
         state = game.initiate(player, 7);
@@ -181,7 +180,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
         players.values().forEach(p -> { if (p != null) {
             p.hand.clear();
-            p.serverHasShoutedMino = false;
+            p.hasShoutedMino = false;
         } });
         state = new ActionMessage(null, player).gameDestroyed();
         sync();

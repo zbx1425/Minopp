@@ -71,7 +71,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     private void renderGameActive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
-        CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayer);
+        CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
         guiGraphics.drawString(font, Component.translatable("gui.minopp.play.game_active"), x, y, 0xFF7090FF);
         y += font.lineHeight;
         LocalPlayer player = Minecraft.getInstance().player;
