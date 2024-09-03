@@ -11,6 +11,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -18,8 +19,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.ServerChatEvent;
-import net.neoforged.neoforge.event.entity.EntityInvulnerabilityCheckEvent;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -84,11 +84,11 @@ public final class MinoNeoForge {
             Mino.onServerChatMessage(event.getRawText(), event.getPlayer());
         }
 
-        @SubscribeEvent
-        public static void onLivingIncomingDamage(final EntityInvulnerabilityCheckEvent event) {
+        @SubscribeEvent(priority = EventPriority.HIGHEST)
+        public static void onAttackEntity(final AttackEntityEvent event) {
             if (event.getEntity().level().isClientSide) return;
-            if (event.getEntity() instanceof Player targetPlayer && event.getSource().getEntity() instanceof Player srcPlayer) {
-                Mino.onPlayerHurtPlayer(targetPlayer, srcPlayer);
+            if (event.getTarget() instanceof Player targetPlayer) {
+                Mino.onPlayerHurtPlayer(targetPlayer, event.getEntity());
             }
         }
     }

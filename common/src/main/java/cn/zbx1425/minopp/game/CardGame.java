@@ -155,7 +155,7 @@ public class CardGame {
         ActionMessage report = new ActionMessage(null, srcPlayer);
         CardPlayer targetPlayer = deAmputate(targetPlayerWithoutHand);
         if (targetPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
-        if (!players.get(currentPlayer).equals(targetPlayer)) {
+        if (players.get(currentPlayer).equals(targetPlayer)) {
             return report.fail(Component.translatable("game.minopp.play.doubt_target_playing"));
         } else if (srcPlayer.equals(targetPlayer)) {
             return report.fail(Component.translatable("game.minopp.play.doubt_target_self"));
