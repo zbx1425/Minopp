@@ -34,19 +34,23 @@ public class C2SSeatControlPacket {
                     player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
                     return;
                 }
-                if (playersList.size() < 2) {
-                    player.displayClientMessage(Component.translatable("game.minopp.play.no_enough_player"), true);
-                    return;
-                }
                 // Start or end the game
                 switch (action) {
-                    case 1 -> tableEntity.startGame(cardPlayer);
-                    case 0 -> tableEntity.destroyGame(cardPlayer);
+                    case 1 -> {
+                        if (tableEntity.game == null) {
+                            if (playersList.size() < 2) {
+                                player.displayClientMessage(Component.translatable("game.minopp.play.no_enough_player"), true);
+                                return;
+                            }
+                            tableEntity.startGame(cardPlayer);
+                        }
+                    }
+                    case 0 -> {
+                        if (tableEntity.game != null) tableEntity.destroyGame(cardPlayer);
+                    }
                     case -1 -> {
                         if (tableEntity.game != null) return;
-                        for (Direction checkDir : tableEntity.players.keySet()) {
-                            tableEntity.players.put(checkDir, null);
-                        }
+                        tableEntity.players.replaceAll((d, v) -> null);
                         tableEntity.state.panic(Component.translatable("game.minopp.play.seats_reset", cardPlayer.name));
                         tableEntity.sync();
                     }

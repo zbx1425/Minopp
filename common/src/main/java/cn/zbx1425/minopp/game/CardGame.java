@@ -151,24 +151,25 @@ public class CardGame {
         return null;
     }
 
-    public ActionMessage doubtMino(CardPlayer realPlayer, UUID targetPlayerWithoutHand) {
-        ActionMessage report = new ActionMessage(null, realPlayer);
-        CardPlayer realTargetPlayer = deAmputate(targetPlayerWithoutHand);
-        if (realTargetPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
-        if (!players.get(currentPlayer).equals(realTargetPlayer)) {
+    public ActionMessage doubtMino(CardPlayer srcPlayer, UUID targetPlayerWithoutHand) {
+        ActionMessage report = new ActionMessage(null, srcPlayer);
+        CardPlayer targetPlayer = deAmputate(targetPlayerWithoutHand);
+        if (targetPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
+        if (!players.get(currentPlayer).equals(targetPlayer)) {
             return report.fail(Component.translatable("game.minopp.play.doubt_target_playing"));
-        } else if (realPlayer.equals(realTargetPlayer)) {
+        } else if (srcPlayer.equals(targetPlayer)) {
             return report.fail(Component.translatable("game.minopp.play.doubt_target_self"));
-        } else if (realTargetPlayer.serverHasShoutedMino) {
+        } else if (targetPlayer.serverHasShoutedMino) {
             return report.fail(Component.translatable("game.minopp.play.doubt_target_shouted"));
-        } else if (realPlayer.hand.size() > 1) {
+        } else if (targetPlayer.hand.size() > 1) {
             return report.fail(Component.translatable("game.minopp.play.doubt_target_hand"));
         } else {
-            if (!doDrawCard(realTargetPlayer, 2, report)) {
+            if (!doDrawCard(targetPlayer, 2, report)) {
                 return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
             }
+            targetPlayer.serverHasShoutedMino = true; // Avoid penalty again and again
             report.sound(Mino.id("game.doubt_success"), 0);
-            return report.ephemeralAll(Component.translatable("game.minopp.play.doubt_success", realPlayer.name, realTargetPlayer.name));
+            return report.ephemeralAll(Component.translatable("game.minopp.play.doubt_success", srcPlayer.name, targetPlayer.name));
         }
     }
 

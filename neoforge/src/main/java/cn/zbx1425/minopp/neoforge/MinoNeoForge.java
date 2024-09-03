@@ -18,6 +18,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.ServerChatEvent;
+import net.neoforged.neoforge.event.entity.EntityInvulnerabilityCheckEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -84,7 +85,7 @@ public final class MinoNeoForge {
         }
 
         @SubscribeEvent
-        public static void onLivingIncomingDamage(final LivingIncomingDamageEvent event) {
+        public static void onLivingIncomingDamage(final EntityInvulnerabilityCheckEvent event) {
             if (event.getEntity().level().isClientSide) return;
             if (event.getEntity() instanceof Player targetPlayer && event.getSource().getEntity() instanceof Player srcPlayer) {
                 Mino.onPlayerHurtPlayer(targetPlayer, srcPlayer);
