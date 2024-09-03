@@ -5,8 +5,25 @@ import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-public record Card(Family family, Suit suit, int number, Card actualCard) {
+public class Card {
+
+    public Family family;
+    public Suit suit;
+    public int number;
+    public Card equivCard;
+
+    public Card(Family family, Suit suit, int number) {
+        this.family = family;
+        this.suit = suit;
+        this.number = number;
+    }
+
+    private Card(Family family, Suit suit, int number, Card equivCard) {
+        this(family, suit, number);
+        this.equivCard = equivCard;
+    }
 
     public static List<Card> createDeck() {
         // Create a deck of UNO cards.
@@ -14,27 +31,30 @@ public record Card(Family family, Suit suit, int number, Card actualCard) {
         // Numbers
         for (Suit suit : Suit.values()) {
             if (suit == Suit.WILD) continue;
-            for (int i = 0; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i, null));
-            for (int i = 1; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i, null));
+            for (int i = 0; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i));
+            for (int i = 1; i <= 9; i++) deck.add(new Card(Family.NUMBER, suit, i));
         }
         // Skip, Reverse, Draw 2
         for (Suit suit : Suit.values()) {
             if (suit == Suit.WILD) continue;
             for (int i = 0; i < 2; i++) {
-                deck.add(new Card(Family.SKIP, suit, -101, null));
-                deck.add(new Card(Family.REVERSE, suit, -102, null));
-                deck.add(new Card(Family.DRAW, suit, -2, null));
+                deck.add(new Card(Family.SKIP, suit, -101));
+                deck.add(new Card(Family.REVERSE, suit, -102));
+                deck.add(new Card(Family.DRAW, suit, -2));
             }
         }
         // Wild, Wild Draw 4
         for (int i = 0; i < 4; i++) {
-            deck.add(new Card(Family.NUMBER, Suit.WILD, -1, null));
-            deck.add(new Card(Family.DRAW, Suit.WILD, -4, null));
+            deck.add(new Card(Family.NUMBER, Suit.WILD, -1));
+            deck.add(new Card(Family.DRAW, Suit.WILD, -4));
         }
         return deck;
     }
 
     public boolean canPlayOn(Card topCard) {
+        if (equivCard != null) return equivCard.canPlayOn(topCard);
+        if (topCard.equivCard != null) return canPlayOn(topCard.equivCard);
+
         if (topCard.family == Family.DRAW) {
             // Draw 2 and Wild Draw 4 can only be resolved by playing another Draw 2 or Wild Draw 4.
             return family == topCard.family && number == topCard.number;
@@ -47,20 +67,47 @@ public record Card(Family family, Suit suit, int number, Card actualCard) {
     }
 
     public Component getDisplayName() {
-        if (actualCard != null) return actualCard.getDisplayName();
         return Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase())
                 .append(" ").append(Component.translatable("game.minopp.card.family." + family.name().toLowerCase(),
                         family == Family.DRAW ? -number : (suit == Suit.WILD ? "" : number)));
     }
 
     public Component getCardFaceName() {
-        if (actualCard != null) return actualCard.getCardFaceName();
         return Component.translatable("game.minopp.card.family." + family.name().toLowerCase(),
                         family == Family.DRAW ? -number : (suit == Suit.WILD ? "" : number));
     }
 
-    public Card getActualCard() {
-        return actualCard == null ? this : actualCard;
+    public Card withEquivFamily(Family equivFamily) {
+        return new Card(family, suit, number, new Card(equivFamily, getEquivSuit(), number));
+    }
+
+    public Card withEquivSuit(Suit equivSuit) {
+        return new Card(family, suit, number, new Card(getEquivFamily(), equivSuit, number));
+    }
+
+    public Family getEquivFamily() {
+        return equivCard == null ? family : equivCard.family;
+    }
+
+    public Suit getEquivSuit() {
+        return equivCard == null ? suit : equivCard.suit;
+    }
+
+    public Card eraseEquiv() {
+        return new Card(family, suit, number);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Card card = (Card) o;
+        return number == card.number && family == card.family && suit == card.suit;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(family, suit, number);
     }
 
     public enum Suit {
@@ -97,7 +144,7 @@ public record Card(Family family, Suit suit, int number, Card actualCard) {
         tag.putString("family", family.name());
         tag.putString("suit", suit.name());
         tag.putInt("number", number);
-        if (actualCard != null) tag.put("actualCard", actualCard.toTag());
+        if (equivCard != null) tag.put("actualCard", equivCard.toTag());
         return tag;
     }
 }

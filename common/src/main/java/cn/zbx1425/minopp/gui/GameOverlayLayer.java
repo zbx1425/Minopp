@@ -91,9 +91,9 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         y += font.lineHeight * 2;
 
         MutableComponent topCardInfo = Component.translatable("gui.minopp.play.top_card", tableEntity.game.topCard.getDisplayName().getString());
-        if (tableEntity.game.topCard.getActualCard().suit() == Card.Suit.WILD) {
+        if (tableEntity.game.topCard.suit == Card.Suit.WILD) {
             topCardInfo.append(", ").append(Component.translatable("gui.minopp.play.top_card_wild_color",
-                    Component.translatable("game.minopp.card.suit." + tableEntity.game.topCard.suit().name().toLowerCase())));
+                    Component.translatable("game.minopp.card.suit." + tableEntity.game.topCard.getEquivSuit().name().toLowerCase())));
         }
         guiGraphics.drawString(font, topCardInfo, x, y, 0xFFFFFFDD);
         y += font.lineHeight * 2;
@@ -131,7 +131,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                     boolean isShouting = !isPass && BlockMinoTable.Client.isShoutModifierHeld();
                     int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
                     int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
-                    boolean highlight = Minecraft.getInstance().level.getGameTime() % 10L < 5L;
+                    boolean highlight = Minecraft.getInstance().level.getGameTime() % 3L < 2L && isPass;
                     int msgWidth = Math.max(font.width(cursorMessage), isShouting ? font.width(shoutMessage) : 0);
                     int msgHeight = isShouting ? font.lineHeight * 2 : font.lineHeight;
                     guiGraphics.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 2, highlight ? 0x80AAAA66 : 0x80000000);
@@ -186,26 +186,26 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             guiGraphics.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
 
             Card card = realPlayer.hand.get(i);
-            float cardU = switch (card.family()) {
-                case NUMBER -> Math.abs(card.number()) * 16;
+            float cardU = switch (card.family) {
+                case NUMBER -> Math.abs(card.number) * 16;
                 case SKIP -> 160;
                 case DRAW -> 176;
                 case REVERSE -> 192;
             };
-            float cardV = card.suit().ordinal() * 25;
+            float cardV = card.suit.ordinal() * 25;
             int cardUW = 16;
             int cardVH = 25;
-//            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit().color);
+//            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit.color);
             guiGraphics.blit(ATLAS_LOCATION, x + 5, y + 5, CARD_WIDTH - 10, CARD_HEIGHT - 10,
                     cardU + 1, cardV + 1, cardUW - 2, cardVH - 2, 256, 128);
             guiGraphics.pose().pushPose();
             guiGraphics.pose().translate(x + 7, y + 7, 0);
             guiGraphics.pose().scale(1.5f, 1.5f, 0);
-            if (card.family() == Card.Family.REVERSE) {
+            if (card.family == Card.Family.REVERSE) {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 208, 0, 10, 10, 256, 128);
-            } else if (card.family() == Card.Family.SKIP) {
+            } else if (card.family == Card.Family.SKIP) {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 218, 0, 10, 10, 256, 128);
-            } else if (card.suit() == Card.Suit.WILD && card.family() == Card.Family.NUMBER) {
+            } else if (card.suit == Card.Suit.WILD && card.family == Card.Family.NUMBER) {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 228, 0, 10, 10, 256, 128);
             } else {
                 guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFFFFFFF);

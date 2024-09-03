@@ -41,7 +41,7 @@ public class CardGame {
             }
         }
         Card tobeTopCard = deck.removeLast();
-        while (tobeTopCard.family() != Card.Family.NUMBER || tobeTopCard.suit() == Card.Suit.WILD) {
+        while (tobeTopCard.family != Card.Family.NUMBER || tobeTopCard.suit == Card.Suit.WILD) {
             deck.add(tobeTopCard);
             Collections.shuffle(deck);
             tobeTopCard = deck.removeLast();
@@ -65,10 +65,10 @@ public class CardGame {
         }
 
         if (!card.canPlayOn(topCard)) return report.fail(Component.translatable("game.minopp.play.invalid_card"));
-        if (card.suit() == Card.Suit.WILD && card.family() == Card.Family.DRAW) {
+        if (card.suit == Card.Suit.WILD && card.family == Card.Family.DRAW) {
             for (Card otherCard : cardPlayer.hand) {
                 if (otherCard.equals(card)) continue;
-                if (card.canPlayOn(topCard)) {
+                if (otherCard.canPlayOn(topCard)) {
                     return report.fail(Component.translatable("game.minopp.play.rule_forbid"));
                 }
             }
@@ -80,10 +80,10 @@ public class CardGame {
             return report.gameWon();
         }
 
-        if (card.suit() == Card.Suit.WILD) {
-            topCard = new Card(topCard.family(), wildSelection, topCard.number(), topCard.getActualCard());
+        if (card.suit == Card.Suit.WILD) {
+            topCard = topCard.withEquivSuit(wildSelection);
         }
-        switch (card.family()) {
+        switch (card.family) {
             case SKIP -> isSkipping = true;
             case REVERSE -> {
                 if (players.size() == 2) {
@@ -92,7 +92,7 @@ public class CardGame {
                     isAntiClockwise = !isAntiClockwise;
                 }
             }
-            case DRAW -> drawCount -= card.number();
+            case DRAW -> drawCount -= card.number;
         }
 
         advanceTurn(report);
@@ -116,7 +116,7 @@ public class CardGame {
             if (this.drawCount > 0) {
                 // The draw card has already performed penalty
                 // Next player doesn't have to also use draw to counteract
-                this.topCard = new Card(Card.Family.NUMBER, topCard.suit(), topCard.number(), topCard.getActualCard());
+                this.topCard = topCard.withEquivFamily(Card.Family.NUMBER);
                 this.drawCount = 0;
             }
             currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
@@ -173,7 +173,7 @@ public class CardGame {
     }
 
     private void doDiscardCard(CardPlayer player, Card card, ActionMessage report) {
-        discardDeck.add(topCard.getActualCard());
+        discardDeck.add(topCard.eraseEquiv());
         topCard = card;
         player.hand.remove(card);
         report.sound(Mino.id("game.play"), 0);

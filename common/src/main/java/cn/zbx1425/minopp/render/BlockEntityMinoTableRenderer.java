@@ -70,14 +70,14 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             poseStack.translate(discardRandom.nextFloat() * 6 - 3, discardRandom.nextFloat() * 6 - 3, ci / 32f);
             poseStack.mulPose(Axis.ZP.rotation(discardRandom.nextFloat() * 2 * (float)Math.PI));
 
-            Card card = ci == blockEntity.game.discardDeck.size() ? blockEntity.game.topCard.getActualCard() : blockEntity.game.discardDeck.get(ci).getActualCard();
-            float cardU = switch (card.family()) {
-                case NUMBER -> Math.abs(card.number()) * 16;
+            Card card = ci == blockEntity.game.discardDeck.size() ? blockEntity.game.topCard : blockEntity.game.discardDeck.get(ci);
+            float cardU = switch (card.family) {
+                case NUMBER -> Math.abs(card.number) * 16;
                 case SKIP -> 160;
                 case DRAW -> 176;
                 case REVERSE -> 192;
             } / 256f;
-            float cardV = card.suit().ordinal() * 25 / 128f;
+            float cardV = card.suit.ordinal() * 25 / 128f;
             float cardUW = 16 / 256f;
             float cardVH = 25 / 128f;
             int color = (ci == blockEntity.game.discardDeck.size())
