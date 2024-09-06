@@ -50,14 +50,14 @@ public class CardGame {
             tobeTopCard = deck.removeLast();
         }
         topCard = tobeTopCard;
-        return ActionReport.builder(cardPlayer)
+        return ActionReport.builder(this, cardPlayer)
                 .sound(Mino.id("game.play"), 0)
                 .sound(Mino.id("game.turn_notice"), 500, players.get(currentPlayerIndex))
                 .gameStarted();
     }
 
     public ActionReport playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection) {
-        ActionReport report = ActionReport.builder(cardPlayer);
+        ActionReport report = ActionReport.builder(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
         if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
         if (!cardPlayer.hand.contains(card)) return report.fail(Component.translatable("game.minopp.play.not_your_card"));
@@ -84,11 +84,8 @@ public class CardGame {
         if (cardPlayer.hand.isEmpty()) {
             report.sound(Mino.id("game.win"), 0);
 
-            // Firework
-            FireworkExplosion explosion = new FireworkExplosion(
-                    FireworkExplosion.Shape.LARGE_BALL, IntList.of(0xFF0000, 0x00FF00, 0x0000FF), IntList.of(0x00FFFF, 0xFF00FF, 0xFFFF00), false, false);
             for (int i = 0; i < 5; i++) {
-                report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, List.of(explosion)));
+                report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, PlayerFireworkEffectEvent.WIN_EXPLOSION));
             }
 
             return report.gameWon();

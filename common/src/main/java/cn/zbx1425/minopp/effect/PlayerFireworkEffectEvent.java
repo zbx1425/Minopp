@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.effect;
 
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -41,4 +42,11 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
             level.createFireworks(origin.getX(), origin.getY() + 2, origin.getZ(), 0, 0, 0, firework);
         }
     }
+
+    public static final List<FireworkExplosion> WIN_EXPLOSION = List.of(
+            new FireworkExplosion(FireworkExplosion.Shape.SMALL_BALL, IntList.of(0xD32F2F, 0xF4511E),
+                    IntList.of(0xEF9A9A, 0xFFAB91), false, false),
+            new FireworkExplosion(FireworkExplosion.Shape.LARGE_BALL, IntList.of(0xFDD835, 0xC0CA33),
+                    IntList.of(0xFFF59D, 0xE6EE9C), false, false)
+    );
 }
