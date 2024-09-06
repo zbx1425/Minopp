@@ -3,6 +3,7 @@ package cn.zbx1425.minopp.network;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.game.ActionMessage;
+import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.platform.ServerPlatform;
 import com.mojang.datafixers.util.Pair;
 import io.netty.buffer.Unpooled;

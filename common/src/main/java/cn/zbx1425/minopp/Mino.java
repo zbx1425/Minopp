@@ -2,7 +2,7 @@ package cn.zbx1425.minopp;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
-import cn.zbx1425.minopp.game.ActionMessage;
+import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
@@ -14,19 +14,15 @@ import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import cn.zbx1425.minopp.platform.ServerPlatform;
 import com.mojang.serialization.Codec;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
@@ -79,7 +75,7 @@ public final class Mino {
                 if (tableEntity.game == null) return false;
                 CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(sender));
                 if (cardPlayer == null) return false;
-                ActionMessage result = tableEntity.game.shoutMino(cardPlayer);
+                ActionReport result = tableEntity.game.shoutMino(cardPlayer);
                 tableEntity.handleActionResult(result, sender);
                 return true;
             }
@@ -94,7 +90,7 @@ public final class Mino {
             if (tableEntity.game == null) return;
             CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(srcPlayer));
             if (cardPlayer == null) return;
-            ActionMessage result = tableEntity.game.doubtMino(cardPlayer, ItemHandCards.getCardPlayer(targetPlayer).uuid);
+            ActionReport result = tableEntity.game.doubtMino(cardPlayer, ItemHandCards.getCardPlayer(targetPlayer).uuid);
             tableEntity.handleActionResult(result, (ServerPlayer) srcPlayer);
         }
     }

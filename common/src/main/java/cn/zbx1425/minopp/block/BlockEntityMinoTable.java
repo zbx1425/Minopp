@@ -2,6 +2,7 @@ package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.ActionMessage;
+import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
@@ -86,7 +87,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                 clientMessageList.add(new Pair<>(state, System.currentTimeMillis() + 16000));
             }
             state = newState;
-            clientMessageList.removeIf(entry -> entry.getFirst().type == ActionMessage.Type.EPHEMERAL_INITIATOR);
+            clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
         }
     }
 
@@ -141,7 +142,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             if (!playerFound) {
                 // No player found or no hand card item given, destroy the game
                 destroyGame(player);
-                state = new ActionMessage(null, player).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name));
+                state = ActionReport.builder(player).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name)).message;
                 return;
             }
         }
@@ -151,7 +152,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hasShoutedMino = false;
         } });
         game = new CardGame(getPlayersList());
-        state = game.initiate(player, 7);
+        state = game.initiate(player, 7).message;
         sync();
     }
 
@@ -182,11 +183,11 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hand.clear();
             p.hasShoutedMino = false;
         } });
-        state = new ActionMessage(null, player).gameDestroyed();
+        state = ActionReport.builder(player).gameDestroyed().message;
         sync();
     }
 
-    public void sendEphemeralToAll(ActionMessage message) {
+    public void sendMessageToAll(ActionMessage message) {
         for (CardPlayer player : getPlayersList()) {
             Player mcPlayer = level.getPlayerByUUID(player.uuid);
             if (mcPlayer != null) {
@@ -195,24 +196,25 @@ public class BlockEntityMinoTable extends BlockEntity {
         }
     }
 
-    public void handleActionResult(ActionMessage result, ServerPlayer player) {
+    public void handleActionResult(ActionReport result, ServerPlayer player) {
         if (result != null) {
-            if (result.type == ActionMessage.Type.EPHEMERAL_INITIATOR) {
-                S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), result);
-            } else if (result.type == ActionMessage.Type.EPHEMERAL_ALL) {
-                sendEphemeralToAll(result);
-            } else if (result.type == ActionMessage.Type.GAME_END) {
+            if (result.shouldDestroyGame) {
                 destroyGame(ItemHandCards.getCardPlayer(player));
-                state = result;
-            } else {
-                state = result;
             }
-            if (!result.serverSounds.isEmpty()) {
+            ActionMessage message = result.message;
+            if (message != null) {
+                switch (message.type()) {
+                    case STATE -> state = message;
+                    case FAIL -> S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), result.message);
+                    case MESSAGE_ALL -> sendMessageToAll(result.message);
+                }
+            }
+            if (!result.effects.isEmpty()) {
                 MinecraftServer server = ((ServerLevel)level).getServer();
                 for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                     if (serverPlayer.level().dimension() == level.dimension()) {
                         if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(getBlockPos())) <= 16 * 16) {
-                            S2CEnqueueSoundPacket.sendS2C(serverPlayer, result.serverSounds, getBlockPos());
+                            S2CEnqueueSoundPacket.sendS2C(serverPlayer, result.effects, getBlockPos());
                         }
                     }
                 }

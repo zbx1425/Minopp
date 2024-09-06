@@ -3,7 +3,7 @@ package cn.zbx1425.minopp.gui;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
-import cn.zbx1425.minopp.game.ActionMessage;
+import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
@@ -102,8 +102,8 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             guiGraphics.drawString(font, Component.literal(part), x, y, 0xFFFFFFFF);
             y += font.lineHeight;
         }
-        for (ListIterator<Pair<ActionMessage, Long>> it = tableEntity.clientMessageList.listIterator(tableEntity.clientMessageList.size()); it.hasPrevious(); ) {
-            Pair<ActionMessage, Long> entry = it.previous();
+        for (ListIterator<Pair<ActionReport, Long>> it = tableEntity.clientMessageList.listIterator(tableEntity.clientMessageList.size()); it.hasPrevious(); ) {
+            Pair<ActionReport, Long> entry = it.previous();
             long currentTime = System.currentTimeMillis();
             if (entry.getSecond() - 200 < currentTime) {
                 it.remove();

@@ -26,8 +26,8 @@ public class CardGame {
         this.players = players;
     }
 
-    public ActionMessage initiate(CardPlayer cardPlayer, int initialCardCount) {
-        if (players.size() < 2) return ActionMessage.NO_GAME;
+    public ActionReport initiate(CardPlayer cardPlayer, int initialCardCount) {
+        if (players.size() < 2) return ActionReport.NO_GAME;
         currentPlayerIndex = new Random().nextInt(players.size());
         drawCount = 0;
         isSkipping = false;
@@ -47,11 +47,14 @@ public class CardGame {
             tobeTopCard = deck.removeLast();
         }
         topCard = tobeTopCard;
-        return new ActionMessage(this, cardPlayer).sound(Mino.id("game.play"), 0).gameStarted();
+        return ActionReport.builder(cardPlayer)
+                .sound(Mino.id("game.play"), 0)
+                .sound(Mino.id("game.turn_notice"), 500, players.get(currentPlayerIndex))
+                .gameStarted();
     }
 
-    public ActionMessage playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection) {
-        ActionMessage report = new ActionMessage(this, cardPlayer);
+    public ActionReport playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection) {
+        ActionReport report = ActionReport.builder(cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
         if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
         if (!cardPlayer.hand.contains(card)) return report.fail(Component.translatable("game.minopp.play.not_your_card"));
@@ -100,8 +103,8 @@ public class CardGame {
         return isCut ? report.cut() : report.played();
     }
 
-    public ActionMessage playNoCard(CardPlayer cardPlayer) {
-        ActionMessage report = new ActionMessage(this, cardPlayer);
+    public ActionReport playNoCard(CardPlayer cardPlayer) {
+        ActionReport report = ActionReport.builder(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
         if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
         if (playerIndex != currentPlayerIndex) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
@@ -131,13 +134,13 @@ public class CardGame {
     }
 
 
-    public ActionMessage shoutMino(CardPlayer realPlayer) {
-        ActionMessage report = new ActionMessage(null, realPlayer);
+    public ActionReport shoutMino(CardPlayer realPlayer) {
+        ActionReport report = ActionReport.builder(this, realPlayer);
         if (!realPlayer.hasShoutedMino) {
             if (realPlayer.hand.size() <= 1) {
                 realPlayer.hasShoutedMino = true;
                 report.sound(Mino.id("game.mino_shout"), 0);
-                return report.ephemeralAll(Component.translatable("game.minopp.play.mino_shout", realPlayer.name));
+                return report.messageAll(Component.translatable("game.minopp.play.mino_shout", realPlayer.name));
             } else {
                 if (!doDrawCard(realPlayer, 2, report)) {
                     return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
@@ -145,14 +148,14 @@ public class CardGame {
                 realPlayer.hasShoutedMino = true; // Avoid penalty again and again
                 report.sound(Mino.id("game.mino_shout"), 0);
                 report.sound(Mino.id("game.mino_shout_invalid"), 500);
-                return report.ephemeralAll(Component.translatable("game.minopp.play.mino_shout_invalid", realPlayer.name));
+                return report.messageAll(Component.translatable("game.minopp.play.mino_shout_invalid", realPlayer.name));
             }
         }
         return null;
     }
 
-    public ActionMessage doubtMino(CardPlayer srcPlayer, UUID targetPlayerWithoutHand) {
-        ActionMessage report = new ActionMessage(null, srcPlayer);
+    public ActionReport doubtMino(CardPlayer srcPlayer, UUID targetPlayerWithoutHand) {
+        ActionReport report = ActionReport.builder(this, srcPlayer);
         CardPlayer targetPlayer = deAmputate(targetPlayerWithoutHand);
         if (targetPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
         if (players.get(currentPlayerIndex).equals(targetPlayer)) {
@@ -169,18 +172,18 @@ public class CardGame {
             }
             targetPlayer.hasShoutedMino = true; // Avoid penalty again and again
             report.sound(Mino.id("game.doubt_success"), 0);
-            return report.ephemeralAll(Component.translatable("game.minopp.play.doubt_success", srcPlayer.name, targetPlayer.name));
+            return report.messageAll(Component.translatable("game.minopp.play.doubt_success", srcPlayer.name, targetPlayer.name));
         }
     }
 
-    public void doDiscardCard(CardPlayer player, Card card, ActionMessage report) {
+    public void doDiscardCard(CardPlayer player, Card card, ActionReport report) {
         discardDeck.add(topCard.eraseEquiv());
         topCard = card;
         player.hand.remove(card);
         report.sound(Mino.id("game.play"), 0);
     }
 
-    public boolean doDrawCard(CardPlayer cardPlayer, int drawCount, ActionMessage report) {
+    public boolean doDrawCard(CardPlayer cardPlayer, int drawCount, ActionReport report) {
         if (deck.size() < drawCount) {
             Collections.shuffle(discardDeck);
             deck.addAll(discardDeck);
@@ -199,7 +202,7 @@ public class CardGame {
         return true;
     }
 
-    private void advanceTurn(ActionMessage report) {
+    private void advanceTurn(ActionReport report) {
 //        CardPlayer previousPlayer = players.get(currentPlayer);
 
         currentPlayerPhase = PlayerActionPhase.DISCARD_HAND;

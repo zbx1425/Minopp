@@ -2,7 +2,7 @@ package cn.zbx1425.minopp.network;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
-import cn.zbx1425.minopp.game.ActionMessage;
+import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.platform.ClientPlatform;
@@ -13,7 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -53,7 +52,7 @@ public class C2SPlayCardPacket {
                 if (tableEntity.game == null) return;
                 CardPlayer cardPlayer = tableEntity.game.deAmputate(playerUuid);
                 if (cardPlayer == null) return;
-                ActionMessage result;
+                ActionReport result;
                 switch (actionType) {
                     case 0 -> {
                         Card.Suit wildSelection = wildSelectionOrdinal == -1 ? null : Card.Suit.values()[wildSelectionOrdinal];
@@ -62,7 +61,7 @@ public class C2SPlayCardPacket {
                     case 1 -> result = tableEntity.game.playNoCard(cardPlayer);
                     case 2 -> result = tableEntity.game.shoutMino(cardPlayer);
                     case 3 -> result = tableEntity.game.doubtMino(cardPlayer, doubtTargetPlayerUuid);
-                    default -> result = ActionMessage.NO_GAME;
+                    default -> result = ActionReport.NO_GAME;
                 }
                 tableEntity.handleActionResult(result, player);
             }

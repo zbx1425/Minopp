@@ -3,8 +3,7 @@ package cn.zbx1425.minopp.network;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.platform.ServerPlatform;
-import cn.zbx1425.minopp.sound.SoundQueue;
-import io.netty.buffer.ByteBuf;
+import cn.zbx1425.minopp.game.EffectQueue;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -19,9 +18,9 @@ public class S2CEnqueueSoundPacket {
 
     public static final ResourceLocation ID = Mino.id("enqueue_sound");
 
-    public static void sendS2C(ServerPlayer target, List<SoundQueue.Event> sounds, BlockPos origin) {
+    public static void sendS2C(ServerPlayer target, List<EffectQueue.Event> sounds, BlockPos origin) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
-        SoundQueue.Event.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(packet, sounds);
+        EffectQueue.Event.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(packet, sounds);
         packet.writeBlockPos(origin);
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
     }
@@ -29,7 +28,7 @@ public class S2CEnqueueSoundPacket {
     public static class Client {
 
         public static void handleS2C(FriendlyByteBuf packet) {
-            List<SoundQueue.Event> sounds = SoundQueue.Event.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(packet);
+            List<EffectQueue.Event> sounds = EffectQueue.Event.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(packet);
             BlockPos origin = packet.readBlockPos();
             MinoClient.SOUND_QUEUE.addAll(sounds, origin, Minecraft.getInstance().player);
         }

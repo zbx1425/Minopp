@@ -2,6 +2,7 @@ package cn.zbx1425.minopp.network;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
+import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.ClientPlatform;
@@ -51,7 +52,7 @@ public class C2SSeatControlPacket {
                     case -1 -> {
                         if (tableEntity.game != null) return;
                         tableEntity.players.replaceAll((d, v) -> null);
-                        tableEntity.state.panic(Component.translatable("game.minopp.play.seats_reset", cardPlayer.name));
+                        tableEntity.state = ActionReport.builder().panic(Component.translatable("game.minopp.play.seats_reset", cardPlayer.name)).message;
                         tableEntity.sync();
                     }
                 }

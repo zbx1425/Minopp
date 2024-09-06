@@ -3,11 +3,11 @@ package cn.zbx1425.minopp;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEnqueueSoundPacket;
 import cn.zbx1425.minopp.platform.ClientPlatform;
-import cn.zbx1425.minopp.sound.SoundQueue;
+import cn.zbx1425.minopp.game.EffectQueue;
 
 public class MinoClient {
 
-    public static final SoundQueue SOUND_QUEUE = new SoundQueue();
+    public static final EffectQueue SOUND_QUEUE = new EffectQueue();
 
     public static void init() {
         ClientPlatform.registerNetworkReceiver(S2CActionEphemeralPacket.ID, S2CActionEphemeralPacket.Client::handleS2C);

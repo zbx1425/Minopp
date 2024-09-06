@@ -1,4 +1,4 @@
-package cn.zbx1425.minopp.sound;
+package cn.zbx1425.minopp.game;
 
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.PriorityQueue;
@@ -7,8 +7,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.game.ClientboundSoundPacket;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -19,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class SoundQueue {
+public class EffectQueue {
 
     private final PriorityQueue<TimedEvent> queue = new ObjectArrayPriorityQueue<>(Comparator.comparingLong(a -> a.time));
 

@@ -1,13 +1,12 @@
 package cn.zbx1425.minopp;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
-import cn.zbx1425.minopp.game.ActionMessage;
+import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -45,7 +44,7 @@ public class MinoCommand {
                 .then(Commands.literal("force_discard").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
                         .executes(context -> {
                             withPlayerAndGame(context, (game, player) -> {
-                                ActionMessage report = new ActionMessage(game, player);
+                                ActionReport report = ActionReport.builder(game, player);
                                 if (player.hand.isEmpty()) return;
                                 game.doDiscardCard(player, player.hand.getFirst(), report);
                             });
@@ -55,14 +54,14 @@ public class MinoCommand {
                         .then(Commands.argument("draw_count", IntegerArgumentType.integer(1))
                             .executes(context -> {
                                 withPlayerAndGame(context, (game, player) -> {
-                                    ActionMessage report = new ActionMessage(game, player);
+                                    ActionReport report = ActionReport.builder(game, player);
                                     game.doDrawCard(player, IntegerArgumentType.getInteger(context, "draw_count"), report);
                                 });
                                 return 1;
                             }))
                         .executes(context -> {
                             withPlayerAndGame(context, (game, player) -> {
-                                ActionMessage report = new ActionMessage(game, player);
+                                ActionReport report = ActionReport.builder(game, player);
                                 game.doDrawCard(player, 1, report);
                             });
                             return 1;
