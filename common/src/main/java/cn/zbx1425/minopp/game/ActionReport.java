@@ -1,5 +1,8 @@
 package cn.zbx1425.minopp.game;
 
+import cn.zbx1425.minopp.effect.EffectEvent;
+import cn.zbx1425.minopp.effect.EffectQueue;
+import cn.zbx1425.minopp.effect.SoundEffectEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -16,7 +19,7 @@ public class ActionReport {
 
     public ActionMessage message;
     public boolean shouldDestroyGame = false;
-    public List<EffectQueue.Event> effects = new ArrayList<>();
+    public List<EffectEvent> effects = new ArrayList<>();
 
     private ActionReport(CardGame game, CardPlayer player) {
         this.initiator = player;
@@ -57,12 +60,17 @@ public class ActionReport {
     private static final int SOUND_RANGE = 16;
 
     public ActionReport sound(ResourceLocation sound, int timeOffset, CardPlayer target) {
-        effects.add(new EffectQueue.Event(SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE), timeOffset, Optional.of(target.uuid)));
+        effects.add(new SoundEffectEvent(timeOffset, Optional.of(target.uuid), SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE)));
         return this;
     }
 
     public ActionReport sound(ResourceLocation sound, int timeOffset) {
-        effects.add(new EffectQueue.Event(SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE), timeOffset, Optional.empty()));
+        effects.add(new SoundEffectEvent(timeOffset, Optional.empty(), SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE)));
+        return this;
+    }
+
+    public ActionReport effect(EffectEvent event) {
+        effects.add(event);
         return this;
     }
 

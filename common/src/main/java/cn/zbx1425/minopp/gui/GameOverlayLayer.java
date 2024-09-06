@@ -3,6 +3,7 @@ package cn.zbx1425.minopp.gui;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
@@ -60,7 +61,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
-        for (String part : tableEntity.state.message.getString().split("\n")) {
+        for (String part : tableEntity.state.message().getString().split("\n")) {
             guiGraphics.drawString(font, Component.literal(part), x, y, 0xFFFFFFFF);
             y += font.lineHeight;
         }
@@ -98,19 +99,19 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         guiGraphics.drawString(font, topCardInfo, x, y, 0xFFFFFFDD);
         y += font.lineHeight * 2;
 
-        for (String part : tableEntity.state.message.getString().split("\n")) {
+        for (String part : tableEntity.state.message().getString().split("\n")) {
             guiGraphics.drawString(font, Component.literal(part), x, y, 0xFFFFFFFF);
             y += font.lineHeight;
         }
-        for (ListIterator<Pair<ActionReport, Long>> it = tableEntity.clientMessageList.listIterator(tableEntity.clientMessageList.size()); it.hasPrevious(); ) {
-            Pair<ActionReport, Long> entry = it.previous();
+        for (ListIterator<Pair<ActionMessage, Long>> it = tableEntity.clientMessageList.listIterator(tableEntity.clientMessageList.size()); it.hasPrevious(); ) {
+            Pair<ActionMessage, Long> entry = it.previous();
             long currentTime = System.currentTimeMillis();
             if (entry.getSecond() - 200 < currentTime) {
                 it.remove();
             } else {
-                int color = entry.getFirst().type.isEphemeral() ? 0x00FF0000 : 0x00AAAAAA;
+                int color = entry.getFirst().type().isEphemeral() ? 0x00FF0000 : 0x00AAAAAA;
                 int alpha = Mth.clamp(0 ,0xFF, (int)(0xFF * (entry.getSecond() - currentTime) / 1000));
-                guiGraphics.drawString(font, entry.getFirst().message, x, y, alpha << 24 | color);
+                guiGraphics.drawString(font, entry.getFirst().message(), x, y, alpha << 24 | color);
                 y += font.lineHeight;
             }
         }

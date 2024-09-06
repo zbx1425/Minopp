@@ -1,4 +1,4 @@
-package cn.zbx1425.minopp.game;
+package cn.zbx1425.minopp.effect;
 
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.PriorityQueue;
@@ -25,41 +25,36 @@ public class EffectQueue {
         long time = System.currentTimeMillis();
         synchronized (queue) {
             while (!queue.isEmpty() && queue.first().time <= time) {
-                queue.dequeue().play(level);
+                queue.dequeue().summon(level);
             }
         }
     }
 
-    public void addAll(List<Event> events, BlockPos origin, Player self) {
+    public void addAll(List<EffectEvent> events, BlockPos origin, Player self) {
         synchronized (queue) {
             long time = System.currentTimeMillis();
-            for (Event event : events) {
-                if (event.target.isEmpty() || event.target.get().equals(self.getGameProfile().getId())) {
+            for (EffectEvent event : events) {
+                if (event.target().isEmpty() || event.target().get().equals(self.getGameProfile().getId())) {
                     queue.enqueue(new TimedEvent(event, time, origin));
                 }
             }
         }
     }
 
-    public record Event(SoundEvent sound, int timeOffset, Optional<UUID> target) {
+    private static class TimedEvent {
 
-        public static StreamCodec<ByteBuf, Event> STREAM_CODEC = StreamCodec.composite(
-                SoundEvent.DIRECT_STREAM_CODEC, Event::sound,
-                ByteBufCodecs.INT, Event::timeOffset,
-                UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), Event::target,
-                Event::new
-        );
-    }
+        private final EffectEvent event;
+        private final long time;
+        private final BlockPos origin;
 
-    private record TimedEvent(SoundEvent sound, long time, BlockPos origin) {
-
-        public TimedEvent(Event incoming, long baseTime, BlockPos origin) {
-            this(incoming.sound(), baseTime + incoming.timeOffset(), origin);
+        public TimedEvent(EffectEvent incoming, long baseTime, BlockPos origin) {
+            this.event = incoming;
+            this.time = baseTime + incoming.timeOffset();
+            this.origin = origin;
         }
 
-        public void play(Level level) {
-            level.playLocalSound(origin, sound, SoundSource.PLAYERS,
-                    1, 1, false);
+        public void summon(Level level) {
+            event.summon(level, origin);
         }
     }
 }

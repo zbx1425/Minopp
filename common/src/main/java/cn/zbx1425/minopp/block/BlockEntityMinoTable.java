@@ -7,7 +7,7 @@ import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
-import cn.zbx1425.minopp.network.S2CEnqueueSoundPacket;
+import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -214,7 +214,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                 for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                     if (serverPlayer.level().dimension() == level.dimension()) {
                         if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(getBlockPos())) <= 16 * 16) {
-                            S2CEnqueueSoundPacket.sendS2C(serverPlayer, result.effects, getBlockPos());
+                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, getBlockPos());
                         }
                     }
                 }

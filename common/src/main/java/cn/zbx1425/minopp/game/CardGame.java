@@ -1,9 +1,12 @@
 package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.effect.PlayerFireworkEffectEvent;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.component.FireworkExplosion;
 
 import java.util.*;
 
@@ -80,6 +83,14 @@ public class CardGame {
         doDiscardCard(cardPlayer, card, report);
         if (cardPlayer.hand.isEmpty()) {
             report.sound(Mino.id("game.win"), 0);
+
+            // Firework
+            FireworkExplosion explosion = new FireworkExplosion(
+                    FireworkExplosion.Shape.LARGE_BALL, IntList.of(0xFF0000, 0x00FF00, 0x0000FF), IntList.of(0x00FFFF, 0xFF00FF, 0xFFFF00), false, false);
+            for (int i = 0; i < 5; i++) {
+                report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, List.of(explosion)));
+            }
+
             return report.gameWon();
         }
 
