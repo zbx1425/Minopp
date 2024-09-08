@@ -11,7 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
@@ -39,8 +38,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class BlockMinoTable extends Block implements EntityBlock {
 
     public static final EnumProperty<TablePartType> PART = EnumProperty.create("part", TablePartType.class);
@@ -52,7 +49,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+    protected @NotNull ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockPos corePos = getCore(blockState, blockPos);
             ItemHandCards.CardGameBindingComponent gameBinding = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY);
@@ -104,7 +101,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
+    protected @NotNull InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
         BlockPos corePos = getCore(blockState, blockPos);
         BlockEntity blockEntity = level.getBlockEntity(corePos);
         if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
@@ -132,9 +129,8 @@ public class BlockMinoTable extends Block implements EntityBlock {
         return InteractionResult.FAIL;
     }
 
-    @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext blockPlaceContext) {
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext blockPlaceContext) {
         BlockPos firstPartPos = blockPlaceContext.getClickedPos();
         Level level = blockPlaceContext.getLevel();
         for (int i = 0; i < 4; i++) {
@@ -170,6 +166,20 @@ public class BlockMinoTable extends Block implements EntityBlock {
             }
         }
         return super.updateShape(blockState, direction, blockState2, levelAccessor, blockPos, blockPos2);
+    }
+
+    @Override
+    public @NotNull BlockState playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+        if (!level.isClientSide && player.isCreative()) {
+            BlockPos firstPartPos = getCore(blockState, blockPos);
+            for (int i = 0; i < 4; i++) {
+                TablePartType thisPart = TablePartType.values()[i];
+                BlockPos thisPartPos = firstPartPos.offset(thisPart.xOff, 0, thisPart.zOff);
+                level.setBlock(thisPartPos, Blocks.AIR.defaultBlockState(),
+                        Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
+            }
+        }
+        return super.playerWillDestroy(level, blockPos, blockState, player);
     }
 
     public static BlockPos getCore(BlockState blockState, BlockPos blockPos) {
@@ -223,7 +233,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     private static final VoxelShape VOXEL_SHAPE = Block.box(0, 0, 0, 16, 14, 16);
 
     @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    protected @NotNull VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return VOXEL_SHAPE;
     }
 }

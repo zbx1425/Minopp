@@ -127,4 +127,9 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         }
         poseStack.popPose();
     }
+
+    @Override
+    public boolean shouldRenderOffScreen(BlockEntityMinoTable blockEntity) {
+        return true;
+    }
 }
