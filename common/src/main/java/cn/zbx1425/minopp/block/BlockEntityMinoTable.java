@@ -211,10 +211,11 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
             if (!result.effects.isEmpty()) {
                 MinecraftServer server = ((ServerLevel)level).getServer();
+                BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
                 for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                     if (serverPlayer.level().dimension() == level.dimension()) {
-                        if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(getBlockPos())) <= 16 * 16) {
-                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, getBlockPos());
+                        if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= 16 * 16) {
+                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos);
                         }
                     }
                 }
