@@ -29,10 +29,10 @@ public class C2SSeatControlPacket {
             if (level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
                 List<CardPlayer> playersList = tableEntity.getPlayersList();
                 CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
-                if (!playersList.contains(cardPlayer)) {
-                    player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
-                    return;
-                }
+//                if (!playersList.contains(cardPlayer)) {
+//                    player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
+//                    return;
+//                }
                 // Start or end the game
                 switch (action) {
                     case 1 -> {
