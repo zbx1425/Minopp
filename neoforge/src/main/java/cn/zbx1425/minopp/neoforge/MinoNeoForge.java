@@ -3,12 +3,10 @@ package cn.zbx1425.minopp.neoforge;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.MinoCommand;
-import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.platform.neoforge.CompatPacketRegistry;
 import cn.zbx1425.minopp.platform.neoforge.RegistriesWrapperImpl;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -21,9 +19,6 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @Mod(Mino.MOD_ID)
 public final class MinoNeoForge {
@@ -76,11 +71,7 @@ public final class MinoNeoForge {
         @SubscribeEvent(priority = EventPriority.HIGHEST)
         public static void onAttackEntity(final AttackEntityEvent event) {
             if (event.getEntity().level().isClientSide) return;
-            if (event.getTarget() instanceof Player targetPlayer) {
-                Mino.onPlayerHurtPlayer(targetPlayer, event.getEntity());
-            } else if (event.getTarget() instanceof EntityAutoPlayer targetAutoPlayer) {
-                Mino.onPlayerHurtAutoPlayer(targetAutoPlayer, event.getEntity());
-            }
+            Mino.onPlayerAttackEntity(event.getTarget(), event.getEntity());
         }
     }
 }

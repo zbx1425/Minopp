@@ -1,7 +1,6 @@
 package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
-import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
@@ -22,11 +21,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -122,6 +121,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         sync();
     }
 
+    @SuppressWarnings("unchecked, rawtypes")
     public void startGame(CardPlayer player) {
         List<CardPlayer> playerList = getPlayersList();
         if (playerList.size() < 2) return;
@@ -130,41 +130,41 @@ public class BlockEntityMinoTable extends BlockEntity {
         AABB searchArea = AABB.ofSize(Vec3.atLowerCornerWithOffset(getBlockPos(), 1, 1, 1), PLAYER_RANGE, PLAYER_RANGE, PLAYER_RANGE);
         for (CardPlayer cardPlayer : playerList) {
             boolean playerFound = false;
-            for (Player mcPlayer : level.players()) {
-                if (!searchArea.contains(mcPlayer.position())) continue;
-                for (ItemStack invItem : mcPlayer.getInventory().items) {
-                    if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                    ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                            ItemHandCards.CardGameBindingComponent.EMPTY);
-                    if (cardPlayer.uuid.equals(gameBinding.player())) {
-                        // We've found an applicable hand card item
-                        if (gameBinding.tablePos().isEmpty()) {
-                            // It's not bound, bind it
-                            ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                    gameBinding.player(), Optional.of(getBlockPos()));
-                            invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                            playerFound = true;
+            for (Entity entity : level.getEntities(null, searchArea)) {
+                if (entity instanceof Player mcPlayer) {
+                    for (ItemStack invItem : mcPlayer.getInventory().items) {
+                        if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
+                        ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
+                                ItemHandCards.CardGameBindingComponent.EMPTY);
+                        if (cardPlayer.uuid.equals(gameBinding.player())) {
+                            // We've found an applicable hand card item
+                            if (gameBinding.tablePos().isEmpty()) {
+                                // It's not bound, bind it
+                                ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
+                                        gameBinding.player(), Optional.of(getBlockPos()));
+                                invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                                playerFound = true;
+                                break;
+                            }
                         }
                     }
-                }
-                if (!playerFound) {
-                    if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
-                        // We've found a player, but no applicable hand card item, give them one
-                        ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                        ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                mcPlayer.getGameProfile().getId(), Optional.of(getBlockPos()));
-                        handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                        playerFound = mcPlayer.getInventory().add(handCard);
+                    if (!playerFound) {
+                        if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
+                            // We've found a player, but no applicable hand card item, give them one
+                            ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
+                            ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
+                                    mcPlayer.getGameProfile().getId(), Optional.of(getBlockPos()));
+                            handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                            playerFound = mcPlayer.getInventory().add(handCard);
+                        }
                     }
-                }
-            }
-            if (!playerFound) {
-                for (EntityAutoPlayer autoPlayer : level.getEntitiesOfClass(EntityAutoPlayer.class, searchArea)) {
-                    if (cardPlayer.equals(autoPlayer.cardPlayer) && autoPlayer.tablePos.equals(getBlockPos())) {
+                } else {
+                    if (cardPlayer.uuid.equals(entity.getUUID())) {
                         // We've found an auto player bound to this table
                         playerFound = true;
                     }
                 }
+                if (playerFound) break;
             }
             if (!playerFound) {
                 // No player found or no hand card item given, destroy the game

@@ -22,6 +22,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
@@ -68,7 +69,6 @@ public final class Mino {
 
         registries.registerEntityType("mino_auto_player", ENTITY_AUTO_PLAYER);
 
-
         ServerPlatform.registerPacket(S2CActionEphemeralPacket.ID);
         ServerPlatform.registerPacket(S2CEffectListPacket.ID);
         ServerPlatform.registerNetworkReceiver(C2SPlayCardPacket.ID, C2SPlayCardPacket::handleC2S);
@@ -93,26 +93,19 @@ public final class Mino {
         return false;
     }
 
-    public static void onPlayerHurtPlayer(Player targetPlayer, Player srcPlayer) {
+    public static void onPlayerAttackEntity(Entity targetMaybePlayer, Player srcPlayer) {
         BlockPos gamePos = ItemHandCards.getHandCardGamePos(srcPlayer);
         if (gamePos == null) return;
         if (srcPlayer.level().getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
             if (tableEntity.game == null) return;
             CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(srcPlayer));
             if (cardPlayer == null) return;
-            ActionReport result = tableEntity.game.doubtMino(cardPlayer, ItemHandCards.getCardPlayer(targetPlayer).uuid);
-            tableEntity.handleActionResult(result, cardPlayer, (ServerPlayer) srcPlayer);
-        }
-    }
-
-    public static void onPlayerHurtAutoPlayer(EntityAutoPlayer targetPlayer, Player srcPlayer) {
-        BlockPos gamePos = ItemHandCards.getHandCardGamePos(srcPlayer);
-        if (gamePos == null) return;
-        if (srcPlayer.level().getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-            if (tableEntity.game == null) return;
-            CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(srcPlayer));
-            if (cardPlayer == null) return;
-            ActionReport result = tableEntity.game.doubtMino(cardPlayer, targetPlayer.getUUID());
+            ActionReport result;
+            if (targetMaybePlayer instanceof Player targetPlayer) {
+                result = tableEntity.game.doubtMino(cardPlayer, ItemHandCards.getCardPlayer(targetPlayer).uuid);
+            } else {
+                result = tableEntity.game.doubtMino(cardPlayer, targetMaybePlayer.getUUID());
+            }
             tableEntity.handleActionResult(result, cardPlayer, (ServerPlayer) srcPlayer);
         }
     }
