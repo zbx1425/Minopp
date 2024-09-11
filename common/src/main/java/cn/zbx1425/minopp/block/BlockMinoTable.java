@@ -111,16 +111,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
 
             if (tableEntity.game == null) {
                 // Join player to table
-                BlockPos centerPos = corePos.offset(1, 0, 1);
-                Vec3 playerOffset = player.position().subtract(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                Direction playerDirection = Direction.fromYRot(Mth.atan2(playerOffset.z, playerOffset.x) * 180 / Math.PI - 90);
-                for (Direction checkDir : tableEntity.players.keySet()) {
-                    if (cardPlayer.equals(tableEntity.players.get(checkDir))) {
-                        tableEntity.players.put(checkDir, null);
-                    }
-                }
-                tableEntity.players.put(playerDirection, cardPlayer);
-                tableEntity.sync();
+                tableEntity.joinPlayerToTable(cardPlayer, player.position());
                 return InteractionResult.SUCCESS;
             }
         }

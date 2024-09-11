@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
@@ -20,10 +21,13 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,15 +108,30 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     private static final int PLAYER_RANGE = 20;
 
+    public void joinPlayerToTable(CardPlayer cardPlayer, Vec3 playerPos) {
+        if (game != null) return;
+        BlockPos centerPos = getBlockPos().offset(1, 0, 1);
+        Vec3 playerOffset = playerPos.subtract(centerPos.getX(), centerPos.getY(), centerPos.getZ());
+        Direction playerDirection = Direction.fromYRot(Mth.atan2(playerOffset.z, playerOffset.x) * 180 / Math.PI - 90);
+        for (Direction checkDir : players.keySet()) {
+            if (cardPlayer.equals(players.get(checkDir))) {
+                players.put(checkDir, null);
+            }
+        }
+        players.put(playerDirection, cardPlayer);
+        sync();
+    }
+
     public void startGame(CardPlayer player) {
         List<CardPlayer> playerList = getPlayersList();
         if (playerList.size() < 2) return;
 
         // Give hand card items to players
+        AABB searchArea = AABB.ofSize(Vec3.atLowerCornerWithOffset(getBlockPos(), 1, 1, 1), PLAYER_RANGE, PLAYER_RANGE, PLAYER_RANGE);
         for (CardPlayer cardPlayer : playerList) {
             boolean playerFound = false;
             for (Player mcPlayer : level.players()) {
-                if (mcPlayer.position().distanceToSqr(Vec3.atCenterOf(getBlockPos())) > PLAYER_RANGE * PLAYER_RANGE) continue;
+                if (!searchArea.contains(mcPlayer.position())) continue;
                 for (ItemStack invItem : mcPlayer.getInventory().items) {
                     if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
                     ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
@@ -136,6 +155,14 @@ public class BlockEntityMinoTable extends BlockEntity {
                                 mcPlayer.getGameProfile().getId(), Optional.of(getBlockPos()));
                         handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
                         playerFound = mcPlayer.getInventory().add(handCard);
+                    }
+                }
+            }
+            if (!playerFound) {
+                for (EntityAutoPlayer autoPlayer : level.getEntitiesOfClass(EntityAutoPlayer.class, searchArea)) {
+                    if (cardPlayer.equals(autoPlayer.cardPlayer) && autoPlayer.tablePos.equals(getBlockPos())) {
+                        // We've found an auto player bound to this table
+                        playerFound = true;
                     }
                 }
             }
@@ -196,15 +223,17 @@ public class BlockEntityMinoTable extends BlockEntity {
         }
     }
 
-    public void handleActionResult(ActionReport result, ServerPlayer player) {
+    public void handleActionResult(ActionReport result, CardPlayer cardPlayer, ServerPlayer player) {
         if (result != null) {
             if (result.shouldDestroyGame) {
-                destroyGame(ItemHandCards.getCardPlayer(player));
+                destroyGame(cardPlayer);
             }
             if (result.state != null) state = result.state;
             for (ActionMessage message : result.messages) {
                 switch (message.type()) {
-                    case FAIL -> S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), message);
+                    case FAIL -> {
+                        if (player != null) S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), message);
+                    }
                     case MESSAGE_ALL -> sendMessageToAll(message);
                 }
             }

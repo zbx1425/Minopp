@@ -1,6 +1,7 @@
 {
   "block.minopp.mino_table": "Mino++ Table",
   "item.minopp.hand_cards": "Mino++ Hand Cards",
+  "entity.minopp.mino_auto_player": "Mino++ Smart Bot",
 
   "game.minopp.play.no_player": "You're not a part of the game.",
   "game.minopp.play.no_enough_player": "Not enough participants to start the game.",

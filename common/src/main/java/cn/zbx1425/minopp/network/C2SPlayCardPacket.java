@@ -51,7 +51,7 @@ public class C2SPlayCardPacket {
                 } else {
                     result = tableEntity.game.playNoCard(cardPlayer);
                 }
-                tableEntity.handleActionResult(result, player);
+                tableEntity.handleActionResult(result, cardPlayer, player);
             }
         });
     }

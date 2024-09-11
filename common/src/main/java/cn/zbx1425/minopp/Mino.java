@@ -2,6 +2,7 @@ package cn.zbx1425.minopp;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
@@ -21,6 +22,8 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.block.Block;
@@ -47,6 +50,10 @@ public final class Mino {
     public static final RegistryObject<DataComponentType<Integer>> DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX = new RegistryObject<>(() ->
             ServerPlatform.createDataComponentType(Codec.INT, ByteBufCodecs.INT));
 
+    public static final RegistryObject<EntityType<EntityAutoPlayer>> ENTITY_AUTO_PLAYER = new RegistryObject<>(() ->
+            EntityType.Builder.of(EntityAutoPlayer::new, MobCategory.CREATURE).sized(0.6f, 1.8f).build("mino_auto_player")
+    );
+
     public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(ItemHandCards::new);
 
     public static void init(RegistriesWrapper registries) {
@@ -58,6 +65,9 @@ public final class Mino {
         registries.registerItem("hand_cards_model_placeholder", ITEM_HAND_CARDS_MODEL_PLACEHOLDER);
         registries.registerDataComponentType("card_game_binding", DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
         registries.registerDataComponentType("client_hand_index", DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX);
+
+        registries.registerEntityType("mino_auto_player", ENTITY_AUTO_PLAYER);
+
 
         ServerPlatform.registerPacket(S2CActionEphemeralPacket.ID);
         ServerPlatform.registerPacket(S2CEffectListPacket.ID);
@@ -76,7 +86,7 @@ public final class Mino {
                 CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(sender));
                 if (cardPlayer == null) return false;
                 ActionReport result = tableEntity.game.shoutMino(cardPlayer);
-                tableEntity.handleActionResult(result, sender);
+                tableEntity.handleActionResult(result, cardPlayer, sender);
                 return true;
             }
         }
@@ -91,7 +101,19 @@ public final class Mino {
             CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(srcPlayer));
             if (cardPlayer == null) return;
             ActionReport result = tableEntity.game.doubtMino(cardPlayer, ItemHandCards.getCardPlayer(targetPlayer).uuid);
-            tableEntity.handleActionResult(result, (ServerPlayer) srcPlayer);
+            tableEntity.handleActionResult(result, cardPlayer, (ServerPlayer) srcPlayer);
+        }
+    }
+
+    public static void onPlayerHurtAutoPlayer(EntityAutoPlayer targetPlayer, Player srcPlayer) {
+        BlockPos gamePos = ItemHandCards.getHandCardGamePos(srcPlayer);
+        if (gamePos == null) return;
+        if (srcPlayer.level().getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
+            if (tableEntity.game == null) return;
+            CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(srcPlayer));
+            if (cardPlayer == null) return;
+            ActionReport result = tableEntity.game.doubtMino(cardPlayer, targetPlayer.getUUID());
+            tableEntity.handleActionResult(result, cardPlayer, (ServerPlayer) srcPlayer);
         }
     }
 }

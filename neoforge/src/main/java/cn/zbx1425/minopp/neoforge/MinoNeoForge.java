@@ -3,8 +3,11 @@ package cn.zbx1425.minopp.neoforge;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.MinoCommand;
+import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.platform.neoforge.CompatPacketRegistry;
 import cn.zbx1425.minopp.platform.neoforge.RegistriesWrapperImpl;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
@@ -14,6 +17,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.ServerChatEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -48,6 +52,13 @@ public final class MinoNeoForge {
             PayloadRegistrar registrar = event.registrar("1");
             MinoNeoForge.PACKET_REGISTRY.commit(registrar);
         }
+
+        @SubscribeEvent
+        public static void newEntityAttributes(EntityAttributeCreationEvent event) {
+            event.put(Mino.ENTITY_AUTO_PLAYER.get(), LivingEntity.createLivingAttributes()
+                    .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                    .build());
+        }
     }
 
     public static class ForgeEventBusListener {
@@ -67,6 +78,8 @@ public final class MinoNeoForge {
             if (event.getEntity().level().isClientSide) return;
             if (event.getTarget() instanceof Player targetPlayer) {
                 Mino.onPlayerHurtPlayer(targetPlayer, event.getEntity());
+            } else if (event.getTarget() instanceof EntityAutoPlayer targetAutoPlayer) {
+                Mino.onPlayerHurtAutoPlayer(targetAutoPlayer, event.getEntity());
             }
         }
     }

@@ -18,8 +18,10 @@ public class ActionReport {
 
     public ActionMessage state;
     public List<ActionMessage> messages = new ArrayList<>();
-    public boolean shouldDestroyGame = false;
     public List<EffectEvent> effects = new ArrayList<>();
+
+    public boolean shouldDestroyGame = false;
+    public boolean isFail = false;
 
     private ActionReport(CardGame game, CardPlayer player) {
         this.initiator = player;
@@ -48,6 +50,7 @@ public class ActionReport {
     }
 
     public ActionReport fail(Component message) {
+        this.isFail = true;
         this.messages.add(new ActionMessage(ActionMessage.Type.FAIL, message));
         return this;
     }
