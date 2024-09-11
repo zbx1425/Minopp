@@ -142,7 +142,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             if (!playerFound) {
                 // No player found or no hand card item given, destroy the game
                 destroyGame(player);
-                state = ActionReport.builder(player).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name)).message;
+                state = ActionReport.builder(player).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name)).state;
                 return;
             }
         }
@@ -152,7 +152,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hasShoutedMino = false;
         } });
         game = new CardGame(getPlayersList());
-        state = game.initiate(player, 7).message;
+        state = game.initiate(player, 7).state;
         sync();
     }
 
@@ -183,7 +183,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hand.clear();
             p.hasShoutedMino = false;
         } });
-        state = ActionReport.builder(player).gameDestroyed().message;
+        state = ActionReport.builder(player).gameDestroyed().state;
         sync();
     }
 
@@ -201,12 +201,11 @@ public class BlockEntityMinoTable extends BlockEntity {
             if (result.shouldDestroyGame) {
                 destroyGame(ItemHandCards.getCardPlayer(player));
             }
-            ActionMessage message = result.message;
-            if (message != null) {
+            if (result.state != null) state = result.state;
+            for (ActionMessage message : result.messages) {
                 switch (message.type()) {
-                    case STATE -> state = message;
-                    case FAIL -> S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), result.message);
-                    case MESSAGE_ALL -> sendMessageToAll(result.message);
+                    case FAIL -> S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), message);
+                    case MESSAGE_ALL -> sendMessageToAll(message);
                 }
             }
             if (!result.effects.isEmpty()) {

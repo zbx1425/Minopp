@@ -56,7 +56,7 @@ public class CardGame {
                 .gameStarted();
     }
 
-    public ActionReport playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection) {
+    public ActionReport playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection, boolean shout) {
         ActionReport report = ActionReport.builder(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
         if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
@@ -104,6 +104,9 @@ public class CardGame {
                 }
             }
             case DRAW -> drawCount -= card.number;
+        }
+        if (shout) {
+            report.combineWith(shoutMino(cardPlayer));
         }
 
         advanceTurn(report);

@@ -8,14 +8,12 @@ import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.ClientPlatform;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
@@ -52,7 +50,7 @@ public class C2SSeatControlPacket {
                     case -1 -> {
                         if (tableEntity.game != null) return;
                         tableEntity.players.replaceAll((d, v) -> null);
-                        tableEntity.state = ActionReport.builder(cardPlayer).panic(Component.translatable("game.minopp.play.seats_reset", cardPlayer.name)).message;
+                        tableEntity.state = ActionReport.builder(cardPlayer).panic(Component.translatable("game.minopp.play.seats_reset", cardPlayer.name)).state;
                         tableEntity.sync();
                     }
                 }

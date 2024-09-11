@@ -42,7 +42,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     }
 
     @Override
-    public void render(BlockEntityMinoTable blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j) {
+    public void render(BlockEntityMinoTable blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
         if (blockEntity.game == null) return;
 
         VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/deck.png")));
@@ -56,7 +56,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         for (int ci = 0; ci < blockEntity.game.deck.size() / 5; ci++) {
             poseStack.translate(deckRandom.nextFloat() * 0.1 - 0.05, deckRandom.nextFloat() * 0.1 - 0.05, 1 / 16f);
             itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
-                    poseStack, multiBufferSource, i, j, model);
+                    poseStack, multiBufferSource, packedLight, packedOverlay, model);
         }
         poseStack.popPose();
 
@@ -84,23 +84,23 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                     ? 0xFFFFFFFF : 0xFFBBBBBB;
             vertexConsumer
                     .addVertex(poseStack.last(), -0.52f, 0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(i).setColor(0xFF000000)
+                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
                     .addVertex(poseStack.last(), -0.52f, -0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(i).setColor(0xFF000000)
+                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
                     .addVertex(poseStack.last(), 0.52f, -0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(i).setColor(0xFF000000)
+                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
                     .addVertex(poseStack.last(), 0.52f, 0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(i).setColor(0xFF000000);
+                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000);
             poseStack.translate(0, 0, 1 / 64f);
             vertexConsumer
                     .addVertex(poseStack.last(), -0.5f, 0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(i).setColor(color)
+                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
                     .addVertex(poseStack.last(), -0.5f, -0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(i).setColor(color)
+                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
                     .addVertex(poseStack.last(), 0.5f, -0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(i).setColor(color)
+                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
                     .addVertex(poseStack.last(), 0.5f, 0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(i).setColor(color);
+                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color);
 
             if (ci == blockEntity.game.discardDeck.size()) {
 //                itemRenderer.render(HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,

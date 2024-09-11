@@ -7,10 +7,12 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -31,7 +33,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
     private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
 
     @Override
-    public void renderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j) {
+    public void renderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
         switch (itemDisplayContext) {
             case FIRST_PERSON_LEFT_HAND, FIRST_PERSON_RIGHT_HAND -> {
                 return;
@@ -52,7 +54,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     poseStack.translate(0, 0, 0.18);
                     for (int k = 0; k < realPlayer.hand.size(); k++) {
                         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-                        itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, i, j,
+                        itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, packedLight, packedOverlay,
                                 itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));
                         poseStack.translate(0, 0.02, 0.08);
                     }
@@ -60,10 +62,18 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     poseStack.pushPose();
                 }
             }
+            case GUI -> {
+                poseStack.popPose();
+                poseStack.mulPose(Axis.ZP.rotationDegrees(15f));
+                ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
+                itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, LightTexture.FULL_BRIGHT, packedOverlay,
+                        itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));
+                poseStack.pushPose();
+            }
             default -> {
                 poseStack.popPose();
                 ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-                itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, i, j,
+                itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, packedLight, packedOverlay,
                         itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));
                 poseStack.pushPose();
             }

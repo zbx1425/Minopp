@@ -1,7 +1,6 @@
 package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.effect.EffectEvent;
-import cn.zbx1425.minopp.effect.EffectQueue;
 import cn.zbx1425.minopp.effect.SoundEffectEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -17,7 +16,8 @@ public class ActionReport {
     private CardGame game;
     private CardPlayer initiator;
 
-    public ActionMessage message;
+    public ActionMessage state;
+    public List<ActionMessage> messages = new ArrayList<>();
     public boolean shouldDestroyGame = false;
     public List<EffectEvent> effects = new ArrayList<>();
 
@@ -43,17 +43,25 @@ public class ActionReport {
     }
 
     public ActionReport state(Component message) {
-        this.message = new ActionMessage(ActionMessage.Type.STATE, message);
+        this.state = new ActionMessage(ActionMessage.Type.STATE, message);
         return this;
     }
 
     public ActionReport fail(Component message) {
-        this.message = new ActionMessage(ActionMessage.Type.FAIL, message);
+        this.messages.add(new ActionMessage(ActionMessage.Type.FAIL, message));
         return this;
     }
 
     public ActionReport messageAll(Component message) {
-        this.message = new ActionMessage(ActionMessage.Type.MESSAGE_ALL, message);
+        this.messages.add(new ActionMessage(ActionMessage.Type.MESSAGE_ALL, message));
+        return this;
+    }
+
+    public ActionReport combineWith(ActionReport other) {
+        if (this.state == null) this.state = other.state;
+        this.messages.addAll(other.messages);
+        this.shouldDestroyGame |= other.shouldDestroyGame;
+        this.effects.addAll(other.effects);
         return this;
     }
 

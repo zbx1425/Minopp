@@ -72,10 +72,8 @@ public class BlockMinoTable extends Block implements EntityBlock {
                         if (selectedCard.suit == Card.Suit.WILD) {
                             Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, Client.isShoutModifierHeld());
                         } else {
-                            C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, null);
-                            if (Client.isShoutModifierHeld()) {
-                                C2SPlayCardPacket.Client.sendShoutMinoC2S(corePos, playerWithoutHand);
-                            }
+                            C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard,
+                                    null, Client.isShoutModifierHeld());
                         }
                     }
                     return ItemInteractionResult.SUCCESS;
