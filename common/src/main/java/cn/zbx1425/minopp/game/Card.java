@@ -18,6 +18,8 @@ public class Card {
         this.family = family;
         this.suit = suit;
         this.number = number;
+//        if (family == null) throw new AssertionError("Card family is null!");
+//        if (suit == null) throw new AssertionError("Card suit is null!");
     }
 
     private Card(Family family, Suit suit, int number, Card equivCard) {

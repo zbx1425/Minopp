@@ -48,22 +48,32 @@ public class EntityAutoPlayer extends LivingEntity {
     private boolean isThinking = false;
     private long thinkingFinishTime = 0;
 
+    public boolean aiNoWin = false;
+    public boolean aiNoForget = false;
+    public byte aiNoDelay = 0;
+    public boolean aiStartGame = false;
+
     public ActionReport performAI(CardGame game, CardPlayer realPlayer) {
         Card topCard = game.topCard;
-        boolean forgetsMino = new Random().nextFloat() < 0.2;
+        boolean forgetsMino = aiNoForget ? false : new Random().nextFloat() < 0.2;
         boolean shoutsMino = !forgetsMino && realPlayer.hand.size() <= 2;
+
+        if (aiNoWin) {
+            if (realPlayer.hand.size() <= 1) {
+                return game.playNoCard(realPlayer);
+            }
+        }
+
         // If we have a card of same number but different suit
-        if (topCard.number != -1) { // Don't apply this logic to Wild
-            for (Card card : realPlayer.hand) {
-                if (card.number == topCard.number && card.suit != topCard.getEquivSuit()) {
-                    ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
-                    if (!result.isFail) return result;
-                }
+        for (Card card : realPlayer.hand) {
+            if (card.number == topCard.number && card.suit != topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
+                ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
+                if (!result.isFail) return result;
             }
         }
         // If we have a card of same suit
         for (Card card : realPlayer.hand) {
-            if (card.suit == topCard.getEquivSuit()) {
+            if (card.suit == topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
                 ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
                 if (!result.isFail) return result;
             }
@@ -103,7 +113,7 @@ public class EntityAutoPlayer extends LivingEntity {
 
         // Rate limiting
         if (level().isClientSide) return;
-        if (level().getGameTime() - lastTickGameTime < 10) {
+        if (aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
             return;
         }
         lastTickGameTime = level().getGameTime();
@@ -152,19 +162,23 @@ public class EntityAutoPlayer extends LivingEntity {
                 setInvulnerable(true);
                 heal(10);
                 if (tableEntity.game.players.get(tableEntity.game.currentPlayerIndex).equals(cardPlayer)) {
-                    if (!isThinking) {
-                        if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN) {
-                            thinkingFinishTime = level().getGameTime() + new Random().nextInt(10, 20);
-                        } else {
-                            thinkingFinishTime = level().getGameTime() + new Random().nextInt(10, 50);
-                        }
-                        isThinking = true;
-                        return;
+                    if (aiNoDelay > 0) {
+                        isThinking = false;
                     } else {
-                        if (level().getGameTime() >= thinkingFinishTime) {
-                            isThinking = false;
-                        } else {
+                        if (!isThinking) {
+                            if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN) {
+                                thinkingFinishTime = level().getGameTime() + new Random().nextInt(10, 20);
+                            } else {
+                                thinkingFinishTime = level().getGameTime() + new Random().nextInt(10, 50);
+                            }
+                            isThinking = true;
                             return;
+                        } else {
+                            if (level().getGameTime() >= thinkingFinishTime) {
+                                isThinking = false;
+                            } else {
+                                return;
+                            }
                         }
                     }
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
@@ -178,9 +192,13 @@ public class EntityAutoPlayer extends LivingEntity {
                 setInvulnerable(false);
                 if (entityData.get(GAME_END_TICK) == -1L) {
                     entityData.set(GAME_END_TICK, level().getGameTime() + 100);
-                }
-                if (level().getGameTime() - entityData.get(GAME_END_TICK) <= 20 * 6) {
+                } else if (level().getGameTime() - entityData.get(GAME_END_TICK) <= 20 * 5) {
                     if (onGround()) jumpFromGround();
+                } else {
+                    if (aiStartGame && tableEntity.getPlayersList().size() >= 2
+                            && tableEntity.getPlayersList().getFirst().equals(cardPlayer)) {
+                        tableEntity.startGame(cardPlayer);
+                    }
                 }
                 if (!tableEntity.getPlayersList().stream().anyMatch(p -> p.equals(cardPlayer))) {
                     // It is not on the table
@@ -240,25 +258,38 @@ public class EntityAutoPlayer extends LivingEntity {
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         if (tablePos != null) {
-            compound.putLong("tablePos", tablePos.asLong());
+            compound.putLong("TablePos", tablePos.asLong());
         }
-        compound.put("cardPlayer", cardPlayer.toTag());
-        compound.put("handStack", entityData.get(HAND_STACK).save(level().registryAccess(), new CompoundTag()));
+        compound.put("CardPlayer", cardPlayer.toTag());
+        compound.put("HandStack", entityData.get(HAND_STACK).save(level().registryAccess(), new CompoundTag()));
+        CompoundTag aiConfig = new CompoundTag();
+        aiConfig.putBoolean("NoWin", aiNoWin);
+        aiConfig.putBoolean("NoForget", aiNoForget);
+        aiConfig.putByte("NoDelay", aiNoDelay);
+        aiConfig.putBoolean("StartGame", aiStartGame);
+        compound.put("AI", aiConfig);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
-        if (compound.contains("tablePos")) {
-            tablePos = BlockPos.of(compound.getLong("tablePos"));
+        if (compound.contains("TablePos", CompoundTag.TAG_LONG)) {
+            tablePos = BlockPos.of(compound.getLong("TablePos"));
         } else {
             tablePos = null;
         }
-        if (compound.contains("cardPlayer")) {
-            cardPlayer = new CardPlayer(compound.getCompound("cardPlayer"));
+        if (compound.contains("CardPlayer", CompoundTag.TAG_COMPOUND)) {
+            cardPlayer = new CardPlayer(compound.getCompound("CardPlayer"));
         }
-        if (compound.contains("handStack")) {
-            entityData.set(HAND_STACK, ItemStack.parse(level().registryAccess(), compound.getCompound("handStack")).orElse(ItemStack.EMPTY));
+        if (compound.contains("HandStack", CompoundTag.TAG_COMPOUND)) {
+            entityData.set(HAND_STACK, ItemStack.parse(level().registryAccess(), compound.getCompound("HandStack")).orElse(ItemStack.EMPTY));
+        }
+        if (compound.contains("AI", CompoundTag.TAG_COMPOUND)) {
+            CompoundTag aiConfig = compound.getCompound("AI");
+            aiNoWin = aiConfig.getBoolean("NoWin");
+            aiNoForget = aiConfig.getBoolean("NoForget");
+            aiNoDelay = aiConfig.getByte("NoDelay");
+            aiStartGame = aiConfig.getBoolean("StartGame");
         }
     }
 
