@@ -52,14 +52,13 @@ public class EntityAutoPlayer extends LivingEntity {
     private long lastTickGameTime = 0;
     private boolean isThinking = false;
     private long thinkingFinishTime = 0;
-    private long gameEndTime = -1;
+    private long gameEndTime = 0;
 
     public boolean aiNoWin = false;
     public boolean aiNoForget = false;
     public byte aiNoDelay = 0;
     public boolean aiStartGame = false;
 
-    public static final UUID UUID_ZERO = new UUID(0, 0);
     public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
     public String clientSkinGameProfileValidFor = "";
 
@@ -218,7 +217,7 @@ public class EntityAutoPlayer extends LivingEntity {
                 setInvulnerable(false);
                 if (gameEndTime == -1L) {
                     gameEndTime = level().getGameTime() + 100;
-                } else if (level().getGameTime() - gameEndTime <= 20 * 5) {
+                } else if (level().getGameTime() - gameEndTime <= 20 * 3) {
                     if (onGround()) jumpFromGround();
                 } else {
                     if (aiStartGame && tableEntity.getPlayersList().size() >= 2

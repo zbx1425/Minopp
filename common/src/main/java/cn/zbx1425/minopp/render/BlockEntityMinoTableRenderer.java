@@ -54,7 +54,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         BakedModel model = itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0);
         poseStack.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
         Random deckRandom = new Random(0);
-        for (int ci = 0; ci < blockEntity.game.deck.size() / 5; ci++) {
+        for (int ci = 0; ci < Math.ceil(blockEntity.game.deck.size() / 5f); ci++) {
             poseStack.translate(deckRandom.nextFloat() * 0.1 - 0.05, deckRandom.nextFloat() * 0.1 - 0.05, 1 / 16f);
             itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
                     poseStack, multiBufferSource, packedLight, packedOverlay, model);
