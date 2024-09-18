@@ -286,10 +286,8 @@ public class EntityAutoPlayer extends LivingEntity {
     @Override
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
-        if (tablePos != null) {
-            compound.putLong("TablePos", tablePos.asLong());
-        }
-        compound.put("CardPlayer", cardPlayer.toTag());
+        if (tablePos != null) compound.putLong("TablePos", tablePos.asLong());
+        if (cardPlayer != null) compound.put("CardPlayer", cardPlayer.toTag());
         compound.put("HandStack", entityData.get(HAND_STACK).save(level().registryAccess(), new CompoundTag()));
         compound.putBoolean("Active", entityData.get(ACTIVE));
         compound.putString("Skin", entityData.get(SKIN));
@@ -311,6 +309,8 @@ public class EntityAutoPlayer extends LivingEntity {
         }
         if (compound.contains("CardPlayer", CompoundTag.TAG_COMPOUND)) {
             cardPlayer = new CardPlayer(compound.getCompound("CardPlayer"));
+        } else {
+            cardPlayer = null;
         }
         if (compound.contains("HandStack", CompoundTag.TAG_COMPOUND)) {
             entityData.set(HAND_STACK, ItemStack.parse(level().registryAccess(), compound.getCompound("HandStack")).orElse(ItemStack.EMPTY));
