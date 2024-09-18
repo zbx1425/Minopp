@@ -8,6 +8,7 @@ import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -20,6 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -62,33 +64,33 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
         for (String part : tableEntity.state.message().getString().split("\n")) {
-            guiGraphics.drawString(font, Component.literal(part), x, y, 0xFFFFFFFF);
+            drawStringWithBackdrop(guiGraphics, font, Component.literal(part), x, y, 0xFFFFFFFF);
             y += font.lineHeight;
         }
         y += font.lineHeight;
-        guiGraphics.drawString(font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
+        drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
     }
 
     private void renderGameActive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
-        guiGraphics.drawString(font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
+        drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
         y += font.lineHeight;
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         if (currentPlayer.equals(cardPlayer)) {
-            guiGraphics.drawString(font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
+            drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
                     (System.currentTimeMillis() % 400 < 200) ? 0xFFFFFFFF : 0xFFFFFF00);
         } else {
-            guiGraphics.drawString(font, Component.translatable("gui.minopp.play.turn_other", currentPlayer.name), x, y, 0xFFAAAAAA);
+            drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.turn_other", currentPlayer.name), x, y, 0xFFAAAAAA);
         }
         y += font.lineHeight;
         MutableComponent auxInfo = Component.translatable("gui.minopp.play.direction." + (tableEntity.game.isAntiClockwise ? "ccw" : "cw"));
         if (tableEntity.game.drawCount > 0) {
             auxInfo = auxInfo.append(", ").append(Component.translatable("gui.minopp.play.draw_accumulate", tableEntity.game.drawCount));
         }
-        guiGraphics.drawString(font, auxInfo, x, y, 0xFFAAAAAA);
+        drawStringWithBackdrop(guiGraphics, font, auxInfo, x, y, 0xFFAAAAAA);
         y += font.lineHeight * 2;
 
         MutableComponent topCardInfo = Component.translatable("gui.minopp.play.top_card", tableEntity.game.topCard.getDisplayName().getString());
@@ -96,14 +98,17 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             topCardInfo.append(", ").append(Component.translatable("gui.minopp.play.top_card_wild_color",
                     Component.translatable("game.minopp.card.suit." + tableEntity.game.topCard.getEquivSuit().name().toLowerCase())));
         }
-        guiGraphics.drawString(font, topCardInfo, x, y, 0xFFFFFFDD);
+        drawStringWithBackdrop(guiGraphics, font, topCardInfo, x, y, 0xFFFFFFDD);
         y += font.lineHeight * 2;
 
         for (String part : tableEntity.state.message().getString().split("\n")) {
-            guiGraphics.drawString(font, Component.literal(part), x, y, 0xFFFFFFFF);
+            drawStringWithBackdrop(guiGraphics, font, Component.literal(part), x, y, 0xFFFFFFFF);
             y += font.lineHeight;
         }
         for (ListIterator<Pair<ActionMessage, Long>> it = tableEntity.clientMessageList.listIterator(tableEntity.clientMessageList.size()); it.hasPrevious(); ) {
+            if (y > Minecraft.getInstance().getWindow().getGuiScaledHeight() - font.lineHeight - 40) {
+                break;
+            }
             Pair<ActionMessage, Long> entry = it.previous();
             long currentTime = System.currentTimeMillis();
             if (entry.getSecond() - 200 < currentTime) {
@@ -111,7 +116,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             } else {
                 int color = entry.getFirst().type().isEphemeral() ? 0x00FF0000 : 0x00AAAAAA;
                 int alpha = Mth.clamp(0 ,0xFF, (int)(0xFF * (entry.getSecond() - currentTime) / 1000));
-                guiGraphics.drawString(font, entry.getFirst().message(), x, y, alpha << 24 | color);
+                drawStringWithBackdrop(guiGraphics, font, entry.getFirst().message(), x, y, alpha << 24 | color);
                 y += font.lineHeight;
             }
         }
@@ -136,13 +141,22 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                     int msgWidth = Math.max(font.width(cursorMessage), isShouting ? font.width(shoutMessage) : 0);
                     int msgHeight = isShouting ? font.lineHeight * 2 : font.lineHeight;
                     guiGraphics.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 2, highlight ? 0x80AAAA66 : 0x80000000);
-                    guiGraphics.drawString(font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                    drawStringWithBackdrop(guiGraphics, font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
                     if (isShouting) {
-                        guiGraphics.drawString(font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                        drawStringWithBackdrop(guiGraphics, font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
                     }
                 }
             }
         }
+    }
+    
+    private static void drawStringWithBackdrop(GuiGraphics guiGraphics, Font font, Component component, int x, int y, int color) {
+        int i = (int)(0.4 * 255.0F) << 24 & -16777216;
+        int var10001 = x - 2;
+        int var10002 = y ;
+        int var10003 = x + font.width(component) + 2;
+        guiGraphics.fill(var10001, var10002, var10003, y + font.lineHeight, FastColor.ARGB32.multiply(i, color));
+        guiGraphics.drawString(font, component, x, y, color, true);
     }
 
     private static final ResourceLocation ATLAS_LOCATION = Mino.id("textures/gui/deck.png");

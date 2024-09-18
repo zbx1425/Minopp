@@ -21,6 +21,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 
 import java.util.Random;
@@ -131,5 +132,11 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     @Override
     public boolean shouldRenderOffScreen(BlockEntityMinoTable blockEntity) {
         return true;
+    }
+
+    private static final AABB AABB_INFINITE = new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+    public AABB getRenderBoundingBox(BlockEntityMinoTable blockEntity) {
+        return AABB_INFINITE;
     }
 }

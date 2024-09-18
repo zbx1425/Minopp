@@ -8,12 +8,14 @@ import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
@@ -25,6 +27,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class EntityAutoPlayer extends LivingEntity {
 
@@ -47,11 +52,16 @@ public class EntityAutoPlayer extends LivingEntity {
     private long lastTickGameTime = 0;
     private boolean isThinking = false;
     private long thinkingFinishTime = 0;
+    private long gameEndTime = -1;
 
     public boolean aiNoWin = false;
     public boolean aiNoForget = false;
     public byte aiNoDelay = 0;
     public boolean aiStartGame = false;
+
+    public static final UUID UUID_ZERO = new UUID(0, 0);
+    public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
+    public String clientSkinGameProfileValidFor = "";
 
     public ActionReport performAI(CardGame game, CardPlayer realPlayer) {
         Card topCard = game.topCard;
@@ -111,13 +121,27 @@ public class EntityAutoPlayer extends LivingEntity {
     public void tick() {
         super.tick();
 
+        if (level().isClientSide) {
+            if (!clientSkinGameProfileValidFor.equals(entityData.get(SKIN))) {
+                clientSkinGameProfileValidFor = entityData.get(SKIN);
+                try {
+                    UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
+                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
+                } catch (IllegalArgumentException e) {
+                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
+                }
+            }
+            return;
+        }
+
         // Rate limiting
-        if (level().isClientSide) return;
+        if (!entityData.get(ACTIVE)) {
+            return;
+        }
         if (aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
             return;
         }
         lastTickGameTime = level().getGameTime();
-        if (!hasCustomName()) return;
 
         if (tablePos == null) {
             // Search for a table and join it
@@ -132,7 +156,9 @@ public class EntityAutoPlayer extends LivingEntity {
                             BlockEntity blockEntity = level().getBlockEntity(corePos);
                             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                                 if (tableEntity.game != null) continue;
-                                cardPlayer = new CardPlayer(uuid, getCustomName().getString());
+                                String playerName = hasCustomName() ? getCustomName().getString()
+                                        : "MinoBot #" + new Random().nextInt(100, 1000);
+                                cardPlayer = new CardPlayer(uuid, playerName);
                                 ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                                 handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
                                         new ItemHandCards.CardGameBindingComponent(uuid, Optional.of(corePos)));
@@ -184,15 +210,15 @@ public class EntityAutoPlayer extends LivingEntity {
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
                     ActionReport result = performAI(tableEntity.game, realPlayer);
                     tableEntity.handleActionResult(result, realPlayer, null);
-                    entityData.set(GAME_END_TICK, -1L);
+                    gameEndTime = -1;
                 } else {
                     isThinking = false;
                 }
             } else {
                 setInvulnerable(false);
-                if (entityData.get(GAME_END_TICK) == -1L) {
-                    entityData.set(GAME_END_TICK, level().getGameTime() + 100);
-                } else if (level().getGameTime() - entityData.get(GAME_END_TICK) <= 20 * 5) {
+                if (gameEndTime == -1L) {
+                    gameEndTime = level().getGameTime() + 100;
+                } else if (level().getGameTime() - gameEndTime <= 20 * 5) {
                     if (onGround()) jumpFromGround();
                 } else {
                     if (aiStartGame && tableEntity.getPlayersList().size() >= 2
@@ -218,8 +244,12 @@ public class EntityAutoPlayer extends LivingEntity {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (source.getEntity() instanceof Player) {
-            if (!hasCustomName()) {
-                setCustomName(Component.literal("MinoBot #" + new Random().nextInt(100, 1000)));
+            if (!entityData.get(ACTIVE)) {
+                entityData.set(ACTIVE, true);
+            } else {
+                if (((Player)source.getEntity()).getMainHandItem().is(net.minecraft.world.item.Items.STICK)) {
+                    entityData.set(ACTIVE, false);
+                }
             }
         }
         return super.hurt(source, amount);
@@ -262,6 +292,8 @@ public class EntityAutoPlayer extends LivingEntity {
         }
         compound.put("CardPlayer", cardPlayer.toTag());
         compound.put("HandStack", entityData.get(HAND_STACK).save(level().registryAccess(), new CompoundTag()));
+        compound.putBoolean("Active", entityData.get(ACTIVE));
+        compound.putString("Skin", entityData.get(SKIN));
         CompoundTag aiConfig = new CompoundTag();
         aiConfig.putBoolean("NoWin", aiNoWin);
         aiConfig.putBoolean("NoForget", aiNoForget);
@@ -284,6 +316,12 @@ public class EntityAutoPlayer extends LivingEntity {
         if (compound.contains("HandStack", CompoundTag.TAG_COMPOUND)) {
             entityData.set(HAND_STACK, ItemStack.parse(level().registryAccess(), compound.getCompound("HandStack")).orElse(ItemStack.EMPTY));
         }
+        if (compound.contains("Active", CompoundTag.TAG_BYTE)) {
+            entityData.set(ACTIVE, compound.getBoolean("Active"));
+        }
+        if (compound.contains("Skin", CompoundTag.TAG_STRING)) {
+            entityData.set(SKIN, compound.getString("Skin"));
+        }
         if (compound.contains("AI", CompoundTag.TAG_COMPOUND)) {
             CompoundTag aiConfig = compound.getCompound("AI");
             aiNoWin = aiConfig.getBoolean("NoWin");
@@ -294,12 +332,15 @@ public class EntityAutoPlayer extends LivingEntity {
     }
 
     private static final EntityDataAccessor<ItemStack> HAND_STACK = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.ITEM_STACK);
-    private static final EntityDataAccessor<Long> GAME_END_TICK = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Boolean> ACTIVE = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<String> SKIN = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.STRING);
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(HAND_STACK, ItemStack.EMPTY);
-        builder.define(GAME_END_TICK, 0L);
+        builder.define(ACTIVE, false);
+        builder.define(SKIN, "");
     }
 }
+
