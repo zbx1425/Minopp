@@ -1,21 +1,13 @@
 package cn.zbx1425.minopp.effect;
 
-import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayPriorityQueue;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 public class EffectQueue {
 
@@ -54,7 +46,7 @@ public class EffectQueue {
         }
 
         public void summon(Level level) {
-            event.summon(level, origin);
+            event.summonClient(level, origin);
         }
     }
 }

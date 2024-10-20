@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.effect.EffectEvent;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
@@ -240,6 +241,9 @@ public class BlockEntityMinoTable extends BlockEntity {
             if (!result.effects.isEmpty()) {
                 MinecraftServer server = ((ServerLevel)level).getServer();
                 BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
+                for (EffectEvent effect : result.effects) {
+                    effect.summonServer((ServerLevel) level, tableCenterPos);
+                }
                 for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                     if (serverPlayer.level().dimension() == level.dimension()) {
                         if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= 16 * 16) {

@@ -2,6 +2,7 @@ package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.effect.PlayerFireworkEffectEvent;
+import cn.zbx1425.minopp.effect.PlayerGlowEffectEvent;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -84,6 +85,7 @@ public class CardGame {
         if (cardPlayer.hand.isEmpty()) {
             report.sound(Mino.id("game.win"), 0);
 
+            report.effect(new PlayerGlowEffectEvent(0, cardPlayer.uuid, 6 * 20));
             for (int i = 0; i < 5; i++) {
                 report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, PlayerFireworkEffectEvent.WIN_EXPLOSION));
             }
@@ -225,6 +227,7 @@ public class CardGame {
         CardPlayer currentPlayer = players.get(currentPlayerIndex);
         currentPlayer.hasShoutedMino = false;
         report.sound(Mino.id("game.turn_notice"), 500, currentPlayer);
+        report.effect(new PlayerGlowEffectEvent(0, currentPlayer.uuid, 10));
     }
 
     public CardPlayer deAmputate(CardPlayer playerWithoutHand) {
