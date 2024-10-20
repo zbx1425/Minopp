@@ -1,7 +1,13 @@
 {
   "game.play": { "sounds": [ "minopp:play" ] },
   "game.draw": { "sounds": [ "minopp:draw" ] },
-  "game.draw_multi": { "sounds": [ "minopp:draw_multi" ] },
+  "game.draw_multi": { "sounds": [
+    { "name": "minopp:draw_multi", "pitch": 0.8 },
+    { "name": "minopp:draw_multi", "pitch": 0.9 },
+    { "name": "minopp:draw_multi", "pitch": 1.0 },
+    { "name": "minopp:draw_multi", "pitch": 1.1 },
+    { "name": "minopp:draw_multi", "pitch": 1.2 }
+  ] },
   "game.pass": { "sounds": [ "minopp:pass" ] },
   "game.turn_notice": { "sounds": [ "minopp:turn_notice" ]},
   "game.turn_notice_again": { "sounds": [ "minopp:turn_notice_again" ]},
