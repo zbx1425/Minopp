@@ -68,5 +68,8 @@
   "gui.minopp.seats.title": "本桌入座情况",
   "gui.minopp.seats.start": "§a起动",
   "gui.minopp.seats.stop": "§c紧急停止",
-  "gui.minopp.seats.reset": "§6清空座位"
+  "gui.minopp.seats.reset": "§6清空座位",
+
+  "task.minopp.minopp_task": "mino",
+  "task.minopp.minopp_task.desc": "打Mino咯，需要主手闲置"
 }

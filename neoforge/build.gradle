@@ -29,10 +29,18 @@ repositories {
         name = 'NeoForged'
         url = 'https://maven.neoforged.net/releases'
     }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+    flatDir {
+        dir "libs"
+    }
 }
 
 dependencies {
     neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
+    modImplementation "libs:touhoulittlemaid:1.21-release-1.1.13"
 
 //    modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
 

@@ -3,6 +3,8 @@ package cn.zbx1425.minopp.neoforge;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.MinoCommand;
+import cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.MemoryTypeRegister;
+import cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.PoiRegistry;
 import cn.zbx1425.minopp.platform.neoforge.CompatPacketRegistry;
 import cn.zbx1425.minopp.platform.neoforge.RegistriesWrapperImpl;
 import net.minecraft.world.entity.LivingEntity;
@@ -32,6 +34,8 @@ public final class MinoNeoForge {
         registries.registerAllDeferred(eventBus);
         eventBus.register(RegistriesWrapperImpl.RegisterCreativeTabs.class);
         eventBus.register(ModEventBusListener.class);
+        PoiRegistry.POI_TYPES.register(eventBus);
+        MemoryTypeRegister.MEMORY_MODULE_TYPES.register(eventBus);
         NeoForge.EVENT_BUS.register(ForgeEventBusListener.class);
         if (FMLEnvironment.dist.isClient()) {
             MinoClient.init();
