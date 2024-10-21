@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.component.FireworkExplosion;
 import net.minecraft.world.level.Level;
@@ -34,13 +35,18 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
     }
 
     @Override
-    public void summon(Level level, BlockPos origin) {
+    public void summonClient(Level level, BlockPos origin) {
         Player player = level.getPlayerByUUID(targetPlayer);
         if (player != null) {
             level.createFireworks(player.getX(), player.getY() + 2, player.getZ(), 0, 0, 0, firework);
         } else {
             level.createFireworks(origin.getX(), origin.getY() + 2, origin.getZ(), 0, 0, 0, firework);
         }
+    }
+
+    @Override
+    public void summonServer(ServerLevel level, BlockPos origin) {
+
     }
 
     public static final List<FireworkExplosion> WIN_EXPLOSION = List.of(

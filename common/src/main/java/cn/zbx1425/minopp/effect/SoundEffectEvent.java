@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
@@ -27,7 +28,12 @@ public record SoundEffectEvent(int timeOffset, Optional<UUID> target, SoundEvent
     }
 
     @Override
-    public void summon(Level level, BlockPos origin) {
+    public void summonClient(Level level, BlockPos origin) {
         level.playLocalSound(origin, sound, SoundSource.PLAYERS, 1, 1, false);
+    }
+
+    @Override
+    public void summonServer(ServerLevel level, BlockPos origin) {
+
     }
 }
