@@ -105,6 +105,16 @@ public class BlockEntityMinoTable extends BlockEntity {
         return playersList;
     }
 
+    public List<Direction> getEmptyDirections() {
+        List<Direction> emptyDirections = new ArrayList<>();
+        for (Direction direction : PLAYER_ORDER) {
+            if (players.get(direction) == null) {
+                emptyDirections.add(direction);
+            }
+        }
+        return emptyDirections;
+    }
+
     private static final int PLAYER_RANGE = 20;
 
     public void joinPlayerToTable(CardPlayer cardPlayer, Vec3 playerPos) {

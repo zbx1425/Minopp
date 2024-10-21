@@ -68,5 +68,8 @@
   "gui.minopp.seats.title": "Participants Seated on the Table",
   "gui.minopp.seats.start": "§aStart Game",
   "gui.minopp.seats.stop": "§cEmergency Stop",
-  "gui.minopp.seats.reset": "§6Reset Seats"
+  "gui.minopp.seats.reset": "§6Reset Seats",
+
+  "task.minopp.minopp_task": "mino",
+  "task.minopp.minopp_task.desc": "Play MINO, mainhand must be empty"
 }

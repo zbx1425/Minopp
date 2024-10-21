@@ -29,4 +29,7 @@ side = "BOTH"
 
 
 [[mixins]]
+config = "minopp_nf.mixins.json"
+
+[[mixins]]
 config = "minopp.mixins.json"
