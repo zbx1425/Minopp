@@ -27,9 +27,5 @@ versionRange = "[1.21.1,)"
 ordering = "NONE"
 side = "BOTH"
 
-
-[[mixins]]
-config = "minopp_nf.mixins.json"
-
 [[mixins]]
 config = "minopp.mixins.json"
