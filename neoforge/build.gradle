@@ -40,7 +40,7 @@ repositories {
 
 dependencies {
     neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
-    modImplementation "libs:touhoulittlemaid:1.21-release-1.1.13"
+    modImplementation "libs:touhoulittlemaid:1.21-release-1.1.14"
 
 //    modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
 
