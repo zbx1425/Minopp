@@ -3,19 +3,14 @@ package cn.zbx1425.minopp.entity;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
-import cn.zbx1425.minopp.game.ActionReport;
-import cn.zbx1425.minopp.game.Card;
-import cn.zbx1425.minopp.game.CardGame;
-import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.game.*;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
@@ -54,67 +49,10 @@ public class EntityAutoPlayer extends LivingEntity {
     private long thinkingFinishTime = 0;
     private long gameEndTime = 0;
 
-    public boolean aiNoWin = false;
-    public boolean aiNoForget = false;
-    public byte aiNoDelay = 0;
-    public boolean aiStartGame = false;
+    private final AutoPlayer autoPlayer = new AutoPlayer();
 
     public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
     public String clientSkinGameProfileValidFor = "";
-
-    public ActionReport performAI(CardGame game, CardPlayer realPlayer) {
-        Card topCard = game.topCard;
-        boolean forgetsMino = aiNoForget ? false : new Random().nextFloat() < 0.2;
-        boolean shoutsMino = !forgetsMino && realPlayer.hand.size() <= 2;
-
-        if (aiNoWin) {
-            if (realPlayer.hand.size() <= 1) {
-                return game.playNoCard(realPlayer);
-            }
-        }
-
-        // If we have a card of same number but different suit
-        for (Card card : realPlayer.hand) {
-            if (card.number == topCard.number && card.suit != topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
-                ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
-                if (!result.isFail) return result;
-            }
-        }
-        // If we have a card of same suit
-        for (Card card : realPlayer.hand) {
-            if (card.suit == topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
-                ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
-                if (!result.isFail) return result;
-            }
-        }
-        // If we have any other card
-        for (Card card : realPlayer.hand) {
-            if (card.canPlayOn(topCard)) {
-                if (card.suit == Card.Suit.WILD) {
-                    // Check which suit is most common in hand
-                    int[] suitCount = new int[4];
-                    for (Card handCard : realPlayer.hand) {
-                        if (handCard.suit != Card.Suit.WILD) {
-                            suitCount[handCard.suit.ordinal()]++;
-                        }
-                    }
-                    Card.Suit mostCommonSuit = Card.Suit.values()[new Random().nextInt(0, 4)];
-                    for (int i = 1; i < 4; i++) {
-                        if (suitCount[i] > suitCount[mostCommonSuit.ordinal()]) {
-                            mostCommonSuit = Card.Suit.values()[i];
-                        }
-                    }
-                    ActionReport result = game.playCard(realPlayer, card, mostCommonSuit, shoutsMino);
-                    if (!result.isFail) return result;
-                } else {
-                    ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
-                    if (!result.isFail) return result;
-                }
-            }
-        }
-        // We're out of option
-        return game.playNoCard(realPlayer);
-    }
 
     @Override
     public void tick() {
@@ -137,7 +75,7 @@ public class EntityAutoPlayer extends LivingEntity {
         if (!entityData.get(ACTIVE)) {
             return;
         }
-        if (aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
+        if (autoPlayer.aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
             return;
         }
         lastTickGameTime = level().getGameTime();
@@ -187,7 +125,7 @@ public class EntityAutoPlayer extends LivingEntity {
                 setInvulnerable(true);
                 heal(10);
                 if (tableEntity.game.players.get(tableEntity.game.currentPlayerIndex).equals(cardPlayer)) {
-                    if (aiNoDelay > 0) {
+                    if (autoPlayer.aiNoDelay > 0) {
                         isThinking = false;
                     } else {
                         if (!isThinking) {
@@ -207,7 +145,7 @@ public class EntityAutoPlayer extends LivingEntity {
                         }
                     }
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
-                    ActionReport result = performAI(tableEntity.game, realPlayer);
+                    ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer);
                     tableEntity.handleActionResult(result, realPlayer, null);
                     gameEndTime = -1;
                 } else {
@@ -220,7 +158,7 @@ public class EntityAutoPlayer extends LivingEntity {
                 } else if (level().getGameTime() - gameEndTime <= 20 * 3) {
                     if (onGround()) jumpFromGround();
                 } else {
-                    if (aiStartGame && tableEntity.getPlayersList().size() >= 2
+                    if (autoPlayer.aiStartGame && tableEntity.getPlayersList().size() >= 2
                             && tableEntity.getPlayersList().getFirst().equals(cardPlayer)) {
                         tableEntity.startGame(cardPlayer);
                     }
@@ -292,10 +230,10 @@ public class EntityAutoPlayer extends LivingEntity {
         compound.putBoolean("Active", entityData.get(ACTIVE));
         compound.putString("Skin", entityData.get(SKIN));
         CompoundTag aiConfig = new CompoundTag();
-        aiConfig.putBoolean("NoWin", aiNoWin);
-        aiConfig.putBoolean("NoForget", aiNoForget);
-        aiConfig.putByte("NoDelay", aiNoDelay);
-        aiConfig.putBoolean("StartGame", aiStartGame);
+        aiConfig.putBoolean("NoWin", autoPlayer.aiNoWin);
+        aiConfig.putBoolean("NoForget", autoPlayer.aiNoForget);
+        aiConfig.putByte("NoDelay", autoPlayer.aiNoDelay);
+        aiConfig.putBoolean("StartGame", autoPlayer.aiStartGame);
         compound.put("AI", aiConfig);
     }
 
@@ -323,10 +261,10 @@ public class EntityAutoPlayer extends LivingEntity {
         }
         if (compound.contains("AI", CompoundTag.TAG_COMPOUND)) {
             CompoundTag aiConfig = compound.getCompound("AI");
-            aiNoWin = aiConfig.getBoolean("NoWin");
-            aiNoForget = aiConfig.getBoolean("NoForget");
-            aiNoDelay = aiConfig.getByte("NoDelay");
-            aiStartGame = aiConfig.getBoolean("StartGame");
+            autoPlayer.aiNoWin = aiConfig.getBoolean("NoWin");
+            autoPlayer.aiNoForget = aiConfig.getBoolean("NoForget");
+            autoPlayer.aiNoDelay = aiConfig.getByte("NoDelay");
+            autoPlayer.aiStartGame = aiConfig.getBoolean("StartGame");
         }
     }
 
