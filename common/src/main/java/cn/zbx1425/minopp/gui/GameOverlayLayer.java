@@ -20,6 +20,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
@@ -223,7 +224,9 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             } else if (card.suit == Card.Suit.WILD && card.family == Card.Family.NUMBER) {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 228, 0, 10, 10, 256, 128);
             } else {
-                guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFFFFFFF);
+                Component cardName = card.getCardFaceName().copy()
+                        .withStyle(Style.EMPTY.withFont(ResourceLocation.withDefaultNamespace("include/default")));
+                guiGraphics.drawString(font, cardName, 0, 0, 0xFFFFFFFF);
             }
             guiGraphics.pose().popPose();
         }
