@@ -141,10 +141,10 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                     boolean highlight = Minecraft.getInstance().level.getGameTime() % 3L < 2L && isPass;
                     int msgWidth = Math.max(font.width(cursorMessage), isShouting ? font.width(shoutMessage) : 0);
                     int msgHeight = isShouting ? font.lineHeight * 2 : font.lineHeight;
-                    guiGraphics.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 2, highlight ? 0x80AAAA66 : 0x80000000);
-                    drawStringWithBackdrop(guiGraphics, font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                    guiGraphics.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 3, highlight ? 0x80AAAA66 : 0x80000000);
+                    guiGraphics.drawString(font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
                     if (isShouting) {
-                        drawStringWithBackdrop(guiGraphics, font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                        guiGraphics.drawString(font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
                     }
                 }
             }

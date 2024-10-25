@@ -116,7 +116,9 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                 Matrix4f matrix4f = poseStack.last().pose();
                 float g = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
                 int k = (int)(g * 255.0F) << 24;
-                Component component = card.getDisplayName();
+                Component component = (card.suit == Card.Suit.WILD)
+                    ? card.getDisplayName().copy().append(Component.translatable("game.minopp.card.suit." + card.getEquivSuit().name().toLowerCase()))
+                    : card.getDisplayName();
                 float h = (float)(-font.width(component) / 2);
                 font.drawInBatch(component, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
                 font.drawInBatch(component, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
