@@ -42,6 +42,8 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     public List<Pair<ActionMessage, Long>> clientMessageList = new ArrayList<>();
 
+    public ItemStack award = ItemStack.EMPTY;
+
     public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
         super(Mino.BLOCK_ENTITY_TYPE_MINO_TABLE.get(), blockPos, blockState);
@@ -64,6 +66,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             compoundTag.put("game", game.toTag());
         }
         compoundTag.put("state", state.toTag());
+        if (!award.isEmpty()) compoundTag.put("award", award.save(provider));
     }
 
     @Override
@@ -92,6 +95,11 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
             state = newState;
             clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
+        }
+        if (compoundTag.contains("award")) {
+            award = ItemStack.parse(provider, compoundTag.get("award")).orElse(ItemStack.EMPTY);
+        } else {
+            award = ItemStack.EMPTY;
         }
     }
 
@@ -252,7 +260,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                 MinecraftServer server = ((ServerLevel)level).getServer();
                 BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
                 for (EffectEvent effect : result.effects) {
-                    effect.summonServer((ServerLevel) level, tableCenterPos);
+                    effect.summonServer((ServerLevel) level, tableCenterPos, this);
                 }
                 for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                     if (serverPlayer.level().dimension() == level.dimension()) {

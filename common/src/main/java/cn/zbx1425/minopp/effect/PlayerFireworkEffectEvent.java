@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.effect;
 
+import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
@@ -45,7 +46,7 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
     }
 
     @Override
-    public void summonServer(ServerLevel level, BlockPos origin) {
+    public void summonServer(ServerLevel level, BlockPos origin, BlockEntityMinoTable tableEntity) {
 
     }
 

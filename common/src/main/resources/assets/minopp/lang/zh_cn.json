@@ -1,6 +1,7 @@
 {
   "block.minopp.mino_table": "Mino++ 游戏桌",
   "item.minopp.hand_cards": "Mino++ 手牌",
+  "item.minopp.coupon": "奖券",
   "entity.minopp.mino_auto_player": "MinoBot",
 
   "game.minopp.play.no_player": "你不在此对局中。",

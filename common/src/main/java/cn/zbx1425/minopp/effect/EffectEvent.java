@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.effect;
 
+import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,7 +22,7 @@ public interface EffectEvent {
     void summonClient(Level level, BlockPos origin);
 
     // Summons the effect on the server side. TimeOffset not supported.
-    void summonServer(ServerLevel level, BlockPos origin);
+    void summonServer(ServerLevel level, BlockPos origin, BlockEntityMinoTable tableEntity);
 
     record Type<T extends EffectEvent>(ResourceLocation id, StreamCodec<ByteBuf, T> streamCodec) { }
 }

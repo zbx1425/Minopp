@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.effect;
 
+import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -33,7 +34,7 @@ public record SoundEffectEvent(int timeOffset, Optional<UUID> target, SoundEvent
     }
 
     @Override
-    public void summonServer(ServerLevel level, BlockPos origin) {
+    public void summonServer(ServerLevel level, BlockPos origin, BlockEntityMinoTable tableEntity) {
 
     }
 }

@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.effect.GrantRewardEffectEvent;
 import cn.zbx1425.minopp.effect.PlayerFireworkEffectEvent;
 import cn.zbx1425.minopp.effect.PlayerGlowEffectEvent;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -85,7 +86,8 @@ public class CardGame {
         if (cardPlayer.hand.isEmpty()) {
             report.sound(Mino.id("game.win"), 0);
 
-            report.effect(new PlayerGlowEffectEvent(0, cardPlayer.uuid, 6 * 20));
+            report.effect(new PlayerGlowEffectEvent(cardPlayer.uuid, 6 * 20));
+            report.effect(new GrantRewardEffectEvent(cardPlayer.uuid));
             for (int i = 0; i < 5; i++) {
                 report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, PlayerFireworkEffectEvent.WIN_EXPLOSION));
             }

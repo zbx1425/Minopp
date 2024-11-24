@@ -1,6 +1,7 @@
 {
   "block.minopp.mino_table": "Mino++ Table",
   "item.minopp.hand_cards": "Mino++ Hand Cards",
+  "item.minopp.coupon": "Coupon",
   "entity.minopp.mino_auto_player": "MinoBot",
 
   "game.minopp.play.no_player": "You're not a part of the game.",
