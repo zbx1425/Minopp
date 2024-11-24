@@ -2,6 +2,7 @@
   "block.minopp.mino_table": "Mino++ Table",
   "item.minopp.hand_cards": "Mino++ Hand Cards",
   "item.minopp.coupon": "Coupon",
+  "item.minopp.coupon.description": "Share with your friends.",
   "entity.minopp.mino_auto_player": "MinoBot",
 
   "game.minopp.play.no_player": "You're not a part of the game.",
