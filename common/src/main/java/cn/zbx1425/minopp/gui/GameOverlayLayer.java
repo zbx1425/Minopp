@@ -173,7 +173,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         } else {
             zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
         }
-        ClientPlatform.globalFovModifier = Mth.lerp(zoomAnimationProgress, 1.0, 0.95);
+        ClientPlatform.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
     }
     
     private static void drawStringWithBackdrop(GuiGraphics guiGraphics, Font font, Component component, int x, int y, int color) {
@@ -200,7 +200,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
 
         final int CARD_V_SPACING = 20;
-        final int CARD_WIDTH = (int)(100.0 * Mth.lerp(zoomAnimationProgress, 0.95, 1.0));
+        final int CARD_WIDTH = (int)(100.0 * Mth.lerp(zoomAnimationProgress, 0.93, 1.0));
         final int CARD_HEIGHT = (int)(CARD_WIDTH * 8.9 / 5.6);
 
         if (tableEntity.game == null) return;
