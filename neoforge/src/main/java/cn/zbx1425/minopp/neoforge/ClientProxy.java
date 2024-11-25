@@ -3,6 +3,7 @@ package cn.zbx1425.minopp.neoforge;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
+import cn.zbx1425.minopp.platform.ClientPlatform;
 import cn.zbx1425.minopp.platform.neoforge.ClientPlatformImpl;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
@@ -54,8 +55,8 @@ public class ClientProxy {
     public static class ForgeEventBusListener {
 
         @SubscribeEvent
-        public static void onRenderLevelStage(RenderLevelStageEvent event) {
-
+        public static void onComputeFovModifier(ComputeFovModifierEvent event) {
+            event.setNewFovModifier(event.getNewFovModifier() * (float)ClientPlatform.globalFovModifier);
         }
 
         @SubscribeEvent

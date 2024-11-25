@@ -138,7 +138,7 @@ public class CardGame {
                 this.drawCount = 0;
             }
             currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
-            report.sound(Mino.id("game.turn_notice_again"), 500, cardPlayer);
+            report.sound(Mino.id("game.turn_notice_again"), 500 * (drawCount > 1 ? drawCount + 1 : 1), cardPlayer);
             return report.drew(drawCount);
         } else if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN) {
             report.sound(Mino.id("game.pass"), 0);

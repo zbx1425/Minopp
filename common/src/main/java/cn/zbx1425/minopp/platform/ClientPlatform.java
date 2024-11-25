@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 
 public class ClientPlatform {
 
+    public static double globalFovModifier = 1;
+
     @ExpectPlatform
     public static void registerKeyBinding(KeyMapping keyMapping) {
         throw new AssertionError();
