@@ -37,8 +37,6 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
 
     @Override
     public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
-        ClientPlatform.globalFovModifier = 1;
-
         LocalPlayer player = Minecraft.getInstance().player;
         BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
         HitResult hitResult = Minecraft.getInstance().hitResult;
@@ -51,17 +49,30 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             }
         }
         BlockPos gamePos = (handCardGamePos != null) ? handCardGamePos : hitResultGamePos;
-        if (gamePos == null) return;
+        if (gamePos == null) {
+            TurnDeadMan.setOutsideGame();
+            return;
+        }
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
-        if (tableEntity == null) return;
+        if (tableEntity == null) {
+            TurnDeadMan.setOutsideGame();
+            return;
+        }
 
         if (tableEntity.game == null) {
             renderGameInactive(guiGraphics, deltaTracker, tableEntity);
+            TurnDeadMan.setOutsideGame();
             zoomAnimationProgress = zoomAnimationTarget = 0;
-        } else if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
-            // Only render active view when the player is looking at the same table as the hand cards
-            renderGameActive(guiGraphics, deltaTracker, tableEntity);
+        } else {
+            TurnDeadMan.tick(tableEntity.game, deltaTracker);
+            if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
+                // Only render active view when the player is looking at the same table as the hand cards
+                renderGameActive(guiGraphics, deltaTracker, tableEntity);
+            } else {
+                zoomAnimationTarget = 0;
+            }
         }
+        performZoomAnimation(deltaTracker);
         renderHandCards(guiGraphics, deltaTracker);
     }
 
@@ -154,6 +165,21 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             }
         }
 
+        if (TurnDeadMan.isAlarmActive()) {
+            Component deadManMessage = Component.translatable("gui.minopp.play.cursor.dead_man");
+            int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+            int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+            boolean highlight = Minecraft.getInstance().level.getGameTime() % 3L < 2L;
+            int msgWidth = font.width(deadManMessage);
+            int msgHeight = font.lineHeight;
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate((float)(width / 2), (float)(height / 2 + 12), 0);
+            guiGraphics.pose().scale(1.5f, 1.5f, 1);
+            guiGraphics.fill(-msgWidth / 2 - 4, 0, msgWidth / 2 + 4, msgHeight + 4, highlight ? 0x80AAAA66 : 0x80000000);
+            guiGraphics.drawString(font, deadManMessage, -msgWidth / 2, 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+            guiGraphics.pose().popPose();
+        }
+
         // Zoom animation
         if (currentPlayer.equals(cardPlayer)) {
             if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND) {
@@ -168,12 +194,6 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         } else {
             zoomAnimationTarget = 0;
         }
-        if (Math.abs(zoomAnimationTarget - zoomAnimationProgress) < 0.01) {
-            zoomAnimationProgress = zoomAnimationTarget;
-        } else {
-            zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
-        }
-        ClientPlatform.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
     }
     
     private static void drawStringWithBackdrop(GuiGraphics guiGraphics, Font font, Component component, int x, int y, int color) {
@@ -268,6 +288,15 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         }
 
         RenderSystem.disableBlend();
+    }
+
+    private void performZoomAnimation(DeltaTracker deltaTracker) {
+        if (Math.abs(zoomAnimationTarget - zoomAnimationProgress) < 0.01) {
+            zoomAnimationProgress = zoomAnimationTarget;
+        } else {
+            zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
+        }
+        ClientPlatform.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
     }
 
     public static final GameOverlayLayer INSTANCE = new GameOverlayLayer();

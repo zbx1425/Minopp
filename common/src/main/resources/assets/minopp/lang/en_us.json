@@ -26,7 +26,7 @@
   "game.minopp.play.game_nearly_won": "%1$s has %2$s card(s) left.",
   "game.minopp.play.deck_depleted": "You have somehow drew the entire deck onto your hands. The game now ends.",
   "game.minopp.play.player_unavailable": "Player %1$s is not available. Please reallocate seats.",
-  "game.minopp.play.no_game": "Game inactive.",
+  "game.minopp.play.no_game": "Table is idle.",
 
   "game.minopp.play.mino_shout": "%1$s: §6Mino!",
   "game.minopp.play.mino_shout_invalid": "%1$s got penalized for randomly shouting Mino.",
@@ -66,6 +66,7 @@
   "gui.minopp.play.cursor.pass_draw": "§6Pass (Draw)",
   "gui.minopp.play.cursor.draw": "§6Draw",
   "gui.minopp.play.cursor.shout": "<§6Mino!§r>",
+  "gui.minopp.play.cursor.dead_man": "YOUR TURN!",
 
   "gui.minopp.seats.title": "Participants Seated on the Table",
   "gui.minopp.seats.start": "§aStart Game",

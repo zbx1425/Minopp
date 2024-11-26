@@ -5,6 +5,7 @@
   "game.pass": { "sounds": [ "minopp:pass" ] },
   "game.turn_notice": { "sounds": [ "minopp:turn_notice" ]},
   "game.turn_notice_again": { "sounds": [ "minopp:turn_notice_again" ]},
+  "game.turn_notice_continuous": { "sounds": [ "minopp:turn_notice_continuous" ]},
   "game.win": { "sounds": [ "minopp:win" ] },
   "game.mino_shout": { "sounds": [ "minopp:mino_shout" ] },
   "game.mino_shout_invalid": { "sounds": [ "minopp:mino_shout_invalid" ] },

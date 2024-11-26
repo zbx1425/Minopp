@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.gui.SeatControlScreen;
+import cn.zbx1425.minopp.gui.TurnDeadMan;
 import cn.zbx1425.minopp.gui.WildSelectionScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
@@ -62,6 +63,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                         player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
                         return ItemInteractionResult.FAIL;
                     }
+                    TurnDeadMan.pedal();
 
                     CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
                     if (realPlayer == null) return ItemInteractionResult.FAIL;
