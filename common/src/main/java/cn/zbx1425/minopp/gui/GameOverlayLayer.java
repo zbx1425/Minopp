@@ -89,10 +89,25 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     }
 
     private void renderGameActive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
-        if (Minecraft.getInstance().options.hideGui) return;
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
+        // Zoom effect target
+        if (currentPlayer.equals(cardPlayer)) {
+            if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND) {
+                zoomAnimationTarget = 1;
+            } else {
+                if (zoomAnimationTarget < 1.01) {
+                    zoomAnimationTarget = 1.5; // Zoom in first
+                } else if (zoomAnimationProgress >= 1.5) { // Already zoomed in
+                    zoomAnimationTarget = 1.05; // Zoom out, but not trigger zoom in again
+                }
+            }
+        } else {
+            zoomAnimationTarget = 0;
+        }
+
+        if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
         drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
@@ -279,24 +294,6 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     }
 
     private void performZoomAnimation(DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
-        LocalPlayer player = Minecraft.getInstance().player;
-        CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
-        CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
-        // Zoom animation
-        if (currentPlayer.equals(cardPlayer)) {
-            if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND) {
-                zoomAnimationTarget = 1;
-            } else {
-                if (zoomAnimationTarget < 1.01) {
-                    zoomAnimationTarget = 1.5; // Zoom in first
-                } else if (zoomAnimationProgress >= 1.5) { // Already zoomed in
-                    zoomAnimationTarget = 1.05; // Zoom out, but not trigger zoom in again
-                }
-            }
-        } else {
-            zoomAnimationTarget = 0;
-        }
-
         if (Math.abs(zoomAnimationTarget - zoomAnimationProgress) < 0.01) {
             zoomAnimationProgress = zoomAnimationTarget;
         } else {

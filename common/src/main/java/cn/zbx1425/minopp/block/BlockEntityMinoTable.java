@@ -229,6 +229,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
         // Remove hand card from other entities eg. AutoPlayer, TLM
         for (CardPlayer cardPlayer : players.values()) {
+            if (cardPlayer == null) continue;
             Entity entity = ((ServerLevel)level).getEntity(cardPlayer.uuid);
             if (entity instanceof LivingEntity livingEntity) {
                 for (InteractionHand hand : InteractionHand.values()) {

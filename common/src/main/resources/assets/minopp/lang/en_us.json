@@ -66,7 +66,7 @@
   "gui.minopp.play.cursor.pass_draw": "§6Pass (Draw)",
   "gui.minopp.play.cursor.draw": "§6Draw",
   "gui.minopp.play.cursor.shout": "<§6Mino!§r>",
-  "gui.minopp.play.cursor.dead_man": "YOUR TURN!",
+  "gui.minopp.play.cursor.dead_man": "(Your Turn)",
 
   "gui.minopp.seats.title": "Participants Seated on the Table",
   "gui.minopp.seats.start": "§aStart Game",

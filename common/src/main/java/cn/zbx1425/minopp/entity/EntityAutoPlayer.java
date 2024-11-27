@@ -39,6 +39,7 @@ public class EntityAutoPlayer extends LivingEntity {
 
     public CardPlayer cardPlayer;
     public BlockPos tablePos = null;
+    private boolean noPush;
 
     public EntityAutoPlayer(EntityType<? extends LivingEntity> entityType, Level level) {
         super(entityType, level);
@@ -235,6 +236,7 @@ public class EntityAutoPlayer extends LivingEntity {
         aiConfig.putByte("NoDelay", autoPlayer.aiNoDelay);
         aiConfig.putBoolean("StartGame", autoPlayer.aiStartGame);
         compound.put("AI", aiConfig);
+        if (noPush) compound.putBoolean("NoPush", true);
     }
 
     @Override
@@ -266,6 +268,14 @@ public class EntityAutoPlayer extends LivingEntity {
             autoPlayer.aiNoDelay = aiConfig.getByte("NoDelay");
             autoPlayer.aiStartGame = aiConfig.getBoolean("StartGame");
         }
+        if (compound.contains("NoPush", CompoundTag.TAG_BYTE)) {
+            noPush = compound.getBoolean("NoPush");
+        }
+    }
+
+    @Override
+    public boolean isPushable() {
+        return !noPush;
     }
 
     private static final EntityDataAccessor<ItemStack> HAND_STACK = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.ITEM_STACK);

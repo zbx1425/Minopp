@@ -66,7 +66,7 @@
   "gui.minopp.play.cursor.pass_draw": "§6不出 (抽牌)",
   "gui.minopp.play.cursor.draw": "§6抽牌",
   "gui.minopp.play.cursor.shout": "<§6Mino!§r>",
-  "gui.minopp.play.cursor.dead_man": "轮到您!",
+  "gui.minopp.play.cursor.dead_man": "(轮到您)",
 
   "gui.minopp.seats.title": "本桌入座情况",
   "gui.minopp.seats.start": "§a起动",
