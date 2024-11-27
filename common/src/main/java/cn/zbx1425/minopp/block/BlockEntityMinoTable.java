@@ -22,7 +22,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -220,6 +222,19 @@ public class BlockEntityMinoTable extends BlockEntity {
                         ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
                                 gameBinding.player(), Optional.empty());
                         invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                    }
+                }
+            }
+        }
+
+        // Remove hand card from other entities eg. AutoPlayer, TLM
+        for (CardPlayer cardPlayer : players.values()) {
+            Entity entity = ((ServerLevel)level).getEntity(cardPlayer.uuid);
+            if (entity instanceof LivingEntity livingEntity) {
+                for (InteractionHand hand : InteractionHand.values()) {
+                    ItemStack stack = livingEntity.getItemInHand(hand);
+                    if (stack.is(Mino.ITEM_HAND_CARDS.get())) {
+                        livingEntity.setItemInHand(hand, ItemStack.EMPTY);
                     }
                 }
             }
