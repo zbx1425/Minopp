@@ -72,11 +72,12 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                 zoomAnimationTarget = 0;
             }
         }
-        performZoomAnimation(deltaTracker);
+        performZoomAnimation(deltaTracker, tableEntity);
         renderHandCards(guiGraphics, deltaTracker);
     }
 
     private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+        if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
         for (String part : tableEntity.state.message().getString().split("\n")) {
@@ -88,13 +89,14 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     }
 
     private void renderGameActive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
-        int x = 20, y = 60;
-        Font font = Minecraft.getInstance().font;
-        CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
-        drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
-        y += font.lineHeight;
+        if (Minecraft.getInstance().options.hideGui) return;
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
+        CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
+        int x = 20, y = 60;
+        Font font = Minecraft.getInstance().font;
+        drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
+        y += font.lineHeight;
         if (currentPlayer.equals(cardPlayer)) {
             drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
                     (System.currentTimeMillis() % 400 < 200) ? 0xFFFFFFFF : 0xFFFFFF00);
@@ -179,21 +181,6 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             guiGraphics.drawString(font, deadManMessage, -msgWidth / 2, 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
             guiGraphics.pose().popPose();
         }
-
-        // Zoom animation
-        if (currentPlayer.equals(cardPlayer)) {
-            if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND) {
-                zoomAnimationTarget = 1;
-            } else {
-                if (zoomAnimationTarget < 1.01) {
-                    zoomAnimationTarget = 1.5; // Zoom in first
-                } else if (zoomAnimationProgress >= 1.5) { // Already zoomed in
-                    zoomAnimationTarget = 1.05; // Zoom out, but not trigger zoom in again
-                }
-            }
-        } else {
-            zoomAnimationTarget = 0;
-        }
     }
     
     private static void drawStringWithBackdrop(GuiGraphics guiGraphics, Font font, Component component, int x, int y, int color) {
@@ -208,6 +195,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     private static final ResourceLocation ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
     private void renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+        if (Minecraft.getInstance().options.hideGui) return;
         RenderSystem.enableBlend();
 
         Font font = Minecraft.getInstance().font;
@@ -290,7 +278,25 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         RenderSystem.disableBlend();
     }
 
-    private void performZoomAnimation(DeltaTracker deltaTracker) {
+    private void performZoomAnimation(DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
+        CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
+        // Zoom animation
+        if (currentPlayer.equals(cardPlayer)) {
+            if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND) {
+                zoomAnimationTarget = 1;
+            } else {
+                if (zoomAnimationTarget < 1.01) {
+                    zoomAnimationTarget = 1.5; // Zoom in first
+                } else if (zoomAnimationProgress >= 1.5) { // Already zoomed in
+                    zoomAnimationTarget = 1.05; // Zoom out, but not trigger zoom in again
+                }
+            }
+        } else {
+            zoomAnimationTarget = 0;
+        }
+
         if (Math.abs(zoomAnimationTarget - zoomAnimationProgress) < 0.01) {
             zoomAnimationProgress = zoomAnimationTarget;
         } else {

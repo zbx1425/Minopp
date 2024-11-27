@@ -135,10 +135,4 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     public boolean shouldRenderOffScreen(BlockEntityMinoTable blockEntity) {
         return true;
     }
-
-    private static final AABB AABB_INFINITE = new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-
-    public AABB getRenderBoundingBox(BlockEntityMinoTable blockEntity) {
-        return AABB_INFINITE;
-    }
 }

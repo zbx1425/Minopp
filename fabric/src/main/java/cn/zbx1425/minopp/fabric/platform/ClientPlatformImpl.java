@@ -19,11 +19,7 @@ public class ClientPlatformImpl {
     }
 
     public static void registerNetworkReceiver(ResourceLocation resourceLocation, Consumer<FriendlyByteBuf> consumer) {
-#if MC_VERSION >= "12100"
         MainFabric.PACKET_REGISTRY.registerNetworkReceiverS2C(resourceLocation, consumer);
-#else
-        ClientPlayNetworking.registerGlobalReceiver(resourceLocation, (client, handler, packet, responseSender) -> consumer.accept(packet));
-#endif
     }
 
     public static void registerPlayerJoinEvent(Consumer<LocalPlayer> consumer) {
