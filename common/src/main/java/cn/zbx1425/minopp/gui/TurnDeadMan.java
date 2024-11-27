@@ -51,12 +51,11 @@ public class TurnDeadMan {
     }
 
     private static void playAlarmSound() {
-        // No-op this, as it might be too annoying to the player
-//        SoundManager soundManager = Minecraft.getInstance().getSoundManager();
-//        if (isAlarmActive() && !Minecraft.getInstance().isPaused()) {
-//            if (!soundManager.isActive(alarmSound)) soundManager.play(alarmSound);
-//        } else {
-//            if (soundManager.isActive(alarmSound)) soundManager.stop(alarmSound);
-//        }
+        SoundManager soundManager = Minecraft.getInstance().getSoundManager();
+        if (isAlarmActive() && !Minecraft.getInstance().isPaused()) {
+            if (!soundManager.isActive(alarmSound)) soundManager.play(alarmSound);
+        } else {
+            if (soundManager.isActive(alarmSound)) soundManager.stop(alarmSound);
+        }
     }
 }
