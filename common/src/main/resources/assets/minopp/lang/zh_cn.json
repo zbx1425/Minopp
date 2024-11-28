@@ -74,5 +74,17 @@
   "gui.minopp.seats.reset": "§6清空座位",
 
   "task.minopp.minopp_task": "mino",
-  "task.minopp.minopp_task.desc": "打Mino咯，需要主手闲置"
+  "task.minopp.minopp_task.desc": "打Mino咯",
+
+  "subtitles.minopp.play": "Mino卡牌: 打出",
+  "subtitles.minopp.draw": "Mino卡牌: 抽牌",
+  "subtitles.minopp.pass": "Mino: 过",
+  "subtitles.minopp.sigh": "悲伤的叹息",
+  "subtitles.minopp.turn_notice": "Mino: 轮到您",
+  "subtitles.minopp.turn_notice_again": "Mino: 再次轮到您",
+  "subtitles.minopp.turn_notice_continuous": "Mino: 现在轮到您",
+  "subtitles.minopp.win": "Mino对局: 胜利",
+  "subtitles.minopp.mino_shout": "Mino!",
+  "subtitles.minopp.mino_shout_invalid": "Mino: 喊叫无效",
+  "subtitles.minopp.doubt_success": "Mino: 怀疑成功"
 }

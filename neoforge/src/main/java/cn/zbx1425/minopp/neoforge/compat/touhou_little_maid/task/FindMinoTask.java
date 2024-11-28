@@ -44,7 +44,7 @@ public class FindMinoTask extends MaidCheckRateTask {
 
     @Override
     protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityMaid maid) {
-        if (super.checkExtraStartConditions(worldIn, maid) && maid.canBrainMoving() && maid.getMainHandItem().isEmpty()) {
+        if (super.checkExtraStartConditions(worldIn, maid) && maid.canBrainMoving()) {
             BlockPos seatPos = findSeat(worldIn, maid);
             if (seatPos != null && maid.isWithinRestriction(seatPos)) {
                 if (seatPos.distToCenterSqr(maid.position()) < Math.pow(this.closeEnoughDist, 2)) {

@@ -74,5 +74,17 @@
   "gui.minopp.seats.reset": "§6Reset Seats",
 
   "task.minopp.minopp_task": "mino",
-  "task.minopp.minopp_task.desc": "Play MINO, mainhand must be empty"
+  "task.minopp.minopp_task.desc": "Play MINO",
+
+  "subtitles.minopp.play": "Mino Card played",
+  "subtitles.minopp.draw": "Mino Card drawn",
+  "subtitles.minopp.sigh": "Sad sigh",
+  "subtitles.minopp.pass": "Mino pass",
+  "subtitles.minopp.turn_notice": "Mino turn arrives",
+  "subtitles.minopp.turn_notice_again": "Mino turn arrives again",
+  "subtitles.minopp.turn_notice_continuous": "Mino turn pending",
+  "subtitles.minopp.win": "Mino Game won",
+  "subtitles.minopp.mino_shout": "Mino!",
+  "subtitles.minopp.mino_shout_invalid": "Mino shout proven invalid",
+  "subtitles.minopp.doubt_success": "Mino doubt proven successful"
 }
