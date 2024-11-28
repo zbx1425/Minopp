@@ -13,6 +13,7 @@
   "game.minopp.play.invalid_card": "这张牌不能回应上张牌。",
   "game.minopp.play.no_draw": "请你先出牌。",
   "game.minopp.play.rule_forbid": "按规则现在不能出这张牌。",
+  "game.minopp.play.table_in_demo": "此桌仅供演示，不用于对局。",
 
   "game.minopp.play.played": "%1$s 出牌 %2$s。",
   "game.minopp.play.cut": "%1$s 抢过回合出牌 %2$s。",

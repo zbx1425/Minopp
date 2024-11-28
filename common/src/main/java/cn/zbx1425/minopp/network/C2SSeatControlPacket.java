@@ -33,6 +33,10 @@ public class C2SSeatControlPacket {
 //                    player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
 //                    return;
 //                }
+                if (tableEntity.demo) {
+                    player.displayClientMessage(Component.translatable("game.minopp.play.table_in_demo"), true);
+                    return;
+                }
                 // Start or end the game
                 switch (action) {
                     case 1 -> {

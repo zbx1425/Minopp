@@ -106,6 +106,10 @@ public class BlockMinoTable extends Block implements EntityBlock {
         BlockEntity blockEntity = level.getBlockEntity(corePos);
         if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
             CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
+            if (tableEntity.demo) {
+                player.displayClientMessage(Component.translatable("game.minopp.play.table_in_demo"), true);
+                return InteractionResult.FAIL;
+            }
             if (level.isClientSide) {
                 Client.openSeatControlScreen(corePos);
                 return InteractionResult.SUCCESS;

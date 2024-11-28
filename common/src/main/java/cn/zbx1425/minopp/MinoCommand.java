@@ -7,6 +7,7 @@ import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -91,6 +92,25 @@ public class MinoCommand {
                             return 0;
                         }
                     }))
+                .then(Commands.literal("set_table_demo").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+                        .then(Commands.argument("demo", BoolArgumentType.bool())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            if (!player.getBlockStateOn().is(Mino.BLOCK_MINO_TABLE.get())) {
+                                context.getSource().sendFailure(Component.literal("Requirement: Stand on a table"));
+                                return 0;
+                            }
+                            BlockPos corePos = BlockMinoTable.getCore(player.getBlockStateOn(), player.getOnPos());
+                            if (player.serverLevel().getBlockEntity(corePos) instanceof BlockEntityMinoTable tableEntity) {
+                                tableEntity.demo = BoolArgumentType.getBool(context, "demo");
+                                tableEntity.sync();
+                                context.getSource().sendSuccess(() -> Component.literal("Table demo set"), true);
+                                return 1;
+                            } else {
+                                context.getSource().sendFailure(Component.literal("Requirement: Stand on a table"));
+                                return 0;
+                            }
+                        })))
         );
     }
 

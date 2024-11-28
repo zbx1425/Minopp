@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -45,6 +46,7 @@ public class BlockEntityMinoTable extends BlockEntity {
     public List<Pair<ActionMessage, Long>> clientMessageList = new ArrayList<>();
 
     public ItemStack award = ItemStack.EMPTY;
+    public boolean demo = false;
 
     public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
@@ -69,6 +71,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         }
         compoundTag.put("state", state.toTag());
         if (!award.isEmpty()) compoundTag.put("award", award.save(provider));
+        compoundTag.putBoolean("demo", demo);
     }
 
     @Override
@@ -102,6 +105,11 @@ public class BlockEntityMinoTable extends BlockEntity {
             award = ItemStack.parse(provider, compoundTag.get("award")).orElse(ItemStack.EMPTY);
         } else {
             award = ItemStack.EMPTY;
+        }
+        if (compoundTag.contains("demo", Tag.TAG_BYTE)) {
+            demo = compoundTag.getBoolean("demo");
+        } else {
+            demo = false;
         }
     }
 

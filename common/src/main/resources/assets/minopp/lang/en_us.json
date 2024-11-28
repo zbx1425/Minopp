@@ -13,6 +13,7 @@
   "game.minopp.play.invalid_card": "This card doesn't apply to the top card.",
   "game.minopp.play.no_draw": "You can't draw a card right now.",
   "game.minopp.play.rule_forbid": "The rule forbids you to play this card right now.",
+  "game.minopp.play.table_in_demo": "This table is only for demonstration and doesn't host games.",
 
   "game.minopp.play.played": "%1$s played %2$s.",
   "game.minopp.play.cut": "%1$s cut in with %2$s.",
