@@ -34,16 +34,6 @@ public class MinoCommand {
                             if (!success) throw new SimpleCommandExceptionType(Component.translatable("game.minopp.play.no_game")).create();
                             return 1;
                         }))
-                .then(Commands.literal("give_test_card").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
-                        .executes(context -> {
-                            ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                            UUID uuid = UUID.randomUUID();
-                            stack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                                    new ItemHandCards.CardGameBindingComponent(uuid, Optional.empty()));
-                            stack.set(DataComponents.CUSTOM_NAME, Component.literal("Test Card " + uuid.toString().substring(0, 8)));
-                            context.getSource().getPlayerOrException().getInventory().add(stack);
-                            return 1;
-                        }))
                 .then(Commands.literal("force_discard").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
                         .executes(context -> {
                             withPlayerAndGame(context, (game, player) -> {

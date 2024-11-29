@@ -99,7 +99,7 @@ public class EntityAutoPlayer extends LivingEntity {
                                 cardPlayer = new CardPlayer(uuid, playerName);
                                 ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                                 handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                                        new ItemHandCards.CardGameBindingComponent(uuid, Optional.of(corePos)));
+                                        new ItemHandCards.CardGameBindingComponent(Optional.of(corePos)));
                                 entityData.set(HAND_STACK, handStack);
                                 tableEntity.joinPlayerToTable(cardPlayer, position());
                                 tablePos = corePos;
@@ -159,8 +159,7 @@ public class EntityAutoPlayer extends LivingEntity {
                 } else if (level().getGameTime() - gameEndTime <= 20 * 3) {
                     if (onGround()) jumpFromGround();
                 } else {
-                    if (autoPlayer.aiStartGame && tableEntity.getPlayersList().size() >= 2
-                            && tableEntity.getPlayersList().getFirst().equals(cardPlayer)) {
+                    if (autoPlayer.aiStartGame && tableEntity.getPlayersList().size() >= 2) {
                         tableEntity.startGame(cardPlayer);
                     }
                 }

@@ -152,6 +152,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     @SuppressWarnings("unchecked, rawtypes")
     public void startGame(CardPlayer player) {
+        if (game != null) return;
         List<CardPlayer> playerList = getPlayersList();
         if (playerList.size() < 2) return;
 
@@ -161,35 +162,17 @@ public class BlockEntityMinoTable extends BlockEntity {
             boolean playerFound = false;
             for (Entity entity : level.getEntities(null, searchArea)) {
                 if (entity instanceof Player mcPlayer) {
-                    for (ItemStack invItem : mcPlayer.getInventory().items) {
-                        if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                        ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                                ItemHandCards.CardGameBindingComponent.EMPTY);
-                        if (cardPlayer.uuid.equals(gameBinding.player())) {
-                            // We've found an applicable hand card item
-                            if (gameBinding.tablePos().isEmpty()) {
-                                // It's not bound, bind it
-                                ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                        gameBinding.player(), Optional.of(getBlockPos()));
-                                invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                                playerFound = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (!playerFound) {
-                        if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
-                            // We've found a player, but no applicable hand card item, give them one
-                            ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                            ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                    mcPlayer.getGameProfile().getId(), Optional.of(getBlockPos()));
-                            handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                            playerFound = mcPlayer.getInventory().add(handCard);
-                        }
+                    if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
+                        // We've found the player, give them a card item
+                        ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
+                        ItemHandCards.CardGameBindingComponent newBinding =
+                                new ItemHandCards.CardGameBindingComponent(Optional.of(getBlockPos()));
+                        handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                        playerFound = mcPlayer.getInventory().add(handCard);
                     }
                 } else {
                     if (cardPlayer.uuid.equals(entity.getUUID())) {
-                        // We've found an auto player bound to this table
+                        // We've found an auto player, hopefully bound to this table
                         playerFound = true;
                     }
                 }
@@ -222,15 +205,8 @@ public class BlockEntityMinoTable extends BlockEntity {
                 ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
                         ItemHandCards.CardGameBindingComponent.EMPTY);
                 if (gameBinding.tablePos().isPresent() && gameBinding.tablePos().get().equals(getBlockPos())) {
-                    if (gameBinding.player().equals(mcPlayer.getGameProfile().getId())) {
-                        // Default item, just remove
-                        mcPlayer.getInventory().removeItem(invItem);
-                    } else {
-                        // Unbind
-                        ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                gameBinding.player(), Optional.empty());
-                        invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                    }
+                    // This is the one bound to this table, remove
+                    mcPlayer.getInventory().removeItem(invItem);
                 }
             }
         }

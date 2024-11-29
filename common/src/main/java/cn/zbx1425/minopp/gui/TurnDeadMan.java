@@ -18,7 +18,7 @@ public class TurnDeadMan {
 
     public static double deadManElapsedTicks;
 
-    private static final double ALARM_DELAY = 10 * 20;
+    private static final double ALARM_DELAY = 8 * 20;
 
     private static final SoundInstance alarmSound = new SimpleSoundInstance(
             Mino.id("game.turn_notice_continuous"),

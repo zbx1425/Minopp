@@ -51,7 +51,8 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                 tablePos = BlockMinoTable.getCore(blockState, tablePos);
                 if (level.getBlockEntity(tablePos) instanceof BlockEntityMinoTable tableEntity) {
                     if (tableEntity.game == null) return;
-                    CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(gameBinding.player())).findFirst().orElse(null);
+                    CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(Minecraft.getInstance().player.getGameProfile().getId()))
+                            .findFirst().orElse(null);
                     if (realPlayer == null) return;
                     poseStack.popPose();
                     poseStack.pushPose();
