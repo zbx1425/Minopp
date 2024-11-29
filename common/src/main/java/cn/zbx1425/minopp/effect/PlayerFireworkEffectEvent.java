@@ -36,7 +36,7 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
     }
 
     @Override
-    public void summonClient(Level level, BlockPos origin) {
+    public void summonClient(Level level, BlockPos origin, boolean selfPartOfSourceGame) {
         Player player = level.getPlayerByUUID(targetPlayer);
         if (player != null) {
             level.createFireworks(player.getX(), player.getY() + 2, player.getZ(), 0, 0, 0, firework);

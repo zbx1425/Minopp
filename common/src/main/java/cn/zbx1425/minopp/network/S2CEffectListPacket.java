@@ -23,7 +23,7 @@ public class S2CEffectListPacket {
     public static final ResourceLocation ID = Mino.id("effect_list");
 
     @SuppressWarnings("unchecked, rawtypes")
-    public static void sendS2C(ServerPlayer target, List<EffectEvent> sounds, BlockPos origin) {
+    public static void sendS2C(ServerPlayer target, List<EffectEvent> sounds, BlockPos origin, boolean playerPartOfSourceGame) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
         packet.writeInt(sounds.size());
         for (EffectEvent event : sounds) {
@@ -31,6 +31,7 @@ public class S2CEffectListPacket {
             ((StreamCodec)event.type().streamCodec()).encode(packet, event);
         }
         packet.writeBlockPos(origin);
+        packet.writeBoolean(playerPartOfSourceGame);
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
     }
 
@@ -45,7 +46,8 @@ public class S2CEffectListPacket {
                 sounds.add(type.streamCodec().decode(packet));
             }
             BlockPos origin = packet.readBlockPos();
-            MinoClient.SOUND_QUEUE.addAll(sounds, origin, Minecraft.getInstance().player);
+            boolean playerPartOfSourceGame = packet.readBoolean();
+            MinoClient.SOUND_QUEUE.addAll(sounds, origin, Minecraft.getInstance().player, playerPartOfSourceGame);
         }
     }
 }

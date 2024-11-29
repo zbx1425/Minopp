@@ -19,7 +19,7 @@ public interface EffectEvent {
 
     Optional<UUID> target();
 
-    void summonClient(Level level, BlockPos origin);
+    void summonClient(Level level, BlockPos origin, boolean selfIsPartOfSourceGame);
 
     // Summons the effect on the server side. TimeOffset not supported.
     void summonServer(ServerLevel level, BlockPos origin, BlockEntityMinoTable tableEntity);

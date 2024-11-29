@@ -37,7 +37,7 @@ public record GrantRewardEffectEvent(UUID targetPlayer) implements EffectEvent{
     }
 
     @Override
-    public void summonClient(Level level, BlockPos origin) {
+    public void summonClient(Level level, BlockPos origin, boolean selfPartOfSourceGame) {
 
     }
 

@@ -41,7 +41,7 @@ public record PlayerGlowEffectEvent(UUID targetPlayer, int duration) implements 
     }
 
     @Override
-    public void summonClient(Level level, BlockPos origin) {
+    public void summonClient(Level level, BlockPos origin, boolean selfPartOfSourceGame) {
 
     }
 
