@@ -52,10 +52,7 @@ public class C2SSeatControlPacket {
                         if (tableEntity.game != null) tableEntity.destroyGame(cardPlayer);
                     }
                     case -1 -> {
-                        if (tableEntity.game != null) return;
-                        tableEntity.players.replaceAll((d, v) -> null);
-                        tableEntity.state = ActionReport.builder(cardPlayer).panic(Component.translatable("game.minopp.play.seats_reset", cardPlayer.name)).state;
-                        tableEntity.sync();
+                        if (tableEntity.game == null) tableEntity.resetSeats(cardPlayer);
                     }
                 }
             }

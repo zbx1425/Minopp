@@ -2,6 +2,8 @@ package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.effect.EffectEvent;
+import cn.zbx1425.minopp.effect.EffectEvents;
+import cn.zbx1425.minopp.effect.SeatActionTakenEffectEvent;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
@@ -151,11 +153,12 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @SuppressWarnings("unchecked, rawtypes")
-    public void startGame(CardPlayer player) {
+    public void startGame(CardPlayer initiator) {
         if (game != null) return;
         List<CardPlayer> playerList = getPlayersList();
         if (playerList.size() < 2) return;
 
+        sendSeatActionTakenToAll();
         // Give hand card items to players
         AABB searchArea = AABB.ofSize(Vec3.atLowerCornerWithOffset(getBlockPos(), 1, 1, 1), PLAYER_RANGE, PLAYER_RANGE, PLAYER_RANGE);
         for (CardPlayer cardPlayer : playerList) {
@@ -180,8 +183,8 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
             if (!playerFound) {
                 // No player found or no hand card item given, destroy the game
-                destroyGame(player);
-                state = ActionReport.builder(player).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name)).state;
+                destroyGame(initiator);
+                state = ActionReport.builder(initiator).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name)).state;
                 return;
             }
         }
@@ -191,13 +194,14 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hasShoutedMino = false;
         } });
         game = new CardGame(getPlayersList());
-        state = game.initiate(player, 7).state;
+        state = game.initiate(initiator, 7).state;
         sync();
     }
 
-    public void destroyGame(CardPlayer player) {
+    public void destroyGame(CardPlayer initiator) {
         game = null;
 
+        sendSeatActionTakenToAll();
         // Remove hand card items from players
         for (Player mcPlayer : level.players()) {
             for (ItemStack invItem : mcPlayer.getInventory().items) {
@@ -229,17 +233,15 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hand.clear();
             p.hasShoutedMino = false;
         } });
-        state = ActionReport.builder(player).gameDestroyed().state;
+        state = ActionReport.builder(initiator).gameDestroyed().state;
         sync();
     }
 
-    public void sendMessageToAll(ActionMessage message) {
-        for (CardPlayer player : getPlayersList()) {
-            Player mcPlayer = level.getPlayerByUUID(player.uuid);
-            if (mcPlayer != null) {
-                S2CActionEphemeralPacket.sendS2C((ServerPlayer) mcPlayer, getBlockPos(), message);
-            }
-        }
+    public void resetSeats(CardPlayer initiator) {
+        sendSeatActionTakenToAll();
+        players.replaceAll((d, v) -> null);
+        state = ActionReport.builder(initiator).panic(Component.translatable("game.minopp.play.seats_reset", initiator.name)).state;
+        sync();
     }
 
     public void handleActionResult(ActionReport result, CardPlayer cardPlayer, ServerPlayer player) {
@@ -264,13 +266,34 @@ public class BlockEntityMinoTable extends BlockEntity {
                 }
                 for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                     if (serverPlayer.level().dimension() == level.dimension()) {
-                        if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= 16 * 16) {
-                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos);
+                        if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= EffectEvents.EFFECT_RADIUS * EffectEvents.EFFECT_RADIUS) {
+                            boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(serverPlayer.getGameProfile().getId()));
+                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
                         }
                     }
                 }
             }
             sync();
+        }
+    }
+
+    private void sendMessageToAll(ActionMessage message) {
+        for (CardPlayer player : getPlayersList()) {
+            Player mcPlayer = level.getPlayerByUUID(player.uuid);
+            if (mcPlayer != null) {
+                S2CActionEphemeralPacket.sendS2C((ServerPlayer) mcPlayer, getBlockPos(), message);
+            }
+        }
+    }
+
+    private void sendSeatActionTakenToAll() {
+        for (CardPlayer player : getPlayersList()) {
+            Player mcPlayer = level.getPlayerByUUID(player.uuid);
+            BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
+            List<EffectEvent> events = List.of(new SeatActionTakenEffectEvent());
+            if (mcPlayer != null) {
+                S2CEffectListPacket.sendS2C((ServerPlayer) mcPlayer, events, tableCenterPos, true);
+            }
         }
     }
 
