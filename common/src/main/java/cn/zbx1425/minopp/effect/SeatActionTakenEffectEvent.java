@@ -18,7 +18,7 @@ public record SeatActionTakenEffectEvent() implements EffectEvent {
 
     @Override
     public Type<? extends EffectEvent> type() {
-        return null;
+        return EffectEvents.SEAT_ACTION_TAKEN;
     }
 
     @Override

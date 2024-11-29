@@ -158,7 +158,6 @@ public class BlockEntityMinoTable extends BlockEntity {
         List<CardPlayer> playerList = getPlayersList();
         if (playerList.size() < 2) return;
 
-        sendSeatActionTakenToAll();
         // Give hand card items to players
         AABB searchArea = AABB.ofSize(Vec3.atLowerCornerWithOffset(getBlockPos(), 1, 1, 1), PLAYER_RANGE, PLAYER_RANGE, PLAYER_RANGE);
         for (CardPlayer cardPlayer : playerList) {
@@ -195,13 +194,14 @@ public class BlockEntityMinoTable extends BlockEntity {
         } });
         game = new CardGame(getPlayersList());
         state = game.initiate(initiator, 7).state;
+        sendSeatActionTakenToAll();
         sync();
     }
 
     public void destroyGame(CardPlayer initiator) {
+        if (game != null) sendSeatActionTakenToAll();
         game = null;
 
-        sendSeatActionTakenToAll();
         // Remove hand card items from players
         for (Player mcPlayer : level.players()) {
             for (ItemStack invItem : mcPlayer.getInventory().items) {
