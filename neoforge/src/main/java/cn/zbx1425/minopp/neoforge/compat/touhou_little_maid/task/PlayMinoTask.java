@@ -53,7 +53,7 @@ public class PlayMinoTask extends MaidCheckRateTask {
                     this.cardPlayer = cardPlayer;
                     ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                     handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                            new ItemHandCards.CardGameBindingComponent(Optional.of(corePos)));
+                            new ItemHandCards.CardGameBindingComponent(corePos, cardPlayer.uuid));
                     maid.setItemInHand(InteractionHand.MAIN_HAND, handStack);
                     tableEntity.joinPlayerToTable(cardPlayer, maid.position());
                 }

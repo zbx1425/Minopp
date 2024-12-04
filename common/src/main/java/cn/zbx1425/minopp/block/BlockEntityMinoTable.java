@@ -168,7 +168,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                         // We've found the player, give them a card item
                         ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                         ItemHandCards.CardGameBindingComponent newBinding =
-                                new ItemHandCards.CardGameBindingComponent(Optional.of(getBlockPos()));
+                                new ItemHandCards.CardGameBindingComponent(getBlockPos(), cardPlayer.uuid);
                         handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
                         playerFound = mcPlayer.getInventory().add(handCard);
                     }
@@ -206,9 +206,8 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (Player mcPlayer : level.players()) {
             for (ItemStack invItem : mcPlayer.getInventory().items) {
                 if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                        ItemHandCards.CardGameBindingComponent.EMPTY);
-                if (gameBinding.tablePos().isPresent() && gameBinding.tablePos().get().equals(getBlockPos())) {
+                ItemHandCards.CardGameBindingComponent gameBinding = invItem.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+                if (gameBinding != null && gameBinding.tablePos().equals(getBlockPos())) {
                     // This is the one bound to this table, remove
                     mcPlayer.getInventory().removeItem(invItem);
                 }

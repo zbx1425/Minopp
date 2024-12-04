@@ -43,15 +43,15 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                 return;
             }
             case THIRD_PERSON_LEFT_HAND, THIRD_PERSON_RIGHT_HAND -> {
-                ItemHandCards.CardGameBindingComponent gameBinding = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY);
-                BlockPos tablePos = gameBinding.tablePos().orElse(null);
-                if (tablePos == null) return;
+                ItemHandCards.CardGameBindingComponent gameBinding = itemStack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+                if (gameBinding == null) return;
+                BlockPos tablePos = gameBinding.tablePos();
                 ClientLevel level = Minecraft.getInstance().level;
                 BlockState blockState = level.getBlockState(tablePos);
                 tablePos = BlockMinoTable.getCore(blockState, tablePos);
                 if (level.getBlockEntity(tablePos) instanceof BlockEntityMinoTable tableEntity) {
                     if (tableEntity.game == null) return;
-                    CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(Minecraft.getInstance().player.getGameProfile().getId()))
+                    CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(gameBinding.bearerId()))
                             .findFirst().orElse(null);
                     if (realPlayer == null) return;
                     poseStack.popPose();
@@ -68,11 +68,13 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     if (tableEntity.game.currentPlayerIndex == tableEntity.game.players.indexOf(realPlayer)) {
                         poseStack.translate(0, 0.3, 0.3);
                         poseStack.mulPose(Axis.XP.rotationDegrees(-110f));
-                        poseStack.scale(0.2f, 0.2f, 1);
+                        poseStack.pushPose();
                         VertexConsumer buffer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/arrow_down.png")));
                         float v0 = ((int)(System.currentTimeMillis() / 100L) % 5) * 0.2f;
                         float v1 = v0 + 0.2f;
                         // Transform must be somehow messed up but it works so I'm not going to fix it
+                        poseStack.mulPose(Axis.YP.rotationDegrees(45));
+                        poseStack.scale(0.2f, 0.2f, 1);
                         buffer
                                 .addVertex(poseStack.last(), -1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
                                 .setUv(0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
@@ -82,6 +84,20 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                                 .setUv(1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
                                 .addVertex(poseStack.last(), 1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
                                 .setUv(1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF);
+                        poseStack.popPose();
+                        poseStack.pushPose();
+                        poseStack.mulPose(Axis.YP.rotationDegrees(-45));
+                        poseStack.scale(0.2f, 0.2f, 1);
+                        buffer
+                                .addVertex(poseStack.last(), -1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
+                                .setUv(0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
+                                .addVertex(poseStack.last(), -1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
+                                .setUv(0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
+                                .addVertex(poseStack.last(), 1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
+                                .setUv(1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
+                                .addVertex(poseStack.last(), 1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
+                                .setUv(1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF);
+                        poseStack.popPose();
                     }
 
                     poseStack.popPose();

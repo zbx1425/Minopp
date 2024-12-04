@@ -8,6 +8,9 @@ import cn.zbx1425.minopp.platform.GroupedItem;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
@@ -25,13 +28,12 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class ItemHandCards extends GroupedItem {
     
     public ItemHandCards() {
-        super(() -> null, p -> p.stacksTo(1)
-                .component(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), CardGameBindingComponent.EMPTY)
-        );
+        super(() -> null, p -> p.stacksTo(1));
     }
 
     @Override
@@ -55,9 +57,9 @@ public class ItemHandCards extends GroupedItem {
 
     public static BlockPos getHandCardGamePos(Player player) {
         if (!player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) return null;
-        BlockPos tablePos = player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY)
-                .tablePos().orElse(null);
-        if (tablePos == null) return null;
+        CardGameBindingComponent binding = player.getMainHandItem().get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+        if (binding == null) return null;
+        BlockPos tablePos = binding.tablePos();
         BlockState blockState = player.level().getBlockState(tablePos);
         if (!blockState.is(Mino.BLOCK_MINO_TABLE.get())) return null;
         return BlockMinoTable.getCore(blockState, tablePos);
@@ -73,18 +75,27 @@ public class ItemHandCards extends GroupedItem {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        CardGameBindingComponent binding = stack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), CardGameBindingComponent.EMPTY);
-        binding.tablePos().ifPresent(pos -> tooltipComponents.add(Component.literal("Game: " + pos.toShortString())));
+        CardGameBindingComponent binding = stack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+        if (binding != null) {
+            tooltipComponents.add(Component.literal("Table: " + binding.tablePos().toShortString()));
+            if (binding.bearerId().equals(Minecraft.getInstance().player.getGameProfile().getId())) {
+                tooltipComponents.add(Component.literal("NOT YOUR CARD!").withStyle(ChatFormatting.RED));
+            }
+        }
         super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
     }
 
-    public record CardGameBindingComponent(Optional<BlockPos> tablePos) {
-        public static final CardGameBindingComponent EMPTY = new CardGameBindingComponent(Optional.empty());
+    public record CardGameBindingComponent(BlockPos tablePos, UUID bearerId) {
+        // BearerId is to convey holder info into BEWLR
+
         public static final Codec<CardGameBindingComponent> CODEC = RecordCodecBuilder.create(it -> it.group(
-                BlockPos.CODEC.optionalFieldOf("tablePos").forGetter(CardGameBindingComponent::tablePos)
+                BlockPos.CODEC.fieldOf("tablePos").orElse(BlockPos.ZERO).forGetter(CardGameBindingComponent::tablePos),
+                UUIDUtil.CODEC.fieldOf("bearerId").orElse(Util.NIL_UUID).forGetter(CardGameBindingComponent::bearerId)
         ).apply(it, CardGameBindingComponent::new));
+
         public static final StreamCodec<ByteBuf, CardGameBindingComponent> STREAM_CODEC = StreamCodec.composite(
-                BlockPos.STREAM_CODEC.apply(ByteBufCodecs::optional), CardGameBindingComponent::tablePos,
+                BlockPos.STREAM_CODEC, CardGameBindingComponent::tablePos,
+                UUIDUtil.STREAM_CODEC, CardGameBindingComponent::bearerId,
                 CardGameBindingComponent::new
         );
     }

@@ -94,16 +94,14 @@ public class EntityAutoPlayer extends LivingEntity {
                             BlockEntity blockEntity = level().getBlockEntity(corePos);
                             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                                 if (tableEntity.game != null) continue;
-                                String playerName = hasCustomName() ? getCustomName().getString()
-                                        : "MinoBot #" + new Random().nextInt(100, 1000);
+                                String playerName = hasCustomName() ? getCustomName().getString() : "MinoBot #" + new Random().nextInt(100, 1000);
                                 cardPlayer = new CardPlayer(uuid, playerName);
-                                ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                                handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                                        new ItemHandCards.CardGameBindingComponent(Optional.of(corePos)));
-                                entityData.set(HAND_STACK, handStack);
                                 tableEntity.joinPlayerToTable(cardPlayer, position());
                                 tablePos = corePos;
                                 tableFound = true;
+                                ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
+                                handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+                                entityData.set(HAND_STACK, handStack);
                                 break;
                             }
                         }
@@ -186,6 +184,7 @@ public class EntityAutoPlayer extends LivingEntity {
             } else {
                 if (((Player)source.getEntity()).getMainHandItem().is(net.minecraft.world.item.Items.STICK)) {
                     entityData.set(ACTIVE, false);
+                    tablePos = null;
                 }
             }
         }
@@ -251,9 +250,6 @@ public class EntityAutoPlayer extends LivingEntity {
         } else {
             cardPlayer = null;
         }
-        if (compound.contains("HandStack", CompoundTag.TAG_COMPOUND)) {
-            entityData.set(HAND_STACK, ItemStack.parse(level().registryAccess(), compound.getCompound("HandStack")).orElse(ItemStack.EMPTY));
-        }
         if (compound.contains("Active", CompoundTag.TAG_BYTE)) {
             entityData.set(ACTIVE, compound.getBoolean("Active"));
         }
@@ -269,6 +265,15 @@ public class EntityAutoPlayer extends LivingEntity {
         }
         if (compound.contains("NoPush", CompoundTag.TAG_BYTE)) {
             noPush = compound.getBoolean("NoPush");
+        }
+
+        // Try fix hand stack
+        if (tablePos != null && cardPlayer != null) {
+            ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
+            handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+            entityData.set(HAND_STACK, handStack);
+        } else {
+            entityData.set(HAND_STACK, ItemStack.EMPTY);
         }
     }
 

@@ -53,13 +53,13 @@ public class BlockMinoTable extends Block implements EntityBlock {
     protected @NotNull ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockPos corePos = getCore(blockState, blockPos);
-            ItemHandCards.CardGameBindingComponent gameBinding = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), ItemHandCards.CardGameBindingComponent.EMPTY);
+            ItemHandCards.CardGameBindingComponent gameBinding = itemStack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
             int handIndex = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
             CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
             BlockEntity blockEntity = level.getBlockEntity(corePos);
             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                 if (tableEntity.game != null) {
-                    if (gameBinding.tablePos().isEmpty() || !gameBinding.tablePos().get().equals(corePos)) {
+                    if (gameBinding == null || !gameBinding.tablePos().equals(corePos)) {
                         player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
                         return ItemInteractionResult.FAIL;
                     }

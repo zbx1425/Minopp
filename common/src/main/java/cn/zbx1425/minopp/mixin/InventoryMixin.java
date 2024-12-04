@@ -21,8 +21,7 @@ public class InventoryMixin {
         if (player == null) return;
         ItemStack holding = player.getMainHandItem();
         if (holding.is(Mino.ITEM_HAND_CARDS.get())) {
-            if (holding.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                    ItemHandCards.CardGameBindingComponent.EMPTY).tablePos().isEmpty()) return;
+            if (holding.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get()) == null) return;
             int handIndex = holding.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
             holding.set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), Math.max(0, handIndex - (int)Math.signum(direction)));
             TurnDeadMan.pedal();
