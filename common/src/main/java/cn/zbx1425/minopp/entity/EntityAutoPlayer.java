@@ -74,6 +74,7 @@ public class EntityAutoPlayer extends LivingEntity {
 
         // Rate limiting
         if (!entityData.get(ACTIVE)) {
+            if (noPush) heal(10);
             return;
         }
         if (autoPlayer.aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
@@ -111,7 +112,11 @@ public class EntityAutoPlayer extends LivingEntity {
                 if (tableFound) break;
             }
             if (!tableFound) {
-                kill();
+                if (!noPush) {
+                    kill();
+                } else {
+                    entityData.set(ACTIVE, false);
+                }
                 return;
             }
         }
