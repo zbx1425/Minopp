@@ -211,7 +211,6 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         ClientLevel level = Minecraft.getInstance().level;
         BlockPos gamePos = ItemHandCards.getHandCardGamePos(player);
         if (gamePos == null) return;
-        int clientHandIndex = ItemHandCards.getClientHandIndex(player);
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
 
@@ -222,10 +221,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         if (tableEntity.game == null) return;
         CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
         if (realPlayer == null) return;
-        if (clientHandIndex > realPlayer.hand.size() - 1) {
-            clientHandIndex = realPlayer.hand.size() - 1;
-            player.getMainHandItem().set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), clientHandIndex);
-        }
+        int clientHandIndex = Mth.clamp(ItemHandCards.getClientHandIndex(player), 0, realPlayer.hand.size() - 1);
 
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
