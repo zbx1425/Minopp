@@ -52,17 +52,11 @@ public class WildSelectionScreen extends Screen {
     }
 
     @Override
-    public boolean isPauseScreen() {
-        return false;
-    }
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
-    @Override
-    public void render(GuiGraphics guiGraphics, int i, int j, float f) {
-        super.render(guiGraphics, i, j, f);
         int xOff = (width - PANEL_WIDTH) / 2;
         int yOff = (height - PANEL_HEIGHT) / 2;
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(0, 0, -100);
         guiGraphics.fill(xOff + MARGIN, yOff + MARGIN, xOff + PANEL_WIDTH + MARGIN, yOff + PANEL_HEIGHT + MARGIN, 0x66000000);
         guiGraphics.fill(xOff, yOff, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0xFF313031);
         guiGraphics.fill(xOff, yOff + PANEL_HEIGHT - BTN_HEIGHT, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0x66546E7A);
@@ -70,6 +64,10 @@ public class WildSelectionScreen extends Screen {
         if (shout) {
             guiGraphics.drawString(font, Component.translatable("gui.minopp.play.cursor.shout"), xOff + MARGIN, yOff + PANEL_HEIGHT - MARGIN - 9, 0xFFFFFFFF);
         }
-        guiGraphics.pose().popPose();
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 }

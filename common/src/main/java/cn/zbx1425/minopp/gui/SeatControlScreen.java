@@ -58,8 +58,8 @@ public class SeatControlScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int i, int j, float f) {
-        super.render(guiGraphics, i, j, f);
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         if (minecraft.level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
             startButton.active = tableEntity.game == null && tableEntity.getPlayersList().size() >= 2;
@@ -69,8 +69,6 @@ public class SeatControlScreen extends Screen {
 
             int xOff = (width - PANEL_WIDTH) / 2;
             int yOff = (height - PANEL_HEIGHT) / 2;
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(0, 0, -100);
             guiGraphics.fill(xOff + MARGIN, yOff + MARGIN, xOff + PANEL_WIDTH + MARGIN, yOff + PANEL_HEIGHT + MARGIN, 0x99000000);
             guiGraphics.fill(xOff, yOff, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0xFF313031);
             guiGraphics.fill(xOff, yOff + PANEL_HEIGHT - BTN_HEIGHT, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0x66546E7A);
@@ -89,8 +87,6 @@ public class SeatControlScreen extends Screen {
                     yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT / 2 - 9 / 2, 0xFFAAAAAA);
             guiGraphics.drawCenteredString(font, getPlayerName(tableEntity, Direction.SOUTH),
                     width / 2, yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT + MARGIN, 0xFFAAAAAA);
-
-            guiGraphics.pose().popPose();
         }
     }
 
