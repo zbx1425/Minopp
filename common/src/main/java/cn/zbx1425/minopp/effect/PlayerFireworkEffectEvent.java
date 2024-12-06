@@ -8,9 +8,12 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.component.FireworkExplosion;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,10 +42,18 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
     public void summonClient(Level level, BlockPos origin, boolean selfPartOfSourceGame) {
         Player player = level.getPlayerByUUID(targetPlayer);
         if (player != null) {
-            level.createFireworks(player.getX(), player.getY() + 2, player.getZ(), 0, 0, 0, firework);
-        } else {
-            level.createFireworks(origin.getX(), origin.getY() + 2, origin.getZ(), 0, 0, 0, firework);
+            level.createFireworks(player.getX(), player.getY() + 3, player.getZ(), 0, 0, 0, firework);
+            return;
         }
+        List<Entity> entities = level.getEntities((Entity)null,
+                AABB.ofSize(Vec3.atLowerCornerOf(origin), 8, 8, 4),
+                it -> it.getUUID().equals(targetPlayer));
+        if (!entities.isEmpty()) {
+            Entity entity = entities.getFirst();
+            level.createFireworks(entity.getX(), entity.getY() + 3, entity.getZ(), 0, 0, 0, firework);
+            return;
+        }
+        level.createFireworks(origin.getX() + 0.5f, origin.getY() + 3, origin.getZ() + 0.5f, 0, 0, 0, firework);
     }
 
     @Override
