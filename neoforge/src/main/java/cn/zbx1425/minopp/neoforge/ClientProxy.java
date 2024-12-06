@@ -61,8 +61,7 @@ public class ClientProxy {
 
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Pre event) {
-            Level level = Minecraft.getInstance().level;
-            if (level != null) MinoClient.SOUND_QUEUE.tick(level);
+            MinoClient.tick();
         }
 
     }

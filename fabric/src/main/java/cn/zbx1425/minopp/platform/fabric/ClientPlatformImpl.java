@@ -1,5 +1,6 @@
-package cn.zbx1425.minopp.fabric.platform;
+package cn.zbx1425.minopp.platform.fabric;
 
+import cn.zbx1425.minopp.fabric.MinoFabric;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -19,7 +20,7 @@ public class ClientPlatformImpl {
     }
 
     public static void registerNetworkReceiver(ResourceLocation resourceLocation, Consumer<FriendlyByteBuf> consumer) {
-        MainFabric.PACKET_REGISTRY.registerNetworkReceiverS2C(resourceLocation, consumer);
+        MinoFabric.PACKET_REGISTRY.registerNetworkReceiverS2C(resourceLocation, consumer);
     }
 
     public static void registerPlayerJoinEvent(Consumer<LocalPlayer> consumer) {
@@ -35,10 +36,6 @@ public class ClientPlatformImpl {
     }
 
     public static void sendPacketToServer(ResourceLocation id, FriendlyByteBuf packet) {
-#if MC_VERSION >= "12100"
-        MainFabric.PACKET_REGISTRY.sendC2S(id, packet);
-#else
-        ClientPlayNetworking.send(id, packet);
-#endif
+        MinoFabric.PACKET_REGISTRY.sendC2S(id, packet);
     }
 }

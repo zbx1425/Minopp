@@ -1,6 +1,5 @@
-package cn.zbx1425.minopp.fabric.platform;
+package cn.zbx1425.minopp.platform.fabric;
 
-#if MC_VERSION >= "12100"
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -46,8 +45,3 @@ public class CompatPacket {
         }
     };
 }
-
-#else
-public class CompatPacket { }
-
-#endif

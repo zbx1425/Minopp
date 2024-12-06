@@ -23,7 +23,8 @@
     ]
   },
   "mixins": [
-    "minopp.mixins.json"
+    "minopp.mixins.json",
+    "minopp.fabric.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.16.2",

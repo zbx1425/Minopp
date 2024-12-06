@@ -145,7 +145,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
             for (int i = 1; i < 4; i++) {
                 TablePartType thisPart = TablePartType.values()[i];
                 BlockPos thisPartPos = blockPos.offset(thisPart.xOff, 0, thisPart.zOff);
-                level.setBlock(thisPartPos, this.defaultBlockState().setValue(PART, thisPart), 3);
+                level.setBlock(thisPartPos, this.defaultBlockState().setValue(PART, thisPart), Block.UPDATE_ALL | Block.UPDATE_KNOWN_SHAPE);
             }
         }
     }

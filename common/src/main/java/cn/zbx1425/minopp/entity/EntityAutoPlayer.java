@@ -18,6 +18,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -297,6 +299,12 @@ public class EntityAutoPlayer extends LivingEntity {
         builder.define(HAND_STACK, ItemStack.EMPTY);
         builder.define(ACTIVE, false);
         builder.define(SKIN, "");
+    }
+
+    public static AttributeSupplier createAttributes() {
+        return LivingEntity.createLivingAttributes()
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                .build();
     }
 }
 

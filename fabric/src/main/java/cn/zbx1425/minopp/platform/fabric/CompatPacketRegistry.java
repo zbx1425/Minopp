@@ -1,6 +1,5 @@
-package cn.zbx1425.minopp.fabric.platform;
+package cn.zbx1425.minopp.platform.fabric;
 
-#if MC_VERSION >= "12100"
 import cn.zbx1425.minopp.platform.ServerPlatform;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -12,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+
 
 public class CompatPacketRegistry {
 
@@ -34,16 +34,17 @@ public class CompatPacketRegistry {
     }
 
     public void commitCommon() {
+        for (Map.Entry<ResourceLocation, CompatPacket> packetEntry : packets.entrySet()) {
+            CompatPacket packet = packetEntry.getValue();
+            PayloadTypeRegistry.playC2S().register(packet.TYPE, packet.STREAM_CODEC);
+            PayloadTypeRegistry.playS2C().register(packet.TYPE, packet.STREAM_CODEC);
+        }
         for (Map.Entry<ResourceLocation, ServerPlatform.C2SPacketHandler> packetC2S : packetsC2S.entrySet()) {
             ServerPlatform.C2SPacketHandler handlerC2S = packetC2S.getValue();
             CompatPacket packet = packets.get(packetC2S.getKey());
             ServerPlayNetworking.registerGlobalReceiver(packet.TYPE, (payload, context) -> {
                 handlerC2S.handlePacket(context.server(), context.player(), payload.buffer);
             });
-        }
-        for (Map.Entry<ResourceLocation, Consumer<FriendlyByteBuf>> packetS2C : packetsS2C.entrySet()) {
-            CompatPacket packet = packets.get(packetS2C.getKey());
-            PayloadTypeRegistry.playS2C().register(packet.TYPE, packet.STREAM_CODEC);
         }
     }
 
@@ -54,10 +55,6 @@ public class CompatPacketRegistry {
             ClientPlayNetworking.registerGlobalReceiver(packet.TYPE, (payload, context) -> {
                 handlerS2C.accept(payload.buffer);
             });
-        }
-        for (Map.Entry<ResourceLocation, ServerPlatform.C2SPacketHandler> packetC2S : packetsC2S.entrySet()) {
-            CompatPacket packet = packets.get(packetC2S.getKey());
-            PayloadTypeRegistry.playC2S().register(packet.TYPE, packet.STREAM_CODEC);
         }
     }
 
@@ -71,10 +68,3 @@ public class CompatPacketRegistry {
         ClientPlayNetworking.send(packet.new Payload(payload));
     }
 }
-
-#else
-public class CompatPacketRegistry {
-
-}
-
-#endif
