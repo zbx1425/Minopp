@@ -9,6 +9,7 @@ import cn.zbx1425.minopp.gui.WildSelectionScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -17,6 +18,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -32,7 +34,9 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -67,7 +71,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
 
                     CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
                     if (realPlayer == null) return ItemInteractionResult.FAIL;
-                    if (blockState.getValue(PART) == TablePartType.X_LESS_Z_LESS) {
+                    if (Client.isCursorHittingPile()) {
                         C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
                     } else {
                         Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
@@ -97,6 +101,42 @@ public class BlockMinoTable extends Block implements EntityBlock {
 
         public static boolean isShoutModifierHeld() {
             return Minecraft.getInstance().options.keySprint.isDown();
+        }
+
+        public static @Nullable BlockPos getCursorPickedGame() {
+            HitResult hitResult = Minecraft.getInstance().hitResult;
+            ClientLevel level = Minecraft.getInstance().level;
+            if (hitResult.getType() == HitResult.Type.BLOCK) {
+                BlockPos potentialTablePos = ((BlockHitResult)hitResult).getBlockPos();
+                if (level.getBlockState(potentialTablePos).is(Mino.BLOCK_MINO_TABLE.get())) {
+                    return BlockMinoTable.getCore(level.getBlockState(potentialTablePos), potentialTablePos);
+                }
+            }
+            return null;
+        }
+
+        public static boolean isCursorHittingPile() {
+            BlockPos gamePos = getCursorPickedGame();
+            if (gamePos == null) return false;
+            ClientLevel level = Minecraft.getInstance().level;
+            if (level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
+                if (tableEntity.game == null) return false;
+                AABB pileAabb = getPileAabb(tableEntity);
+                Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
+                float partialTicks = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
+                float hitDistance = 20;
+                Vec3 rayBegin = cameraEntity.getEyePosition(partialTicks);
+                Vec3 rayDir = cameraEntity.getViewVector(partialTicks);
+                Vec3 rayEnd = rayBegin.add(rayDir.x * hitDistance, rayDir.y * hitDistance, rayDir.z * hitDistance);
+                return pileAabb.move(gamePos).clip(rayBegin, rayEnd).isPresent();
+            }
+            return true;
+        }
+
+        public static AABB getPileAabb(BlockEntityMinoTable tableEntity) {
+            if (tableEntity.game == null) return new AABB(0, 0, 0, 0, 0, 0);
+            return AABB.ofSize(new Vec3(0.5, 0.9, 0.5), 0.3, 1 / 16f, 0.5)
+                    .expandTowards(0, Math.ceil(tableEntity.game.deck.size() / 5f) * (1 / 16f) * 0.3f, 0);
         }
     }
 
@@ -225,7 +265,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
         return true;
     }
 
-    private static final VoxelShape VOXEL_SHAPE = Block.box(0, 0, 0, 16, 14, 16);
+    private static final VoxelShape VOXEL_SHAPE = Block.box(0, 0, 0, 16, 14.9, 16);
 
     @Override
     protected @NotNull VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {

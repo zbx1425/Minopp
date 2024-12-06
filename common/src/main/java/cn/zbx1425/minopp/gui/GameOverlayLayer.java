@@ -39,15 +39,8 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         LocalPlayer player = Minecraft.getInstance().player;
         BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
-        HitResult hitResult = Minecraft.getInstance().hitResult;
         ClientLevel level = Minecraft.getInstance().level;
-        BlockPos hitResultGamePos = null;
-        if (hitResult.getType() == HitResult.Type.BLOCK) {
-            BlockPos potentialTablePos = ((BlockHitResult)hitResult).getBlockPos();
-            if (level.getBlockState(potentialTablePos).is(Mino.BLOCK_MINO_TABLE.get())) {
-                hitResultGamePos = BlockMinoTable.getCore(level.getBlockState(potentialTablePos), potentialTablePos);
-            }
-        }
+        BlockPos hitResultGamePos = BlockMinoTable.Client.getCursorPickedGame();
         BlockPos gamePos = (handCardGamePos != null) ? handCardGamePos : hitResultGamePos;
         if (gamePos == null) {
             TurnDeadMan.setOutsideGame();
@@ -158,7 +151,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             BlockPos hitPos = ((BlockHitResult) Minecraft.getInstance().hitResult).getBlockPos();
             BlockState hitState = Minecraft.getInstance().level.getBlockState(hitPos);
             if (hitState.is(Mino.BLOCK_MINO_TABLE.get())) {
-                boolean isPass = hitState.getValue(BlockMinoTable.PART) == BlockMinoTable.TablePartType.X_LESS_Z_LESS;
+                boolean isPass = BlockMinoTable.Client.isCursorHittingPile();
                 if (currentPlayer.equals(cardPlayer)) {
                     Component cursorMessage = switch (tableEntity.game.currentPlayerPhase) {
                         case DISCARD_HAND -> isPass ? Component.translatable("gui.minopp.play.cursor.pass_draw")
