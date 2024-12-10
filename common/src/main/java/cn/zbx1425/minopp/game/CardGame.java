@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.effect.GrantRewardEffectEvent;
 import cn.zbx1425.minopp.effect.PlayerFireworkEffectEvent;
 import cn.zbx1425.minopp.effect.PlayerGlowEffectEvent;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -85,7 +86,8 @@ public class CardGame {
         if (cardPlayer.hand.isEmpty()) {
             report.sound(Mino.id("game.win"), 0);
 
-            report.effect(new PlayerGlowEffectEvent(0, cardPlayer.uuid, 6 * 20));
+            report.effect(new PlayerGlowEffectEvent(cardPlayer.uuid, 6 * 20));
+            report.effect(new GrantRewardEffectEvent(cardPlayer.uuid));
             for (int i = 0; i < 5; i++) {
                 report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, PlayerFireworkEffectEvent.WIN_EXPLOSION));
             }
@@ -136,7 +138,7 @@ public class CardGame {
                 this.drawCount = 0;
             }
             currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
-            report.sound(Mino.id("game.turn_notice_again"), 500, cardPlayer);
+            report.sound(Mino.id("game.turn_notice_again"), 500 * (drawCount > 1 ? drawCount + 1 : 1), cardPlayer);
             return report.drew(drawCount);
         } else if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN) {
             report.sound(Mino.id("game.pass"), 0);
@@ -227,7 +229,7 @@ public class CardGame {
         CardPlayer currentPlayer = players.get(currentPlayerIndex);
         currentPlayer.hasShoutedMino = false;
         report.sound(Mino.id("game.turn_notice"), 500, currentPlayer);
-        report.effect(new PlayerGlowEffectEvent(0, currentPlayer.uuid, 10));
+        // report.effect(new PlayerGlowEffectEvent(0, currentPlayer.uuid, 10));
     }
 
     public CardPlayer deAmputate(CardPlayer playerWithoutHand) {

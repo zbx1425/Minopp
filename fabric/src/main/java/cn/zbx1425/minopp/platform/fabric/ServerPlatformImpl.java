@@ -1,4 +1,4 @@
-package cn.zbx1425.minopp.fabric.platform;
+package cn.zbx1425.minopp.platform.fabric;
 
 import cn.zbx1425.minopp.fabric.MinoFabric;
 import cn.zbx1425.minopp.platform.ServerPlatform;

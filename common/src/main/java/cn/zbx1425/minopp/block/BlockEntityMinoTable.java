@@ -2,6 +2,8 @@ package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.effect.EffectEvent;
+import cn.zbx1425.minopp.effect.EffectEvents;
+import cn.zbx1425.minopp.effect.SeatActionTakenEffectEvent;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
@@ -14,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -22,7 +25,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -41,6 +46,9 @@ public class BlockEntityMinoTable extends BlockEntity {
     public ActionMessage state = ActionMessage.NO_GAME;
 
     public List<Pair<ActionMessage, Long>> clientMessageList = new ArrayList<>();
+
+    public ItemStack award = ItemStack.EMPTY;
+    public boolean demo = false;
 
     public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
@@ -64,6 +72,8 @@ public class BlockEntityMinoTable extends BlockEntity {
             compoundTag.put("game", game.toTag());
         }
         compoundTag.put("state", state.toTag());
+        if (!award.isEmpty()) compoundTag.put("award", award.save(provider));
+        compoundTag.putBoolean("demo", demo);
     }
 
     @Override
@@ -92,6 +102,16 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
             state = newState;
             clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
+        }
+        if (compoundTag.contains("award")) {
+            award = ItemStack.parse(provider, compoundTag.get("award")).orElse(ItemStack.EMPTY);
+        } else {
+            award = ItemStack.EMPTY;
+        }
+        if (compoundTag.contains("demo", Tag.TAG_BYTE)) {
+            demo = compoundTag.getBoolean("demo");
+        } else {
+            demo = false;
         }
     }
 
@@ -133,7 +153,8 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @SuppressWarnings("unchecked, rawtypes")
-    public void startGame(CardPlayer player) {
+    public void startGame(CardPlayer initiator) {
+        if (game != null) return;
         List<CardPlayer> playerList = getPlayersList();
         if (playerList.size() < 2) return;
 
@@ -143,35 +164,17 @@ public class BlockEntityMinoTable extends BlockEntity {
             boolean playerFound = false;
             for (Entity entity : level.getEntities(null, searchArea)) {
                 if (entity instanceof Player mcPlayer) {
-                    for (ItemStack invItem : mcPlayer.getInventory().items) {
-                        if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                        ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                                ItemHandCards.CardGameBindingComponent.EMPTY);
-                        if (cardPlayer.uuid.equals(gameBinding.player())) {
-                            // We've found an applicable hand card item
-                            if (gameBinding.tablePos().isEmpty()) {
-                                // It's not bound, bind it
-                                ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                        gameBinding.player(), Optional.of(getBlockPos()));
-                                invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                                playerFound = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (!playerFound) {
-                        if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
-                            // We've found a player, but no applicable hand card item, give them one
-                            ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                            ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                    mcPlayer.getGameProfile().getId(), Optional.of(getBlockPos()));
-                            handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                            playerFound = mcPlayer.getInventory().add(handCard);
-                        }
+                    if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
+                        // We've found the player, give them a card item
+                        ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
+                        ItemHandCards.CardGameBindingComponent newBinding =
+                                new ItemHandCards.CardGameBindingComponent(getBlockPos(), cardPlayer.uuid);
+                        handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                        playerFound = mcPlayer.getInventory().add(handCard);
                     }
                 } else {
                     if (cardPlayer.uuid.equals(entity.getUUID())) {
-                        // We've found an auto player bound to this table
+                        // We've found an auto player, hopefully bound to this table
                         playerFound = true;
                     }
                 }
@@ -179,8 +182,8 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
             if (!playerFound) {
                 // No player found or no hand card item given, destroy the game
-                destroyGame(player);
-                state = ActionReport.builder(player).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name)).state;
+                destroyGame(initiator);
+                state = ActionReport.builder(initiator).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name)).state;
                 return;
             }
         }
@@ -190,28 +193,36 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hasShoutedMino = false;
         } });
         game = new CardGame(getPlayersList());
-        state = game.initiate(player, 7).state;
+        state = game.initiate(initiator, 7).state;
+        sendSeatActionTakenToAll();
         sync();
     }
 
-    public void destroyGame(CardPlayer player) {
+    public void destroyGame(CardPlayer initiator) {
+        if (game != null) sendSeatActionTakenToAll();
         game = null;
 
         // Remove hand card items from players
         for (Player mcPlayer : level.players()) {
             for (ItemStack invItem : mcPlayer.getInventory().items) {
                 if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                ItemHandCards.CardGameBindingComponent gameBinding = invItem.getOrDefault(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                        ItemHandCards.CardGameBindingComponent.EMPTY);
-                if (gameBinding.tablePos().isPresent() && gameBinding.tablePos().get().equals(getBlockPos())) {
-                    if (gameBinding.player().equals(mcPlayer.getGameProfile().getId())) {
-                        // Default item, just remove
-                        mcPlayer.getInventory().removeItem(invItem);
-                    } else {
-                        // Unbind
-                        ItemHandCards.CardGameBindingComponent newBinding = new ItemHandCards.CardGameBindingComponent(
-                                gameBinding.player(), Optional.empty());
-                        invItem.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                ItemHandCards.CardGameBindingComponent gameBinding = invItem.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+                if (gameBinding != null && gameBinding.tablePos().equals(getBlockPos())) {
+                    // This is the one bound to this table, remove
+                    mcPlayer.getInventory().removeItem(invItem);
+                }
+            }
+        }
+
+        // Remove hand card from other entities eg. AutoPlayer, TLM
+        for (CardPlayer cardPlayer : players.values()) {
+            if (cardPlayer == null) continue;
+            Entity entity = ((ServerLevel)level).getEntity(cardPlayer.uuid);
+            if (entity instanceof LivingEntity livingEntity) {
+                for (InteractionHand hand : InteractionHand.values()) {
+                    ItemStack stack = livingEntity.getItemInHand(hand);
+                    if (stack.is(Mino.ITEM_HAND_CARDS.get())) {
+                        livingEntity.setItemInHand(hand, ItemStack.EMPTY);
                     }
                 }
             }
@@ -221,17 +232,15 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hand.clear();
             p.hasShoutedMino = false;
         } });
-        state = ActionReport.builder(player).gameDestroyed().state;
+        state = ActionReport.builder(initiator).gameDestroyed().state;
         sync();
     }
 
-    public void sendMessageToAll(ActionMessage message) {
-        for (CardPlayer player : getPlayersList()) {
-            Player mcPlayer = level.getPlayerByUUID(player.uuid);
-            if (mcPlayer != null) {
-                S2CActionEphemeralPacket.sendS2C((ServerPlayer) mcPlayer, getBlockPos(), message);
-            }
-        }
+    public void resetSeats(CardPlayer initiator) {
+        sendSeatActionTakenToAll();
+        players.replaceAll((d, v) -> null);
+        state = ActionReport.builder(initiator).panic(Component.translatable("game.minopp.play.seats_reset", initiator.name)).state;
+        sync();
     }
 
     public void handleActionResult(ActionReport result, CardPlayer cardPlayer, ServerPlayer player) {
@@ -252,17 +261,38 @@ public class BlockEntityMinoTable extends BlockEntity {
                 MinecraftServer server = ((ServerLevel)level).getServer();
                 BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
                 for (EffectEvent effect : result.effects) {
-                    effect.summonServer((ServerLevel) level, tableCenterPos);
+                    effect.summonServer((ServerLevel) level, tableCenterPos, this);
                 }
                 for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                     if (serverPlayer.level().dimension() == level.dimension()) {
-                        if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= 16 * 16) {
-                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos);
+                        if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= EffectEvents.EFFECT_RADIUS * EffectEvents.EFFECT_RADIUS) {
+                            boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(serverPlayer.getGameProfile().getId()));
+                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
                         }
                     }
                 }
             }
             sync();
+        }
+    }
+
+    private void sendMessageToAll(ActionMessage message) {
+        for (CardPlayer player : getPlayersList()) {
+            Player mcPlayer = level.getPlayerByUUID(player.uuid);
+            if (mcPlayer != null) {
+                S2CActionEphemeralPacket.sendS2C((ServerPlayer) mcPlayer, getBlockPos(), message);
+            }
+        }
+    }
+
+    private void sendSeatActionTakenToAll() {
+        for (CardPlayer player : getPlayersList()) {
+            Player mcPlayer = level.getPlayerByUUID(player.uuid);
+            BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
+            List<EffectEvent> events = List.of(new SeatActionTakenEffectEvent());
+            if (mcPlayer != null) {
+                S2CEffectListPacket.sendS2C((ServerPlayer) mcPlayer, events, tableCenterPos, true);
+            }
         }
     }
 

@@ -5,6 +5,7 @@ import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.item.ItemCoupon;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
 import cn.zbx1425.minopp.network.C2SSeatControlPacket;
@@ -51,6 +52,8 @@ public final class Mino {
     public static final RegistryObject<DataComponentType<Integer>> DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX = new RegistryObject<>(() ->
             ServerPlatform.createDataComponentType(Codec.INT, ByteBufCodecs.INT));
 
+    public static final RegistryObject<GroupedItem> ITEM_COUPON = new RegistryObject<>(ItemCoupon::new);
+
     public static final RegistryObject<EntityType<EntityAutoPlayer>> ENTITY_AUTO_PLAYER = new RegistryObject<>(() ->
             EntityType.Builder.of(EntityAutoPlayer::new, MobCategory.CREATURE).sized(0.6f, 1.8f).build("mino_auto_player")
     );
@@ -66,6 +69,7 @@ public final class Mino {
         registries.registerItem("hand_cards_model_placeholder", ITEM_HAND_CARDS_MODEL_PLACEHOLDER);
         registries.registerDataComponentType("card_game_binding", DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
         registries.registerDataComponentType("client_hand_index", DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX);
+        registries.registerItem("coupon", ITEM_COUPON);
 
         registries.registerEntityType("mino_auto_player", ENTITY_AUTO_PLAYER);
 

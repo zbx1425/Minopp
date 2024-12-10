@@ -1,6 +1,8 @@
 {
   "block.minopp.mino_table": "Mino++ Table",
   "item.minopp.hand_cards": "Mino++ Hand Cards",
+  "item.minopp.coupon": "Coupon",
+  "item.minopp.coupon.description": "Share with your friends.",
   "entity.minopp.mino_auto_player": "MinoBot",
 
   "game.minopp.play.no_player": "You're not a part of the game.",
@@ -11,6 +13,7 @@
   "game.minopp.play.invalid_card": "This card doesn't apply to the top card.",
   "game.minopp.play.no_draw": "You can't draw a card right now.",
   "game.minopp.play.rule_forbid": "The rule forbids you to play this card right now.",
+  "game.minopp.play.table_in_demo": "This table is only for demonstration and doesn't host games.",
 
   "game.minopp.play.played": "%1$s played %2$s.",
   "game.minopp.play.cut": "%1$s cut in with %2$s.",
@@ -24,7 +27,7 @@
   "game.minopp.play.game_nearly_won": "%1$s has %2$s card(s) left.",
   "game.minopp.play.deck_depleted": "You have somehow drew the entire deck onto your hands. The game now ends.",
   "game.minopp.play.player_unavailable": "Player %1$s is not available. Please reallocate seats.",
-  "game.minopp.play.no_game": "Game inactive.",
+  "game.minopp.play.no_game": "Table is idle.",
 
   "game.minopp.play.mino_shout": "%1$s: §6Mino!",
   "game.minopp.play.mino_shout_invalid": "%1$s got penalized for randomly shouting Mino.",
@@ -64,12 +67,25 @@
   "gui.minopp.play.cursor.pass_draw": "§6Pass (Draw)",
   "gui.minopp.play.cursor.draw": "§6Draw",
   "gui.minopp.play.cursor.shout": "<§6Mino!§r>",
+  "gui.minopp.play.cursor.dead_man": "(Your Turn)",
 
   "gui.minopp.seats.title": "Participants Seated on the Table",
-  "gui.minopp.seats.start": "§aStart Game",
-  "gui.minopp.seats.stop": "§cEmergency Stop",
+  "gui.minopp.seats.start": "§aStart",
+  "gui.minopp.seats.stop": "§cE-Stop",
   "gui.minopp.seats.reset": "§6Reset Seats",
 
   "task.minopp.minopp_task": "mino",
-  "task.minopp.minopp_task.desc": "Play MINO, mainhand must be empty"
+  "task.minopp.minopp_task.desc": "Play MINO, mainhand must be empty",
+
+  "subtitles.minopp.play": "Mino Card played",
+  "subtitles.minopp.draw": "Mino Card drawn",
+  "subtitles.minopp.sigh": "Sad sigh",
+  "subtitles.minopp.pass": "Mino pass",
+  "subtitles.minopp.turn_notice": "Mino turn arrives",
+  "subtitles.minopp.turn_notice_again": "Mino turn arrives again",
+  "subtitles.minopp.turn_notice_continuous": "Mino turn pending",
+  "subtitles.minopp.win": "Mino Game won",
+  "subtitles.minopp.mino_shout": "Mino!",
+  "subtitles.minopp.mino_shout_invalid": "Mino shout proven invalid",
+  "subtitles.minopp.doubt_success": "Mino doubt proven successful"
 }

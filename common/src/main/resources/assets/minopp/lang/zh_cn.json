@@ -1,6 +1,8 @@
 {
   "block.minopp.mino_table": "Mino++ 游戏桌",
   "item.minopp.hand_cards": "Mino++ 手牌",
+  "item.minopp.coupon": "奖券",
+  "item.minopp.coupon.description": "和您的朋友分享。",
   "entity.minopp.mino_auto_player": "MinoBot",
 
   "game.minopp.play.no_player": "你不在此对局中。",
@@ -11,6 +13,7 @@
   "game.minopp.play.invalid_card": "这张牌不能回应上张牌。",
   "game.minopp.play.no_draw": "请你先出牌。",
   "game.minopp.play.rule_forbid": "按规则现在不能出这张牌。",
+  "game.minopp.play.table_in_demo": "此桌仅供演示，不用于对局。",
 
   "game.minopp.play.played": "%1$s 出牌 %2$s。",
   "game.minopp.play.cut": "%1$s 抢过回合出牌 %2$s。",
@@ -24,7 +27,7 @@
   "game.minopp.play.game_nearly_won": "%1$s 还剩 %2$s 张牌。",
   "game.minopp.play.deck_depleted": "你们把所有牌全都抽到手上了，本局不再进行。",
   "game.minopp.play.player_unavailable": "%1$s 现在似乎不在，请重新入座。",
-  "game.minopp.play.no_game": "对局未获使能。",
+  "game.minopp.play.no_game": "桌子空闲。",
 
   "game.minopp.play.mino_shout": "%1$s: §6Mino!",
   "game.minopp.play.mino_shout_invalid": "%1$s 乱喊 Mino 而被罚。",
@@ -64,6 +67,7 @@
   "gui.minopp.play.cursor.pass_draw": "§6不出 (抽牌)",
   "gui.minopp.play.cursor.draw": "§6抽牌",
   "gui.minopp.play.cursor.shout": "<§6Mino!§r>",
+  "gui.minopp.play.cursor.dead_man": "(轮到您)",
 
   "gui.minopp.seats.title": "本桌入座情况",
   "gui.minopp.seats.start": "§a起动",
@@ -71,5 +75,17 @@
   "gui.minopp.seats.reset": "§6清空座位",
 
   "task.minopp.minopp_task": "mino",
-  "task.minopp.minopp_task.desc": "打Mino咯，需要主手闲置"
+  "task.minopp.minopp_task.desc": "打Mino咯，需要主手闲置",
+
+  "subtitles.minopp.play": "Mino卡牌: 打出",
+  "subtitles.minopp.draw": "Mino卡牌: 抽牌",
+  "subtitles.minopp.pass": "Mino: 过",
+  "subtitles.minopp.sigh": "悲伤的叹息",
+  "subtitles.minopp.turn_notice": "Mino: 轮到您",
+  "subtitles.minopp.turn_notice_again": "Mino: 再次轮到您",
+  "subtitles.minopp.turn_notice_continuous": "Mino: 现在轮到您",
+  "subtitles.minopp.win": "Mino对局: 胜利",
+  "subtitles.minopp.mino_shout": "Mino!",
+  "subtitles.minopp.mino_shout_invalid": "Mino: 喊叫无效",
+  "subtitles.minopp.doubt_success": "Mino: 怀疑成功"
 }

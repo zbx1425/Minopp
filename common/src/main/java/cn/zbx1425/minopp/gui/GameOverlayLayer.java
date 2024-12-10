@@ -3,11 +3,9 @@ package cn.zbx1425.minopp.gui;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
-import cn.zbx1425.minopp.game.ActionMessage;
-import cn.zbx1425.minopp.game.ActionReport;
-import cn.zbx1425.minopp.game.Card;
-import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.game.*;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.platform.ClientPlatform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.DeltaTracker;
@@ -20,6 +18,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
@@ -33,34 +32,45 @@ import java.util.Random;
 
 public class GameOverlayLayer implements LayeredDraw.Layer {
 
+    private double zoomAnimationProgress = 0;
+    private double zoomAnimationTarget = 0;
+
     @Override
     public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         LocalPlayer player = Minecraft.getInstance().player;
         BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
-        HitResult hitResult = Minecraft.getInstance().hitResult;
         ClientLevel level = Minecraft.getInstance().level;
-        BlockPos hitResultGamePos = null;
-        if (hitResult.getType() == HitResult.Type.BLOCK) {
-            BlockPos potentialTablePos = ((BlockHitResult)hitResult).getBlockPos();
-            if (level.getBlockState(potentialTablePos).is(Mino.BLOCK_MINO_TABLE.get())) {
-                hitResultGamePos = BlockMinoTable.getCore(level.getBlockState(potentialTablePos), potentialTablePos);
-            }
-        }
+        BlockPos hitResultGamePos = BlockMinoTable.Client.getCursorPickedGame();
         BlockPos gamePos = (handCardGamePos != null) ? handCardGamePos : hitResultGamePos;
-        if (gamePos == null) return;
+        if (gamePos == null) {
+            TurnDeadMan.setOutsideGame();
+            return;
+        }
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
-        if (tableEntity == null) return;
+        if (tableEntity == null) {
+            TurnDeadMan.setOutsideGame();
+            return;
+        }
 
         if (tableEntity.game == null) {
             renderGameInactive(guiGraphics, deltaTracker, tableEntity);
-        } else if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
-            // Only render active view when the player is looking at the same table as the hand cards
-            renderGameActive(guiGraphics, deltaTracker, tableEntity);
+            TurnDeadMan.setOutsideGame();
+            zoomAnimationProgress = zoomAnimationTarget = 0;
+        } else {
+            TurnDeadMan.tick(tableEntity.game, deltaTracker);
+            if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
+                // Only render active view when the player is looking at the same table as the hand cards
+                renderGameActive(guiGraphics, deltaTracker, tableEntity);
+            } else {
+                zoomAnimationTarget = 0;
+            }
         }
+        performZoomAnimation(deltaTracker, tableEntity);
         renderHandCards(guiGraphics, deltaTracker);
     }
 
     private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+        if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
         for (String part : tableEntity.state.message().getString().split("\n")) {
@@ -72,13 +82,29 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     }
 
     private void renderGameActive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
-        int x = 20, y = 60;
-        Font font = Minecraft.getInstance().font;
-        CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
-        drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
-        y += font.lineHeight;
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
+        CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
+        // Zoom effect target
+        if (currentPlayer.equals(cardPlayer)) {
+            if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND) {
+                zoomAnimationTarget = 1;
+            } else {
+                if (zoomAnimationTarget < 1.01) {
+                    zoomAnimationTarget = 1.5; // Zoom in first
+                } else if (zoomAnimationProgress >= 1.5) { // Already zoomed in
+                    zoomAnimationTarget = 1.05; // Zoom out, but not trigger zoom in again
+                }
+            }
+        } else {
+            zoomAnimationTarget = 0;
+        }
+
+        if (Minecraft.getInstance().options.hideGui) return;
+        int x = 20, y = 60;
+        Font font = Minecraft.getInstance().font;
+        drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
+        y += font.lineHeight;
         if (currentPlayer.equals(cardPlayer)) {
             drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
                     (System.currentTimeMillis() % 400 < 200) ? 0xFFFFFFFF : 0xFFFFFF00);
@@ -125,7 +151,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             BlockPos hitPos = ((BlockHitResult) Minecraft.getInstance().hitResult).getBlockPos();
             BlockState hitState = Minecraft.getInstance().level.getBlockState(hitPos);
             if (hitState.is(Mino.BLOCK_MINO_TABLE.get())) {
-                boolean isPass = hitState.getValue(BlockMinoTable.PART) == BlockMinoTable.TablePartType.X_LESS_Z_LESS;
+                boolean isPass = BlockMinoTable.Client.isCursorHittingPile();
                 if (currentPlayer.equals(cardPlayer)) {
                     Component cursorMessage = switch (tableEntity.game.currentPlayerPhase) {
                         case DISCARD_HAND -> isPass ? Component.translatable("gui.minopp.play.cursor.pass_draw")
@@ -140,13 +166,28 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                     boolean highlight = Minecraft.getInstance().level.getGameTime() % 3L < 2L && isPass;
                     int msgWidth = Math.max(font.width(cursorMessage), isShouting ? font.width(shoutMessage) : 0);
                     int msgHeight = isShouting ? font.lineHeight * 2 : font.lineHeight;
-                    guiGraphics.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 2, highlight ? 0x80AAAA66 : 0x80000000);
-                    drawStringWithBackdrop(guiGraphics, font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                    guiGraphics.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 3, highlight ? 0x80AAAA66 : 0x80000000);
+                    guiGraphics.drawString(font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
                     if (isShouting) {
-                        drawStringWithBackdrop(guiGraphics, font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                        guiGraphics.drawString(font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
                     }
                 }
             }
+        }
+
+        if (TurnDeadMan.isAlarmActive()) {
+            Component deadManMessage = Component.translatable("gui.minopp.play.cursor.dead_man");
+            int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+            int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+            boolean highlight = Minecraft.getInstance().level.getGameTime() % 3L < 2L;
+            int msgWidth = font.width(deadManMessage);
+            int msgHeight = font.lineHeight;
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate((float)(width / 2), (float)(height / 2 + 12), 0);
+            guiGraphics.pose().scale(1.5f, 1.5f, 1);
+            guiGraphics.fill(-msgWidth / 2 - 4, 0, msgWidth / 2 + 4, msgHeight + 4, highlight ? 0x80AAAA66 : 0x80000000);
+            guiGraphics.drawString(font, deadManMessage, -msgWidth / 2, 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+            guiGraphics.pose().popPose();
         }
     }
     
@@ -162,26 +203,25 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     private static final ResourceLocation ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
     private void renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+        if (Minecraft.getInstance().options.hideGui) return;
+        RenderSystem.enableBlend();
+
         Font font = Minecraft.getInstance().font;
         LocalPlayer player = Minecraft.getInstance().player;
         ClientLevel level = Minecraft.getInstance().level;
         BlockPos gamePos = ItemHandCards.getHandCardGamePos(player);
         if (gamePos == null) return;
-        int clientHandIndex = ItemHandCards.getClientHandIndex(player);
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
 
         final int CARD_V_SPACING = 20;
-        final int CARD_WIDTH = 100;
+        final int CARD_WIDTH = (int)(100.0 * Mth.lerp(zoomAnimationProgress, 0.93, 1.0));
         final int CARD_HEIGHT = (int)(CARD_WIDTH * 8.9 / 5.6);
 
         if (tableEntity.game == null) return;
         CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
         if (realPlayer == null) return;
-        if (clientHandIndex > realPlayer.hand.size() - 1) {
-            clientHandIndex = realPlayer.hand.size() - 1;
-            player.getMainHandItem().set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), clientHandIndex);
-        }
+        int clientHandIndex = Mth.clamp(ItemHandCards.getClientHandIndex(player), 0, realPlayer.hand.size() - 1);
 
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
@@ -210,12 +250,15 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             float cardV = card.suit.ordinal() * 25;
             int cardUW = 16;
             int cardVH = 25;
+
+            float shadowAlpha = (float) Math.max(Mth.lerp(zoomAnimationProgress, 0.5, 0), 0);
+
 //            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit.color);
             guiGraphics.blit(ATLAS_LOCATION, x + 5, y + 5, CARD_WIDTH - 10, CARD_HEIGHT - 10,
                     cardU + 1, cardV + 1, cardUW - 2, cardVH - 2, 256, 128);
             guiGraphics.pose().pushPose();
             guiGraphics.pose().translate(x + 7, y + 7, 0);
-            guiGraphics.pose().scale(1.5f, 1.5f, 0);
+            guiGraphics.pose().scale(1.5f, 1.5f, 1);
             if (card.family == Card.Family.REVERSE) {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 208, 0, 10, 10, 256, 128);
             } else if (card.family == Card.Family.SKIP) {
@@ -223,10 +266,29 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             } else if (card.suit == Card.Suit.WILD && card.family == Card.Family.NUMBER) {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 228, 0, 10, 10, 256, 128);
             } else {
-                guiGraphics.drawString(font, card.getCardFaceName(), 0, 0, 0xFFFFFFFF);
+                Component cardName = card.getCardFaceName().copy()
+                        .withStyle(Style.EMPTY.withFont(ResourceLocation.withDefaultNamespace("include/default")));
+                // blend color with shadowAlpha
+                int colorA = (int)(0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
+                guiGraphics.drawString(font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
             }
+
+            guiGraphics.pose().popPose();
+            guiGraphics.pose().pushPose();
+            guiGraphics.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0x222222 | ((int)(0xFF * shadowAlpha) << 24));
             guiGraphics.pose().popPose();
         }
+
+        RenderSystem.disableBlend();
+    }
+
+    private void performZoomAnimation(DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+        if (Math.abs(zoomAnimationTarget - zoomAnimationProgress) < 0.01) {
+            zoomAnimationProgress = zoomAnimationTarget;
+        } else {
+            zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
+        }
+        ClientPlatform.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
     }
 
     public static final GameOverlayLayer INSTANCE = new GameOverlayLayer();

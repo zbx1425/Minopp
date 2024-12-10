@@ -1,12 +1,13 @@
 {
-  "game.play": { "sounds": [ "minopp:play" ] },
-  "game.draw": { "sounds": [ "minopp:draw" ] },
-  "game.draw_multi": { "sounds": [ "minopp:draw_multi" ] },
-  "game.pass": { "sounds": [ "minopp:pass" ] },
-  "game.turn_notice": { "sounds": [ "minopp:turn_notice" ]},
-  "game.turn_notice_again": { "sounds": [ "minopp:turn_notice_again" ]},
-  "game.win": { "sounds": [ "minopp:win" ] },
-  "game.mino_shout": { "sounds": [ "minopp:mino_shout" ] },
-  "game.mino_shout_invalid": { "sounds": [ "minopp:mino_shout_invalid" ] },
-  "game.doubt_success": { "sounds": [ "minopp:doubt_success" ] }
+  "game.play": { "sounds": [ "minopp:play" ], "subtitle": "subtitles.minopp.play" },
+  "game.draw": { "sounds": [ "minopp:draw" ], "subtitle": "subtitles.minopp.draw" },
+  "game.draw_multi": { "sounds": [ "minopp:draw_multi" ], "subtitle": "subtitles.minopp.sigh" },
+  "game.pass": { "sounds": [ "minopp:pass" ], "subtitle": "subtitles.minopp.pass" },
+  "game.turn_notice": { "sounds": [ "minopp:turn_notice" ], "subtitle": "subtitles.minopp.turn_notice" },
+  "game.turn_notice_again": { "sounds": [ "minopp:turn_notice_again" ], "subtitle": "subtitles.minopp.turn_notice_again" },
+  "game.turn_notice_continuous": { "sounds": [ "minopp:turn_notice_continuous" ], "subtitle": "subtitles.minopp.turn_notice_continuous" },
+  "game.win": { "sounds": [ "minopp:win" ], "subtitle": "subtitles.minopp.win" },
+  "game.mino_shout": { "sounds": [ "minopp:mino_shout" ], "subtitle": "subtitles.minopp.mino_shout" },
+  "game.mino_shout_invalid": { "sounds": [ "minopp:mino_shout_invalid" ], "subtitle": "subtitles.minopp.mino_shout_invalid" },
+  "game.doubt_success": { "sounds": [ "minopp:doubt_success" ], "subtitle": "subtitles.minopp.doubt_success" }
 }

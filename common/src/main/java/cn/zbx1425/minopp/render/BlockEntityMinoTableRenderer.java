@@ -2,6 +2,7 @@ package cn.zbx1425.minopp.render;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
+import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -9,6 +10,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -22,6 +24,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import java.util.Random;
@@ -46,6 +49,11 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     public void render(BlockEntityMinoTable blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
         if (blockEntity.game == null) return;
 
+        if (BlockMinoTable.Client.isCursorHittingPile()) {
+            LevelRenderer.renderLineBox(poseStack, multiBufferSource.getBuffer(RenderType.lines()),
+                    BlockMinoTable.Client.getPileAabb(blockEntity), 1, 1, 0, 1f);
+        }
+
         VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/deck.png")));
 
         poseStack.pushPose();
@@ -53,7 +61,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         poseStack.scale(0.4f, 0.3f, 0.4f);
         BakedModel model = itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0);
         poseStack.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
-        Random deckRandom = new Random(0);
+        Random deckRandom = new Random(1);
         for (int ci = 0; ci < Math.ceil(blockEntity.game.deck.size() / 5f); ci++) {
             poseStack.translate(deckRandom.nextFloat() * 0.1 - 0.05, deckRandom.nextFloat() * 0.1 - 0.05, 1 / 16f);
             itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
@@ -116,7 +124,9 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                 Matrix4f matrix4f = poseStack.last().pose();
                 float g = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
                 int k = (int)(g * 255.0F) << 24;
-                Component component = card.getDisplayName();
+                Component component = (card.suit == Card.Suit.WILD)
+                    ? card.getDisplayName().copy().append(Component.translatable("game.minopp.card.suit." + card.getEquivSuit().name().toLowerCase()))
+                    : card.getDisplayName();
                 float h = (float)(-font.width(component) / 2);
                 font.drawInBatch(component, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
                 font.drawInBatch(component, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
@@ -132,11 +142,5 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     @Override
     public boolean shouldRenderOffScreen(BlockEntityMinoTable blockEntity) {
         return true;
-    }
-
-    private static final AABB AABB_INFINITE = new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-
-    public AABB getRenderBoundingBox(BlockEntityMinoTable blockEntity) {
-        return AABB_INFINITE;
     }
 }

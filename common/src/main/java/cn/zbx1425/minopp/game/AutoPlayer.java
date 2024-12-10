@@ -1,0 +1,80 @@
+package cn.zbx1425.minopp.game;
+
+import java.util.Random;
+
+public class AutoPlayer {
+
+    // Better Abstraction?
+
+    public boolean aiNoWin = false;
+    public boolean aiNoForget = false;
+    public byte aiNoDelay = 0;
+    public boolean aiStartGame = false;
+
+    public ActionReport playAtGame(CardGame game, CardPlayer realPlayer) {
+        Card topCard = game.topCard;
+        boolean forgetsMino = aiNoForget ? false : new Random().nextFloat() < 0.2;
+        boolean shoutsMino = !forgetsMino && realPlayer.hand.size() <= 2;
+
+        if (aiNoWin) {
+            if (realPlayer.hand.size() <= 1) {
+                return game.playNoCard(realPlayer);
+            }
+        }
+
+        // Prioritize switching suit to make things more interesting
+        // If we have a card of same number but different suit
+        for (Card card : realPlayer.hand) {
+            if (card.number == topCard.number && card.suit != topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
+                ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
+                if (!result.isFail) return result;
+            }
+        }
+        // If we have a Wild card
+        for (Card card : realPlayer.hand) {
+            if (card.suit == Card.Suit.WILD && card.family != Card.Family.DRAW) {
+                ActionReport result = game.playCard(realPlayer, card, getMostCommonSuit(realPlayer), shoutsMino);
+                if (!result.isFail) return result;
+            }
+        }
+
+        // If we have a card of same suit
+        for (Card card : realPlayer.hand) {
+            if (card.suit == topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
+                ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
+                if (!result.isFail) return result;
+            }
+        }
+        // If we have any other card
+        for (Card card : realPlayer.hand) {
+            if (card.canPlayOn(topCard)) {
+                if (card.suit == Card.Suit.WILD) {
+                    ActionReport result = game.playCard(realPlayer, card, getMostCommonSuit(realPlayer), shoutsMino);
+                    if (!result.isFail) return result;
+                } else {
+                    ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
+                    if (!result.isFail) return result;
+                }
+            }
+        }
+
+        // We're out of option
+        return game.playNoCard(realPlayer);
+    }
+
+    private Card.Suit getMostCommonSuit(CardPlayer realPlayer) {
+        int[] suitCount = new int[4];
+        for (Card handCard : realPlayer.hand) {
+            if (handCard.suit != Card.Suit.WILD) {
+                suitCount[handCard.suit.ordinal()]++;
+            }
+        }
+        Card.Suit mostCommonSuit = Card.Suit.values()[new Random().nextInt(0, 4)];
+        for (int i = 1; i < 4; i++) {
+            if (suitCount[i] > suitCount[mostCommonSuit.ordinal()]) {
+                mostCommonSuit = Card.Suit.values()[i];
+            }
+        }
+        return mostCommonSuit;
+    }
+}

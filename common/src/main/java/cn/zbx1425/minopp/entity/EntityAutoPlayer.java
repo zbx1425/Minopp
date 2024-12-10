@@ -3,19 +3,14 @@ package cn.zbx1425.minopp.entity;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
-import cn.zbx1425.minopp.game.ActionReport;
-import cn.zbx1425.minopp.game.Card;
-import cn.zbx1425.minopp.game.CardGame;
-import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.game.*;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
@@ -23,6 +18,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -44,6 +41,7 @@ public class EntityAutoPlayer extends LivingEntity {
 
     public CardPlayer cardPlayer;
     public BlockPos tablePos = null;
+    private boolean noPush;
 
     public EntityAutoPlayer(EntityType<? extends LivingEntity> entityType, Level level) {
         super(entityType, level);
@@ -54,67 +52,10 @@ public class EntityAutoPlayer extends LivingEntity {
     private long thinkingFinishTime = 0;
     private long gameEndTime = 0;
 
-    public boolean aiNoWin = false;
-    public boolean aiNoForget = false;
-    public byte aiNoDelay = 0;
-    public boolean aiStartGame = false;
+    private final AutoPlayer autoPlayer = new AutoPlayer();
 
     public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
     public String clientSkinGameProfileValidFor = "";
-
-    public ActionReport performAI(CardGame game, CardPlayer realPlayer) {
-        Card topCard = game.topCard;
-        boolean forgetsMino = aiNoForget ? false : new Random().nextFloat() < 0.2;
-        boolean shoutsMino = !forgetsMino && realPlayer.hand.size() <= 2;
-
-        if (aiNoWin) {
-            if (realPlayer.hand.size() <= 1) {
-                return game.playNoCard(realPlayer);
-            }
-        }
-
-        // If we have a card of same number but different suit
-        for (Card card : realPlayer.hand) {
-            if (card.number == topCard.number && card.suit != topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
-                ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
-                if (!result.isFail) return result;
-            }
-        }
-        // If we have a card of same suit
-        for (Card card : realPlayer.hand) {
-            if (card.suit == topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
-                ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
-                if (!result.isFail) return result;
-            }
-        }
-        // If we have any other card
-        for (Card card : realPlayer.hand) {
-            if (card.canPlayOn(topCard)) {
-                if (card.suit == Card.Suit.WILD) {
-                    // Check which suit is most common in hand
-                    int[] suitCount = new int[4];
-                    for (Card handCard : realPlayer.hand) {
-                        if (handCard.suit != Card.Suit.WILD) {
-                            suitCount[handCard.suit.ordinal()]++;
-                        }
-                    }
-                    Card.Suit mostCommonSuit = Card.Suit.values()[new Random().nextInt(0, 4)];
-                    for (int i = 1; i < 4; i++) {
-                        if (suitCount[i] > suitCount[mostCommonSuit.ordinal()]) {
-                            mostCommonSuit = Card.Suit.values()[i];
-                        }
-                    }
-                    ActionReport result = game.playCard(realPlayer, card, mostCommonSuit, shoutsMino);
-                    if (!result.isFail) return result;
-                } else {
-                    ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
-                    if (!result.isFail) return result;
-                }
-            }
-        }
-        // We're out of option
-        return game.playNoCard(realPlayer);
-    }
 
     @Override
     public void tick() {
@@ -135,9 +76,10 @@ public class EntityAutoPlayer extends LivingEntity {
 
         // Rate limiting
         if (!entityData.get(ACTIVE)) {
+            if (noPush) heal(10);
             return;
         }
-        if (aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
+        if (autoPlayer.aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
             return;
         }
         lastTickGameTime = level().getGameTime();
@@ -155,16 +97,14 @@ public class EntityAutoPlayer extends LivingEntity {
                             BlockEntity blockEntity = level().getBlockEntity(corePos);
                             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                                 if (tableEntity.game != null) continue;
-                                String playerName = hasCustomName() ? getCustomName().getString()
-                                        : "MinoBot #" + new Random().nextInt(100, 1000);
+                                String playerName = hasCustomName() ? getCustomName().getString() : "MinoBot #" + new Random().nextInt(100, 1000);
                                 cardPlayer = new CardPlayer(uuid, playerName);
-                                ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                                handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                                        new ItemHandCards.CardGameBindingComponent(uuid, Optional.of(corePos)));
-                                entityData.set(HAND_STACK, handStack);
                                 tableEntity.joinPlayerToTable(cardPlayer, position());
                                 tablePos = corePos;
                                 tableFound = true;
+                                ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
+                                handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+                                entityData.set(HAND_STACK, handStack);
                                 break;
                             }
                         }
@@ -174,7 +114,11 @@ public class EntityAutoPlayer extends LivingEntity {
                 if (tableFound) break;
             }
             if (!tableFound) {
-                kill();
+                if (!noPush) {
+                    kill();
+                } else {
+                    entityData.set(ACTIVE, false);
+                }
                 return;
             }
         }
@@ -187,7 +131,7 @@ public class EntityAutoPlayer extends LivingEntity {
                 setInvulnerable(true);
                 heal(10);
                 if (tableEntity.game.players.get(tableEntity.game.currentPlayerIndex).equals(cardPlayer)) {
-                    if (aiNoDelay > 0) {
+                    if (autoPlayer.aiNoDelay > 0) {
                         isThinking = false;
                     } else {
                         if (!isThinking) {
@@ -207,7 +151,7 @@ public class EntityAutoPlayer extends LivingEntity {
                         }
                     }
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
-                    ActionReport result = performAI(tableEntity.game, realPlayer);
+                    ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer);
                     tableEntity.handleActionResult(result, realPlayer, null);
                     gameEndTime = -1;
                 } else {
@@ -220,8 +164,7 @@ public class EntityAutoPlayer extends LivingEntity {
                 } else if (level().getGameTime() - gameEndTime <= 20 * 3) {
                     if (onGround()) jumpFromGround();
                 } else {
-                    if (aiStartGame && tableEntity.getPlayersList().size() >= 2
-                            && tableEntity.getPlayersList().getFirst().equals(cardPlayer)) {
+                    if (autoPlayer.aiStartGame && tableEntity.getPlayersList().size() >= 2) {
                         tableEntity.startGame(cardPlayer);
                     }
                 }
@@ -248,6 +191,7 @@ public class EntityAutoPlayer extends LivingEntity {
             } else {
                 if (((Player)source.getEntity()).getMainHandItem().is(net.minecraft.world.item.Items.STICK)) {
                     entityData.set(ACTIVE, false);
+                    tablePos = null;
                 }
             }
         }
@@ -292,11 +236,12 @@ public class EntityAutoPlayer extends LivingEntity {
         compound.putBoolean("Active", entityData.get(ACTIVE));
         compound.putString("Skin", entityData.get(SKIN));
         CompoundTag aiConfig = new CompoundTag();
-        aiConfig.putBoolean("NoWin", aiNoWin);
-        aiConfig.putBoolean("NoForget", aiNoForget);
-        aiConfig.putByte("NoDelay", aiNoDelay);
-        aiConfig.putBoolean("StartGame", aiStartGame);
+        aiConfig.putBoolean("NoWin", autoPlayer.aiNoWin);
+        aiConfig.putBoolean("NoForget", autoPlayer.aiNoForget);
+        aiConfig.putByte("NoDelay", autoPlayer.aiNoDelay);
+        aiConfig.putBoolean("StartGame", autoPlayer.aiStartGame);
         compound.put("AI", aiConfig);
+        if (noPush) compound.putBoolean("NoPush", true);
     }
 
     @Override
@@ -312,9 +257,6 @@ public class EntityAutoPlayer extends LivingEntity {
         } else {
             cardPlayer = null;
         }
-        if (compound.contains("HandStack", CompoundTag.TAG_COMPOUND)) {
-            entityData.set(HAND_STACK, ItemStack.parse(level().registryAccess(), compound.getCompound("HandStack")).orElse(ItemStack.EMPTY));
-        }
         if (compound.contains("Active", CompoundTag.TAG_BYTE)) {
             entityData.set(ACTIVE, compound.getBoolean("Active"));
         }
@@ -323,11 +265,28 @@ public class EntityAutoPlayer extends LivingEntity {
         }
         if (compound.contains("AI", CompoundTag.TAG_COMPOUND)) {
             CompoundTag aiConfig = compound.getCompound("AI");
-            aiNoWin = aiConfig.getBoolean("NoWin");
-            aiNoForget = aiConfig.getBoolean("NoForget");
-            aiNoDelay = aiConfig.getByte("NoDelay");
-            aiStartGame = aiConfig.getBoolean("StartGame");
+            autoPlayer.aiNoWin = aiConfig.getBoolean("NoWin");
+            autoPlayer.aiNoForget = aiConfig.getBoolean("NoForget");
+            autoPlayer.aiNoDelay = aiConfig.getByte("NoDelay");
+            autoPlayer.aiStartGame = aiConfig.getBoolean("StartGame");
         }
+        if (compound.contains("NoPush", CompoundTag.TAG_BYTE)) {
+            noPush = compound.getBoolean("NoPush");
+        }
+
+        // Try fix hand stack
+        if (tablePos != null && cardPlayer != null) {
+            ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
+            handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+            entityData.set(HAND_STACK, handStack);
+        } else {
+            entityData.set(HAND_STACK, ItemStack.EMPTY);
+        }
+    }
+
+    @Override
+    public boolean isPushable() {
+        return !noPush;
     }
 
     private static final EntityDataAccessor<ItemStack> HAND_STACK = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.ITEM_STACK);
@@ -340,6 +299,12 @@ public class EntityAutoPlayer extends LivingEntity {
         builder.define(HAND_STACK, ItemStack.EMPTY);
         builder.define(ACTIVE, false);
         builder.define(SKIN, "");
+    }
+
+    public static AttributeSupplier createAttributes() {
+        return LivingEntity.createLivingAttributes()
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                .build();
     }
 }
 

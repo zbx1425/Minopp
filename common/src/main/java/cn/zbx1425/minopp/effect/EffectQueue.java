@@ -22,12 +22,12 @@ public class EffectQueue {
         }
     }
 
-    public void addAll(List<EffectEvent> events, BlockPos origin, Player self) {
+    public void addAll(List<EffectEvent> events, BlockPos origin, Player self, boolean selfIsPartOfSourceGame) {
         synchronized (queue) {
             long time = System.currentTimeMillis();
             for (EffectEvent event : events) {
                 if (event.target().isEmpty() || event.target().get().equals(self.getGameProfile().getId())) {
-                    queue.enqueue(new TimedEvent(event, time, origin));
+                    queue.enqueue(new TimedEvent(event, time, origin, selfIsPartOfSourceGame));
                 }
             }
         }
@@ -38,15 +38,17 @@ public class EffectQueue {
         private final EffectEvent event;
         private final long time;
         private final BlockPos origin;
+        private final boolean selfIsPartOfSourceGame;
 
-        public TimedEvent(EffectEvent incoming, long baseTime, BlockPos origin) {
+        public TimedEvent(EffectEvent incoming, long baseTime, BlockPos origin, boolean selfIsPartOfSourceGame) {
             this.event = incoming;
             this.time = baseTime + incoming.timeOffset();
             this.origin = origin;
+            this.selfIsPartOfSourceGame = selfIsPartOfSourceGame;
         }
 
         public void summon(Level level) {
-            event.summonClient(level, origin);
+            event.summonClient(level, origin, selfIsPartOfSourceGame);
         }
     }
 }
