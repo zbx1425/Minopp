@@ -75,7 +75,7 @@
   "gui.minopp.seats.reset": "§6Reset Seats",
 
   "task.minopp.minopp_task": "mino",
-  "task.minopp.minopp_task.desc": "Play MINO",
+  "task.minopp.minopp_task.desc": "Play MINO, mainhand must be empty or Mino card",
 
   "subtitles.minopp.play": "Mino Card played",
   "subtitles.minopp.draw": "Mino Card drawn",
