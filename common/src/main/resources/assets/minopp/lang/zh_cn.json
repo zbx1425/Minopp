@@ -75,7 +75,7 @@
   "gui.minopp.seats.reset": "§6清空座位",
 
   "task.minopp.minopp_task": "mino",
-  "task.minopp.minopp_task.desc": "打Mino咯，需要主手闲置",
+  "task.minopp.minopp_task.desc": "打Mino咯，需要主手闲置或为mino卡牌",
 
   "subtitles.minopp.play": "Mino卡牌: 打出",
   "subtitles.minopp.draw": "Mino卡牌: 抽牌",

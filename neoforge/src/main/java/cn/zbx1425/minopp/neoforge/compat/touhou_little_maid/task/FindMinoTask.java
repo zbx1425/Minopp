@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.task;
 
+import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.MemoryTypeRegister;
@@ -44,7 +45,7 @@ public class FindMinoTask extends MaidCheckRateTask {
 
     @Override
     protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityMaid maid) {
-        if (super.checkExtraStartConditions(worldIn, maid) && maid.canBrainMoving() && maid.getMainHandItem().isEmpty()) {
+        if (super.checkExtraStartConditions(worldIn, maid) && maid.canBrainMoving() && (maid.getMainHandItem().isEmpty() || maid.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get()))) {
             BlockPos seatPos = findSeat(worldIn, maid);
             if (seatPos != null && maid.isWithinRestriction(seatPos)) {
                 if (seatPos.distToCenterSqr(maid.position()) < Math.pow(this.closeEnoughDist, 2)) {
