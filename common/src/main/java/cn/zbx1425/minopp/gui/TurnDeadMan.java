@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.gui;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
@@ -41,7 +42,7 @@ public class TurnDeadMan {
     }
 
     public static void setOutsideGame() {
-        ClientPlatform.globalFovModifier = 1;
+        MinoClient.globalFovModifier = 1;
         deadManElapsedTicks = 0;
         playAlarmSound();
     }

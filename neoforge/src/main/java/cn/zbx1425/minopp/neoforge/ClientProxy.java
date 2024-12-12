@@ -3,6 +3,7 @@ package cn.zbx1425.minopp.neoforge;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
+import cn.zbx1425.minopp.neoforge.compat.signmeup.MinimapVisibility;
 import cn.zbx1425.minopp.platform.ClientPlatform;
 import cn.zbx1425.minopp.platform.neoforge.ClientPlatformImpl;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
@@ -56,12 +57,13 @@ public class ClientProxy {
 
         @SubscribeEvent
         public static void onComputeFovModifier(ComputeFovModifierEvent event) {
-            event.setNewFovModifier(event.getNewFovModifier() * (float)ClientPlatform.globalFovModifier);
+            event.setNewFovModifier(event.getNewFovModifier() * (float)MinoClient.globalFovModifier);
         }
 
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Pre event) {
             MinoClient.tick();
+            MinimapVisibility.tick();
         }
 
     }

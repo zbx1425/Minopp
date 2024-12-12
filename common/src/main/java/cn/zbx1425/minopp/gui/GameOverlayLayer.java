@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.gui;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.*;
@@ -44,11 +45,13 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         BlockPos gamePos = (handCardGamePos != null) ? handCardGamePos : hitResultGamePos;
         if (gamePos == null) {
             TurnDeadMan.setOutsideGame();
+            MinoClient.handCardOverlayActive = false;
             return;
         }
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         if (tableEntity == null) {
             TurnDeadMan.setOutsideGame();
+            MinoClient.handCardOverlayActive = false;
             return;
         }
 
@@ -66,7 +69,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             }
         }
         performZoomAnimation(deltaTracker, tableEntity);
-        renderHandCards(guiGraphics, deltaTracker);
+        MinoClient.handCardOverlayActive = renderHandCards(guiGraphics, deltaTracker);
     }
 
     private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
@@ -202,15 +205,19 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
 
     private static final ResourceLocation ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
-    private void renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
-        if (Minecraft.getInstance().options.hideGui) return;
+    /**
+     * Render hand cards on the screen
+     * @return whether the hand cards are rendered
+     */
+    private boolean renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+        if (Minecraft.getInstance().options.hideGui) return false;
         RenderSystem.enableBlend();
 
         Font font = Minecraft.getInstance().font;
         LocalPlayer player = Minecraft.getInstance().player;
         ClientLevel level = Minecraft.getInstance().level;
         BlockPos gamePos = ItemHandCards.getHandCardGamePos(player);
-        if (gamePos == null) return;
+        if (gamePos == null) return false;
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
 
@@ -218,9 +225,9 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         final int CARD_WIDTH = (int)(100.0 * Mth.lerp(zoomAnimationProgress, 0.93, 1.0));
         final int CARD_HEIGHT = (int)(CARD_WIDTH * 8.9 / 5.6);
 
-        if (tableEntity.game == null) return;
+        if (tableEntity.game == null) return false;
         CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
-        if (realPlayer == null) return;
+        if (realPlayer == null) return false;
         int clientHandIndex = Mth.clamp(ItemHandCards.getClientHandIndex(player), 0, realPlayer.hand.size() - 1);
 
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
@@ -280,6 +287,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         }
 
         RenderSystem.disableBlend();
+        return true;
     }
 
     private void performZoomAnimation(DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
@@ -288,7 +296,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         } else {
             zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
         }
-        ClientPlatform.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
+        MinoClient.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
     }
 
     public static final GameOverlayLayer INSTANCE = new GameOverlayLayer();

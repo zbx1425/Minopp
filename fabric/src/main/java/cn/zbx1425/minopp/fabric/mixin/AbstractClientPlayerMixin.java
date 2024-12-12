@@ -1,6 +1,6 @@
 package cn.zbx1425.minopp.fabric.mixin;
 
-import cn.zbx1425.minopp.platform.ClientPlatform;
+import cn.zbx1425.minopp.MinoClient;
 import net.minecraft.client.player.AbstractClientPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,6 +12,6 @@ public class AbstractClientPlayerMixin {
 
     @Inject(method = "getFieldOfViewModifier", at = @At("RETURN"), cancellable = true)
     public void getFieldOfViewModifier(CallbackInfoReturnable<Float> cir) {
-        cir.setReturnValue(cir.getReturnValueF() * (float) ClientPlatform.globalFovModifier);
+        cir.setReturnValue(cir.getReturnValueF() * (float) MinoClient.globalFovModifier);
     }
 }
