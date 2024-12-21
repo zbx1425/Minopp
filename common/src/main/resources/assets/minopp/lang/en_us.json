@@ -87,5 +87,8 @@
   "subtitles.minopp.win": "Mino Game won",
   "subtitles.minopp.mino_shout": "Mino!",
   "subtitles.minopp.mino_shout_invalid": "Mino shout proven invalid",
-  "subtitles.minopp.doubt_success": "Mino doubt proven successful"
+  "subtitles.minopp.doubt_success": "Mino doubt proven successful",
+
+  "key.categories.minopp": "Mino++",
+  "key.minopp.shout_modifier": "Shout Mino while Playing"
 }

@@ -87,5 +87,8 @@
   "subtitles.minopp.win": "Mino对局: 胜利",
   "subtitles.minopp.mino_shout": "Mino!",
   "subtitles.minopp.mino_shout_invalid": "Mino: 喊叫无效",
-  "subtitles.minopp.doubt_success": "Mino: 怀疑成功"
+  "subtitles.minopp.doubt_success": "Mino: 怀疑成功",
+
+  "key.categories.minopp": "Mino++",
+  "key.minopp.shout_modifier": "出牌同时喊出 Mino"
 }

@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.gui.SeatControlScreen;
@@ -100,7 +101,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
         }
 
         public static boolean isShoutModifierHeld() {
-            return Minecraft.getInstance().options.keySprint.isDown();
+            return MinoClient.KEY_SHOUT_MODIFIER.isDown();
         }
 
         public static @Nullable BlockPos getCursorPickedGame() {
