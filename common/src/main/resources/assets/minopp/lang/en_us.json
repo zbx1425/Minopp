@@ -12,7 +12,7 @@
   "game.minopp.play.must_draw": "You must draw a card right now.",
   "game.minopp.play.invalid_card": "This card doesn't apply to the top card.",
   "game.minopp.play.no_draw": "You can't draw a card right now.",
-  "game.minopp.play.rule_forbid": "The rule forbids you to play this card right now.",
+  "game.minopp.play.rule_forbid": "You can only play this card when you have no other cards to play.",
   "game.minopp.play.table_in_demo": "This table is only for demonstration and doesn't host games.",
 
   "game.minopp.play.played": "%1$s played %2$s.",
@@ -22,6 +22,7 @@
   "game.minopp.play.played_no_drawn_card": "%1$s didn't play the drawn card(s).",
   "game.minopp.play.game_destroyed": "%1$s stopped the game.",
   "game.minopp.play.game_started": "%1$s requested the game to start.",
+  "game.minopp.play.hand_card_in_inventory": "Since your main hand is occupied, a hand card item has been placed in your inventory. Please move it to your main hand.",
   "game.minopp.play.seats_reset": "%1$s reset the seats. Please reallocate seats.",
   "game.minopp.play.game_won": "§6%1$s WON THE GAME! Congratulations!",
   "game.minopp.play.game_nearly_won": "%1$s has %2$s card(s) left.",

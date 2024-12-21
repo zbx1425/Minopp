@@ -12,7 +12,7 @@
   "game.minopp.play.must_draw": "现在你必须从牌堆抽牌。",
   "game.minopp.play.invalid_card": "这张牌不能回应上张牌。",
   "game.minopp.play.no_draw": "请你先出牌。",
-  "game.minopp.play.rule_forbid": "按规则现在不能出这张牌。",
+  "game.minopp.play.rule_forbid": "按照规则，只有在没有其他牌可出的时候，才可以出这张牌。",
   "game.minopp.play.table_in_demo": "此桌仅供演示，不用于对局。",
 
   "game.minopp.play.played": "%1$s 出牌 %2$s。",
@@ -22,6 +22,7 @@
   "game.minopp.play.played_no_drawn_card": "%1$s 没有出抽到的牌。",
   "game.minopp.play.game_destroyed": "%1$s 停止了对局。",
   "game.minopp.play.game_started": "%1$s 提议开始。",
+  "game.minopp.play.hand_card_in_inventory": "介于您的主手现在没有空着，手牌物品已被放入您的背包。请把它挪到手上。",
   "game.minopp.play.seats_reset": "%1$s 清空了座位。请重新入座。",
   "game.minopp.play.game_won": "§6%1$s 胜利！恭喜！",
   "game.minopp.play.game_nearly_won": "%1$s 还剩 %2$s 张牌。",

@@ -28,6 +28,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -170,7 +172,25 @@ public class BlockEntityMinoTable extends BlockEntity {
                         ItemHandCards.CardGameBindingComponent newBinding =
                                 new ItemHandCards.CardGameBindingComponent(getBlockPos(), cardPlayer.uuid);
                         handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                        playerFound = mcPlayer.getInventory().add(handCard);
+                        if (Inventory.isHotbarSlot(mcPlayer.getInventory().selected)
+                            && mcPlayer.getInventory().getSelected().isEmpty()) {
+                            // If the player has an empty hand slot, put the card there
+                            mcPlayer.getInventory().setItem(mcPlayer.getInventory().selected, handCard);
+                            playerFound = true;
+                        } else {
+                            // Main hand is occupied, try to put the card in the inventory
+                            boolean addSuccessful = mcPlayer.getInventory().add(handCard);
+                            if (!addSuccessful) {
+                                // Inventory is full, drop the card
+                                ItemEntity itemEntity = mcPlayer.drop(handCard, false);
+                                if (itemEntity != null) {
+                                    itemEntity.setNoPickUpDelay();
+                                    itemEntity.setTarget(mcPlayer.getUUID());
+                                }
+                            }
+                            mcPlayer.displayClientMessage(Component.translatable("game.minopp.play.hand_card_in_inventory"), false);
+                            playerFound = true;
+                        }
                     }
                 } else {
                     if (cardPlayer.uuid.equals(entity.getUUID())) {
