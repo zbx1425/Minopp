@@ -8,6 +8,7 @@ import cn.zbx1425.minopp.item.ItemHandCards;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,7 +37,7 @@ public class InventoryMixin {
 
                     int handIndex = holding.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
                     holding.set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(),
-                            (handIndex - (int)Math.signum(direction) + realPlayer.hand.size()) % realPlayer.hand.size());
+                            Mth.clamp(handIndex - (int)Math.signum(direction), 0, realPlayer.hand.size() - 1));
 
                     TurnDeadMan.pedal();
                     ci.cancel();

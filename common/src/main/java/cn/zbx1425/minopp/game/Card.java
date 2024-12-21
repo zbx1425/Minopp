@@ -2,12 +2,13 @@ package cn.zbx1425.minopp.game;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Card {
+public class Card implements Comparable<Card> {
 
     public Family family;
     public Suit suit;
@@ -109,7 +110,12 @@ public class Card {
 
     @Override
     public int hashCode() {
-        return Objects.hash(family, suit, number);
+        return suit.ordinal() << 16 | family.ordinal() << 8 | (number + 128);
+    }
+
+    @Override
+    public int compareTo(@NotNull Card o) {
+        return Integer.compare(hashCode(), o.hashCode());
     }
 
     public enum Suit {

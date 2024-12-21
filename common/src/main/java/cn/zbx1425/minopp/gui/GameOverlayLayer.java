@@ -6,9 +6,10 @@ import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.*;
 import cn.zbx1425.minopp.item.ItemHandCards;
-import cn.zbx1425.minopp.platform.ClientPlatform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.longs.Long2FloatArrayMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -33,8 +34,10 @@ import java.util.Random;
 
 public class GameOverlayLayer implements LayeredDraw.Layer {
 
+    // Some animation related stuff
     private double zoomAnimationProgress = 0;
     private double zoomAnimationTarget = 0;
+    private final Long2FloatArrayMap handCardCurrentXOff = new Long2FloatArrayMap();
 
     @Override
     public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
@@ -46,12 +49,14 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         if (gamePos == null) {
             TurnDeadMan.setOutsideGame();
             MinoClient.handCardOverlayActive = false;
+            handCardCurrentXOff.clear();
             return;
         }
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         if (tableEntity == null) {
             TurnDeadMan.setOutsideGame();
             MinoClient.handCardOverlayActive = false;
+            handCardCurrentXOff.clear();
             return;
         }
 
@@ -230,6 +235,19 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         if (realPlayer == null) return false;
         int clientHandIndex = Mth.clamp(ItemHandCards.getClientHandIndex(player), 0, realPlayer.hand.size() - 1);
 
+        // Compute some hashes for hand cards, for the sake of animation
+        realPlayer.hand.sort(Card::compareTo);
+        LongArrayList handCardHashes = new LongArrayList();
+        for (Card card : realPlayer.hand) {
+            if (!handCardHashes.isEmpty() && card.hashCode() == (handCardHashes.getLast() & 0xFFFFFFFFL)) {
+                // Tell duplicate identical cards apart; the list's already sorted
+                handCardHashes.add(handCardHashes.getLast() + 0x100000000L);
+            } else {
+                handCardHashes.add(card.hashCode());
+            }
+        }
+        handCardCurrentXOff.keySet().removeIf(hash -> !handCardHashes.contains(hash));
+
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
         int handSize = realPlayer.hand.size();
@@ -237,7 +255,12 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         int cardDrawOffset = selectedCardYRaw < 20 ? 20 - selectedCardYRaw : 0;
         Random cardRandom = new Random(handSize);
         for (int i = 0; i < handSize; i++) {
-            int x = width - 20 - CARD_WIDTH - (i == clientHandIndex ? 30 : 0) + cardRandom.nextInt(-3, 4);
+            int targetXOff = (i == clientHandIndex ? -30 : 0) + cardRandom.nextInt(-3, 4);
+            float currentXOff = handCardCurrentXOff.computeIfAbsent(handCardHashes.getLong(i), ignored -> CARD_WIDTH + 10);
+            int x = width - 10 - CARD_WIDTH + (int)currentXOff;
+            handCardCurrentXOff.put(handCardHashes.getLong(i),
+                    (float)Mth.lerp(8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false),
+                            currentXOff, targetXOff));
             int y = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
             if (i == clientHandIndex) {
                 Card card = realPlayer.hand.get(i);
