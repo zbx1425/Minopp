@@ -76,7 +76,6 @@ public final class MinoNeoForge {
 
         @SubscribeEvent(priority = EventPriority.HIGHEST)
         public static void onAttackEntity(final AttackEntityEvent event) {
-            if (event.getEntity().level().isClientSide) return;
             Mino.onPlayerAttackEntity(event.getTarget(), event.getEntity());
         }
     }

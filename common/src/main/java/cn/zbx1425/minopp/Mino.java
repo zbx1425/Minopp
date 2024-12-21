@@ -33,6 +33,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 @SuppressWarnings("unchecked")
 public final class Mino {
     public static final String MOD_ID = "minopp";
@@ -98,19 +100,18 @@ public final class Mino {
     }
 
     public static void onPlayerAttackEntity(Entity targetMaybePlayer, Player srcPlayer) {
+        if (!srcPlayer.level().isClientSide) return;
         BlockPos gamePos = ItemHandCards.getHandCardGamePos(srcPlayer);
         if (gamePos == null) return;
         if (srcPlayer.level().getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
             if (tableEntity.game == null) return;
-            CardPlayer cardPlayer = tableEntity.game.deAmputate(ItemHandCards.getCardPlayer(srcPlayer));
-            if (cardPlayer == null) return;
-            ActionReport result;
+            UUID targetId;
             if (targetMaybePlayer instanceof Player targetPlayer) {
-                result = tableEntity.game.doubtMino(cardPlayer, ItemHandCards.getCardPlayer(targetPlayer).uuid);
+                targetId = ItemHandCards.getCardPlayer(targetPlayer).uuid;
             } else {
-                result = tableEntity.game.doubtMino(cardPlayer, targetMaybePlayer.getUUID());
+                targetId = targetMaybePlayer.getUUID();
             }
-            tableEntity.handleActionResult(result, cardPlayer, (ServerPlayer) srcPlayer);
+            C2SPlayCardPacket.Client.sendDoubtMinoC2S(gamePos, ItemHandCards.getCardPlayer(srcPlayer), targetId);
         }
     }
 }

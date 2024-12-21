@@ -32,9 +32,7 @@ public final class MinoFabric implements ModInitializer {
         ServerMessageEvents.CHAT_MESSAGE.register((message, sender, params) ->
                 Mino.onServerChatMessage(message.unsignedContent().getString(), sender));
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            if (!entity.level().isClientSide) {
-                Mino.onPlayerAttackEntity(entity, player);
-            }
+            Mino.onPlayerAttackEntity(entity, player);
             return InteractionResult.PASS;
         });
         FabricDefaultAttributeRegistry.register(Mino.ENTITY_AUTO_PLAYER.get(), EntityAutoPlayer.createAttributes());
