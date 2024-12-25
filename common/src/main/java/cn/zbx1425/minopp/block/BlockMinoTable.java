@@ -8,7 +8,9 @@ import cn.zbx1425.minopp.gui.SeatControlScreen;
 import cn.zbx1425.minopp.gui.TurnDeadMan;
 import cn.zbx1425.minopp.gui.WildSelectionScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.mixin.KeyMappingAccessor;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -101,7 +103,9 @@ public class BlockMinoTable extends Block implements EntityBlock {
         }
 
         public static boolean isShoutModifierHeld() {
-            return MinoClient.KEY_SHOUT_MODIFIER.isDown();
+            InputConstants.Key boundKey = ((KeyMappingAccessor)MinoClient.KEY_SHOUT_MODIFIER.get()).getKey();
+            return boundKey.getType() == InputConstants.Type.KEYSYM
+                    && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), boundKey.getValue());
         }
 
         public static @Nullable BlockPos getCursorPickedGame() {

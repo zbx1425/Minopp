@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.platform.fabric;
 
 import cn.zbx1425.minopp.fabric.MinoFabric;
+import cn.zbx1425.minopp.platform.RegistryObject;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -15,8 +16,8 @@ import java.util.function.Consumer;
 
 public class ClientPlatformImpl {
 
-    public static void registerKeyBinding(KeyMapping keyMapping) {
-        KeyBindingHelper.registerKeyBinding(keyMapping);
+    public static void registerKeyBinding(RegistryObject<KeyMapping> keyMapping) {
+        KeyBindingHelper.registerKeyBinding(keyMapping.get());
     }
 
     public static void registerNetworkReceiver(ResourceLocation resourceLocation, Consumer<FriendlyByteBuf> consumer) {

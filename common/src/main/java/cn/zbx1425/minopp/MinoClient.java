@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import cn.zbx1425.minopp.platform.ClientPlatform;
 import cn.zbx1425.minopp.effect.EffectQueue;
+import cn.zbx1425.minopp.platform.RegistryObject;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
@@ -13,7 +14,8 @@ public class MinoClient {
 
     public static final EffectQueue SOUND_QUEUE = new EffectQueue();
 
-    public static final KeyMapping KEY_SHOUT_MODIFIER = new KeyMapping("key.minopp.shout_modifier", GLFW.GLFW_KEY_LEFT_CONTROL, "key.categories.minopp");
+    public static final RegistryObject<KeyMapping> KEY_SHOUT_MODIFIER = new RegistryObject<>(() ->
+            new KeyMapping("key.minopp.shout_modifier",GLFW.GLFW_KEY_LEFT_CONTROL, "key.categories.minopp"));
 
     // For interfacing with platform codes
     public static double globalFovModifier = 1;

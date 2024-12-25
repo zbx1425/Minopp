@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 public class ClientPlatform {
 
     @ExpectPlatform
-    public static void registerKeyBinding(KeyMapping keyMapping) {
+    public static void registerKeyBinding(RegistryObject<KeyMapping> keyMapping) {
         throw new AssertionError();
     }
 

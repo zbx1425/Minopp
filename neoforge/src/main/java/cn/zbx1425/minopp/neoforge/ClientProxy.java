@@ -5,6 +5,7 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
 import cn.zbx1425.minopp.neoforge.compat.signmeup.MinimapVisibility;
 import cn.zbx1425.minopp.platform.ClientPlatform;
+import cn.zbx1425.minopp.platform.RegistryObject;
 import cn.zbx1425.minopp.platform.neoforge.ClientPlatformImpl;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
@@ -30,9 +31,10 @@ public class ClientProxy {
 
         @SubscribeEvent
         public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
-            for (KeyMapping keyMapping : ClientPlatformImpl.KEY_MAPPINGS) {
-                keyMapping.setKeyConflictContext(NoConflictKeyConflictContext.INSTANCE);
-                event.register(keyMapping);
+            for (RegistryObject<KeyMapping> keyMapping : ClientPlatformImpl.KEY_MAPPINGS) {
+                KeyMapping key = keyMapping.get();
+                key.setKeyConflictContext(NoConflictKeyConflictContext.INSTANCE);
+                event.register(key);
             }
         }
 

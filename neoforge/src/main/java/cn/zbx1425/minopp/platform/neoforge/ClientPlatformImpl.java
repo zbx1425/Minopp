@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.platform.neoforge;
 
 import cn.zbx1425.minopp.neoforge.MinoNeoForge;
+import cn.zbx1425.minopp.platform.RegistryObject;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -13,9 +14,9 @@ import java.util.function.Consumer;
 
 public class ClientPlatformImpl {
 
-    public static List<KeyMapping> KEY_MAPPINGS = new ArrayList<>();
+    public static List<RegistryObject<KeyMapping>> KEY_MAPPINGS = new ArrayList<>();
 
-    public static void registerKeyBinding(KeyMapping keyMapping) {
+    public static void registerKeyBinding(RegistryObject<KeyMapping> keyMapping) {
         KEY_MAPPINGS.add(keyMapping);
     }
 
