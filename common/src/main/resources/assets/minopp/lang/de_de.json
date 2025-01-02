@@ -28,15 +28,15 @@
   "game.minopp.play.game_nearly_won": "%1$s hat %2$s Karte(n) übrig.",
   "game.minopp.play.deck_depleted": "Du hast es irgendwie geschafft das Ganze Deck zu ziehen. Das Spiel endet nun.",
   "game.minopp.play.player_unavailable": "Spieler %1$s ist nicht verfügbar. Bitte belege die Plätze neu.",
-  "game.minopp.play.no_game": "Der Tisch ist idle.",
+  "game.minopp.play.no_game": "Der Tisch wird noch nicht bespielt.",
 
   "game.minopp.play.mino_shout": "%1$s: §6Mino!",
   "game.minopp.play.mino_shout_invalid": "%1$s wurde für das ungerechtfertigte ausrufen von Mino bestraft.",
   "game.minopp.play.doubt_success": "%1$s meldet, dass %2$s das Ausrufen von Mino vergessen hat.",
-  "game.minopp.play.doubt_target_playing": "It's still their turn.",
+  "game.minopp.play.doubt_target_playing": "Ist noch immer am Zug.",
   "game.minopp.play.doubt_target_self": "Du kannst dich nicht selbst melden.",
-  "game.minopp.play.doubt_target_shouted": "Mino wurde ausgerufen.",
-  "game.minopp.play.doubt_target_hand": "Sie haben immer noch mehr als eine Karte auf der Hand.",
+  "game.minopp.play.doubt_target_shouted": "Hat Mino ausgerufen.",
+  "game.minopp.play.doubt_target_hand": "Hat noch immer mehr als eine Karte auf der Hand.",
 
   "game.minopp.card.suit.red": "§cRedstone",
   "game.minopp.card.suit.green": "§aSmaragd",
@@ -70,7 +70,7 @@
   "gui.minopp.play.cursor.shout": "<§6Mino!§r>",
   "gui.minopp.play.cursor.dead_man": "(Du bist dran)",
 
-  "gui.minopp.seats.title": "Teilnehmer haben Platz genommen",
+  "gui.minopp.seats.title": "Teilnehmer an diesem Tisch",
   "gui.minopp.seats.start": "§aStarten",
   "gui.minopp.seats.stop": "§cE-Stoppen",
   "gui.minopp.seats.reset": "§6Sitze zurücksetzen",
@@ -82,14 +82,14 @@
   "subtitles.minopp.draw": "Mino Karte gezogen",
   "subtitles.minopp.sigh": "Seufzt traurig",
   "subtitles.minopp.pass": "Mino passen",
-  "subtitles.minopp.turn_notice": "Mino turn arrives",
-  "subtitles.minopp.turn_notice_again": "Mino turn arrives again",
-  "subtitles.minopp.turn_notice_continuous": "Mino turn pending",
+  "subtitles.minopp.turn_notice": "Mino Runde steht an",
+  "subtitles.minopp.turn_notice_again": "Mino Runde steht wieder an",
+  "subtitles.minopp.turn_notice_continuous": "Mino Runde steht noch aus",
   "subtitles.minopp.win": "Mino Spiel gewonnen",
   "subtitles.minopp.mino_shout": "Mino!",
   "subtitles.minopp.mino_shout_invalid": "Mino wurde nachweislich falsch ausgerufen",
   "subtitles.minopp.doubt_success": "Zweifel an Mino erfolgreich",
 
   "key.categories.minopp": "Mino++",
-  "key.minopp.shout_modifier": "ruft Mino während dem Spiel"
+  "key.minopp.shout_modifier": "ruft Mino während des Spiels"
 }
