@@ -30,7 +30,7 @@ public final class MinoFabric implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environ) ->
                 MinoCommand.register(dispatcher));
         ServerMessageEvents.CHAT_MESSAGE.register((message, sender, params) ->
-                Mino.onServerChatMessage(message.unsignedContent().getString(), sender));
+                Mino.onServerChatMessage(message.decoratedContent().getString(), sender));
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             Mino.onPlayerAttackEntity(entity, player);
             return InteractionResult.PASS;
