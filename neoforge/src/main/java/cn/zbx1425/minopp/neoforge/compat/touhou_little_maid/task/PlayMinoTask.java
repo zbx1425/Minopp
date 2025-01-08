@@ -68,7 +68,7 @@ public class PlayMinoTask extends MaidCheckRateTask {
         if (tableEntity.game != null) {
             if (tableEntity.game.players.get(tableEntity.game.currentPlayerIndex).equals(cardPlayer)) {
                 CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
-                ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer);
+                ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, maid.getServer());
                 tableEntity.handleActionResult(result, realPlayer, null);
             }
         }

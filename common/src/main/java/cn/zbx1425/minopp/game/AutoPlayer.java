@@ -1,5 +1,7 @@
 package cn.zbx1425.minopp.game;
 
+import net.minecraft.server.MinecraftServer;
+
 import java.util.Random;
 
 public class AutoPlayer {
@@ -7,14 +9,19 @@ public class AutoPlayer {
     // Better Abstraction?
 
     public boolean aiNoWin = false;
+    public boolean aiNoPlayerDraw = false;
     public boolean aiNoForget = false;
     public byte aiNoDelay = 0;
     public boolean aiStartGame = false;
 
-    public ActionReport playAtGame(CardGame game, CardPlayer realPlayer) {
+    public ActionReport playAtGame(CardGame game, CardPlayer realPlayer, MinecraftServer server) {
         Card topCard = game.topCard;
         boolean forgetsMino = aiNoForget ? false : new Random().nextFloat() < 0.2;
         boolean shoutsMino = !forgetsMino && realPlayer.hand.size() <= 2;
+
+        // If the next player is a human player, we should not play Draw cards
+        CardPlayer nextPlayer = game.players.get((game.currentPlayerIndex + (game.isAntiClockwise ? -1 : 1)) % game.players.size());
+        boolean canPlayDrawCard = !aiNoPlayerDraw || server.getPlayerList().getPlayer(nextPlayer.uuid) == null;
 
         if (aiNoWin) {
             if (realPlayer.hand.size() <= 1) {
@@ -26,6 +33,7 @@ public class AutoPlayer {
         // If we have a card of same number but different suit
         for (Card card : realPlayer.hand) {
             if (card.number == topCard.number && card.suit != topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
+                if (!canPlayDrawCard && card.family == Card.Family.DRAW) continue;
                 ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
                 if (!result.isFail) return result;
             }
@@ -41,12 +49,14 @@ public class AutoPlayer {
         // If we have a card of same suit
         for (Card card : realPlayer.hand) {
             if (card.suit == topCard.getEquivSuit() && card.suit != Card.Suit.WILD) {
+                if (!canPlayDrawCard && card.family == Card.Family.DRAW) continue;
                 ActionReport result = game.playCard(realPlayer, card, null, shoutsMino);
                 if (!result.isFail) return result;
             }
         }
         // If we have any other card
         for (Card card : realPlayer.hand) {
+            if (!canPlayDrawCard && card.family == Card.Family.DRAW) continue;
             if (card.canPlayOn(topCard)) {
                 if (card.suit == Card.Suit.WILD) {
                     ActionReport result = game.playCard(realPlayer, card, getMostCommonSuit(realPlayer), shoutsMino);

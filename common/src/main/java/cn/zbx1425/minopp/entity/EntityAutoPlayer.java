@@ -151,7 +151,7 @@ public class EntityAutoPlayer extends LivingEntity {
                         }
                     }
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
-                    ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer);
+                    ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, getServer());
                     tableEntity.handleActionResult(result, realPlayer, null);
                     gameEndTime = -1;
                 } else {
@@ -237,6 +237,7 @@ public class EntityAutoPlayer extends LivingEntity {
         compound.putString("Skin", entityData.get(SKIN));
         CompoundTag aiConfig = new CompoundTag();
         aiConfig.putBoolean("NoWin", autoPlayer.aiNoWin);
+        aiConfig.putBoolean("NoPlayerDraw", autoPlayer.aiNoPlayerDraw);
         aiConfig.putBoolean("NoForget", autoPlayer.aiNoForget);
         aiConfig.putByte("NoDelay", autoPlayer.aiNoDelay);
         aiConfig.putBoolean("StartGame", autoPlayer.aiStartGame);
@@ -266,6 +267,7 @@ public class EntityAutoPlayer extends LivingEntity {
         if (compound.contains("AI", CompoundTag.TAG_COMPOUND)) {
             CompoundTag aiConfig = compound.getCompound("AI");
             autoPlayer.aiNoWin = aiConfig.getBoolean("NoWin");
+            autoPlayer.aiNoPlayerDraw = aiConfig.getBoolean("NoPlayerDraw");
             autoPlayer.aiNoForget = aiConfig.getBoolean("NoForget");
             autoPlayer.aiNoDelay = aiConfig.getByte("NoDelay");
             autoPlayer.aiStartGame = aiConfig.getBoolean("StartGame");
