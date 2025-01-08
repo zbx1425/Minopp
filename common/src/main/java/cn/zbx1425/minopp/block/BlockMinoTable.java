@@ -140,7 +140,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
 
         public static AABB getPileAabb(BlockEntityMinoTable tableEntity) {
             if (tableEntity.game == null) return new AABB(0, 0, 0, 0, 0, 0);
-            return AABB.ofSize(new Vec3(0.5, 0.9, 0.5), 0.3, 1 / 16f, 0.5)
+            return AABB.ofSize(new Vec3(0.5, 0.94, 0.5), 0.3, 1 / 16f, 0.5)
                     .expandTowards(0, Math.ceil(tableEntity.game.deck.size() / 5f) * (1 / 16f) * 0.3f, 0);
         }
     }

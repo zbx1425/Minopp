@@ -57,7 +57,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/deck.png")));
 
         poseStack.pushPose();
-        poseStack.translate(0.5, 0.9, 0.5);
+        poseStack.translate(0.5, 0.94, 0.5);
         poseStack.scale(0.4f, 0.3f, 0.4f);
         BakedModel model = itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0);
         poseStack.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
