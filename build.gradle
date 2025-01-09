@@ -79,4 +79,9 @@ subprojects {
             // retrieving dependencies.
         }
     }
+
+    remapJar {
+        archiveBaseName = rootProject.name
+        version = project.version + "+" + rootProject.minecraft_version + "+" + project.name
+    }
 }

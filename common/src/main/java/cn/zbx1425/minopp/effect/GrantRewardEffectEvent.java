@@ -43,7 +43,7 @@ public record GrantRewardEffectEvent(UUID targetPlayer) implements EffectEvent{
 
     @Override
     public void summonServer(ServerLevel level, BlockPos origin, BlockEntityMinoTable tableEntity) {
-        ItemStack stack = tableEntity.award;
+        ItemStack stack = tableEntity.award.copy();
         if (stack.isEmpty()) return;
         ServerPlayer player = (ServerPlayer) level.getPlayerByUUID(targetPlayer);
         if (player != null) {
