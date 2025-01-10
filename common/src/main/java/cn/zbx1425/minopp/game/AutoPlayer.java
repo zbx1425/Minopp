@@ -20,7 +20,7 @@ public class AutoPlayer {
         boolean shoutsMino = !forgetsMino && realPlayer.hand.size() <= 2;
 
         // If the next player is a human player, we should not play Draw cards
-        CardPlayer nextPlayer = game.players.get((game.currentPlayerIndex + (game.isAntiClockwise ? -1 : 1)) % game.players.size());
+        CardPlayer nextPlayer = game.players.get((game.currentPlayerIndex + (game.isAntiClockwise ? -1 : 1) + game.players.size()) % game.players.size());
         boolean canPlayDrawCard = !aiNoPlayerDraw || server.getPlayerList().getPlayer(nextPlayer.uuid) == null;
 
         if (aiNoWin) {
