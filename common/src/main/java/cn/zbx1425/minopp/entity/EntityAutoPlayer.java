@@ -81,8 +81,9 @@ public class EntityAutoPlayer extends LivingEntity {
         }
 
         // Rate limiting
-        if (!entityData.get(ACTIVE)) {
-            if (noPush) heal(10);
+        if (!getActive()) {
+            tablePos = null;
+            heal(10);
             return;
         }
         if (autoPlayer.aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
@@ -120,11 +121,7 @@ public class EntityAutoPlayer extends LivingEntity {
                 if (tableFound) break;
             }
             if (!tableFound) {
-                if (!noPush) {
-                    kill();
-                } else {
-                    entityData.set(ACTIVE, false);
-                }
+                setActive(false);
                 return;
             }
         }
@@ -134,7 +131,6 @@ public class EntityAutoPlayer extends LivingEntity {
         BlockEntity blockEntity = level().getBlockEntity(tablePos);
         if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
             if (tableEntity.game != null) {
-                setInvulnerable(true);
                 heal(10);
                 if (tableEntity.game.players.get(tableEntity.game.currentPlayerIndex).equals(cardPlayer)) {
                     if (autoPlayer.aiNoDelay > 0) {
@@ -164,7 +160,6 @@ public class EntityAutoPlayer extends LivingEntity {
                     isThinking = false;
                 }
             } else {
-                setInvulnerable(false);
                 if (gameEndTime == -1L) {
                     gameEndTime = level().getGameTime() + 100;
                 } else if (level().getGameTime() - gameEndTime <= 20 * 3) {
@@ -187,21 +182,6 @@ public class EntityAutoPlayer extends LivingEntity {
             entityData.set(HAND_STACK, ItemStack.EMPTY);
             tablePos = null;
         }
-    }
-
-    @Override
-    public boolean hurt(DamageSource source, float amount) {
-        if (source.getEntity() instanceof Player) {
-            if (!entityData.get(ACTIVE)) {
-                entityData.set(ACTIVE, true);
-            } else {
-                if (((Player)source.getEntity()).getMainHandItem().is(net.minecraft.world.item.Items.STICK)) {
-                    entityData.set(ACTIVE, false);
-                    tablePos = null;
-                }
-            }
-        }
-        return super.hurt(source, amount);
     }
 
     @Override
@@ -246,6 +226,16 @@ public class EntityAutoPlayer extends LivingEntity {
     @Override
     public @NotNull HumanoidArm getMainArm() {
         return HumanoidArm.RIGHT;
+    }
+
+    @Override
+    public boolean isInvulnerable() {
+        return true;
+    }
+
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        return true;
     }
 
     @Override
