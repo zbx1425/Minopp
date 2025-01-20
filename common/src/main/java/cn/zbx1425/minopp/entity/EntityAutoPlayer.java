@@ -4,8 +4,11 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.*;
+import cn.zbx1425.minopp.gui.AutoPlayerScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.network.S2CAutoPlayerScreenPacket;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.client.Minecraft;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -13,6 +16,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -28,6 +33,7 @@ import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +58,7 @@ public class EntityAutoPlayer extends LivingEntity {
     private long thinkingFinishTime = 0;
     private long gameEndTime = 0;
 
-    private final AutoPlayer autoPlayer = new AutoPlayer();
+    public final AutoPlayer autoPlayer = new AutoPlayer();
 
     public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
     public String clientSkinGameProfileValidFor = "";
@@ -199,6 +205,21 @@ public class EntityAutoPlayer extends LivingEntity {
     }
 
     @Override
+    public @NotNull InteractionResult interact(Player player, InteractionHand hand) {
+        if (level().isClientSide) {
+            if (player.hasPermissions(2) && player.isShiftKeyDown()) {
+                return InteractionResult.SUCCESS;
+            }
+        } else {
+            if (player instanceof ServerPlayer serverPlayer && player.hasPermissions(2) && player.isShiftKeyDown()) {
+                S2CAutoPlayerScreenPacket.sendS2C(serverPlayer, this);
+                return InteractionResult.SUCCESS;
+            }
+        }
+        return super.interact(player, hand);
+    }
+
+    @Override
     public @NotNull Iterable<ItemStack> getArmorSlots() {
         return armorItems;
     }
@@ -233,16 +254,7 @@ public class EntityAutoPlayer extends LivingEntity {
         if (tablePos != null) compound.putLong("TablePos", tablePos.asLong());
         if (cardPlayer != null) compound.put("CardPlayer", cardPlayer.toTag());
         if (!entityData.get(HAND_STACK).isEmpty()) compound.put("HandStack", entityData.get(HAND_STACK).save(level().registryAccess(), new CompoundTag()));
-        compound.putBoolean("Active", entityData.get(ACTIVE));
-        compound.putString("Skin", entityData.get(SKIN));
-        CompoundTag aiConfig = new CompoundTag();
-        aiConfig.putBoolean("NoWin", autoPlayer.aiNoWin);
-        aiConfig.putBoolean("NoPlayerDraw", autoPlayer.aiNoPlayerDraw);
-        aiConfig.putBoolean("NoForget", autoPlayer.aiNoForget);
-        aiConfig.putByte("NoDelay", autoPlayer.aiNoDelay);
-        aiConfig.putBoolean("StartGame", autoPlayer.aiStartGame);
-        compound.put("AI", aiConfig);
-        if (noPush) compound.putBoolean("NoPush", true);
+        writeConfigToTag(compound); // Write config values directly to maintain backward compatibility
     }
 
     @Override
@@ -258,23 +270,7 @@ public class EntityAutoPlayer extends LivingEntity {
         } else {
             cardPlayer = null;
         }
-        if (compound.contains("Active", CompoundTag.TAG_BYTE)) {
-            entityData.set(ACTIVE, compound.getBoolean("Active"));
-        }
-        if (compound.contains("Skin", CompoundTag.TAG_STRING)) {
-            entityData.set(SKIN, compound.getString("Skin"));
-        }
-        if (compound.contains("AI", CompoundTag.TAG_COMPOUND)) {
-            CompoundTag aiConfig = compound.getCompound("AI");
-            autoPlayer.aiNoWin = aiConfig.getBoolean("NoWin");
-            autoPlayer.aiNoPlayerDraw = aiConfig.getBoolean("NoPlayerDraw");
-            autoPlayer.aiNoForget = aiConfig.getBoolean("NoForget");
-            autoPlayer.aiNoDelay = aiConfig.getByte("NoDelay");
-            autoPlayer.aiStartGame = aiConfig.getBoolean("StartGame");
-        }
-        if (compound.contains("NoPush", CompoundTag.TAG_BYTE)) {
-            noPush = compound.getBoolean("NoPush");
-        }
+        readConfigFromTag(compound); // Read config values directly from root tag
 
         // Try fix hand stack
         if (tablePos != null && cardPlayer != null) {
@@ -307,6 +303,57 @@ public class EntityAutoPlayer extends LivingEntity {
         return LivingEntity.createLivingAttributes()
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .build();
+    }
+
+    public boolean getActive() {
+        return entityData.get(ACTIVE);
+    }
+
+    public void setActive(boolean active) {
+        entityData.set(ACTIVE, active);
+    }
+
+    public boolean getNoPush() {
+        return noPush;
+    }
+
+    public void setNoPush(boolean noPush) {
+        this.noPush = noPush;
+    }
+
+    public String getSkin() {
+        return entityData.get(SKIN);
+    }
+
+    public void setSkin(String skin) {
+        entityData.set(SKIN, skin);
+    }
+
+    public CompoundTag writeConfigToTag() {
+        CompoundTag tag = new CompoundTag();
+        writeConfigToTag(tag);
+        return tag;
+    }
+
+    public void writeConfigToTag(CompoundTag tag) {
+        tag.putBoolean("Active", getActive());
+        tag.putBoolean("NoPush", getNoPush());
+        tag.putString("Skin", getSkin());
+        tag.put("AI", autoPlayer.toConfigNbt());
+    }
+
+    public void readConfigFromTag(CompoundTag tag) {
+        setActive(tag.getBoolean("Active"));
+        setNoPush(tag.getBoolean("NoPush"));
+        setSkin(tag.getString("Skin"));
+        autoPlayer.useConfigNbt(tag.getCompound("AI"));
+    }
+
+    private static class Client {
+
+        public static void openAutoPlayerScreen(EntityAutoPlayer autoPlayer) {
+            Minecraft.getInstance().setScreen(AutoPlayerScreen.create(autoPlayer, Minecraft.getInstance().screen));
+        }
     }
 }
 

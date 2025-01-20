@@ -9,8 +9,10 @@ import cn.zbx1425.minopp.item.ItemCoupon;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
 import cn.zbx1425.minopp.network.C2SSeatControlPacket;
+import cn.zbx1425.minopp.network.C2SAutoPlayerConfigPacket;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
+import cn.zbx1425.minopp.network.S2CAutoPlayerScreenPacket;
 import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
@@ -77,8 +79,10 @@ public final class Mino {
 
         ServerPlatform.registerPacket(S2CActionEphemeralPacket.ID);
         ServerPlatform.registerPacket(S2CEffectListPacket.ID);
+        ServerPlatform.registerPacket(S2CAutoPlayerScreenPacket.ID);
         ServerPlatform.registerNetworkReceiver(C2SPlayCardPacket.ID, C2SPlayCardPacket::handleC2S);
         ServerPlatform.registerNetworkReceiver(C2SSeatControlPacket.ID, C2SSeatControlPacket::handleC2S);
+        ServerPlatform.registerNetworkReceiver(C2SAutoPlayerConfigPacket.ID, C2SAutoPlayerConfigPacket::handleC2S);
     }
 
     public static boolean onServerChatMessage(String rawText, ServerPlayer sender) {

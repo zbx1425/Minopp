@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.game;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.Random;
@@ -10,13 +11,13 @@ public class AutoPlayer {
 
     public boolean aiNoWin = false;
     public boolean aiNoPlayerDraw = false;
-    public boolean aiNoForget = false;
+    public float aiForgetChance = 0.2f;
     public byte aiNoDelay = 0;
     public boolean aiStartGame = false;
 
     public ActionReport playAtGame(CardGame game, CardPlayer realPlayer, MinecraftServer server) {
         Card topCard = game.topCard;
-        boolean forgetsMino = aiNoForget ? false : new Random().nextFloat() < 0.2;
+        boolean forgetsMino = new Random().nextFloat() < aiForgetChance;
         boolean shoutsMino = !forgetsMino && realPlayer.hand.size() <= 2;
 
         // If the next player is a human player, we should not play Draw cards
@@ -86,5 +87,23 @@ public class AutoPlayer {
             }
         }
         return mostCommonSuit;
+    }
+
+    public void useConfigNbt(CompoundTag aiConfig) {
+        aiNoWin = aiConfig.getBoolean("NoWin");
+        aiNoPlayerDraw = aiConfig.getBoolean("NoPlayerDraw");
+        aiForgetChance = aiConfig.contains("ForgetChance", CompoundTag.TAG_FLOAT) ? aiConfig.getFloat("ForgetChance") : 0.2f;
+        aiNoDelay = aiConfig.getByte("NoDelay");
+        aiStartGame = aiConfig.getBoolean("StartGame");
+    }
+
+    public CompoundTag toConfigNbt() {
+        CompoundTag aiConfig = new CompoundTag();
+        aiConfig.putBoolean("NoWin", aiNoWin);
+        aiConfig.putBoolean("NoPlayerDraw", aiNoPlayerDraw);
+        aiConfig.putFloat("ForgetChance", aiForgetChance);
+        aiConfig.putByte("NoDelay", aiNoDelay);
+        aiConfig.putBoolean("StartGame", aiStartGame);
+        return aiConfig;
     }
 }

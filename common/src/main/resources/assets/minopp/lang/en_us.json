@@ -91,5 +91,29 @@
   "subtitles.minopp.doubt_success": "Mino doubt proven successful",
 
   "key.categories.minopp": "Mino++",
-  "key.minopp.shout_modifier": "Shout Mino while Playing"
+  "key.minopp.shout_modifier": "Shout Mino while Playing",
+
+  "gui.minopp.bot_config.title": "MinoBot Preferences",
+  "gui.minopp.bot_config.category.entity": "MinoBot Entity",
+  "gui.minopp.bot_config.active": "Power",
+  "gui.minopp.bot_config.remove": "Dismantle",
+  "gui.minopp.bot_config.custom_name": "Custom Name",
+  "gui.minopp.bot_config.skin": "Skin",
+  "gui.minopp.bot_config.skin.summary": "Name or UUID of the player whose skin is to be used.",
+  "gui.minopp.bot_config.no_push": "Disable Pushing",
+  "gui.minopp.bot_config.no_push.summary": "Prevent the bot from being moved by other players by pushing.",
+  "gui.minopp.bot_config.category.difficulty": "AI Difficulty",
+  "gui.minopp.bot_config.no_win": "Avoid Winning",
+  "gui.minopp.bot_config.no_win.summary": "If the bot should never play its last card.",
+  "gui.minopp.bot_config.no_player_draw": "Avoid Making Players Draw",
+  "gui.minopp.bot_config.no_player_draw.summary": "If the bot should avoid playing Draw cards when the next player is a human player.",
+  "gui.minopp.bot_config.forget_chance": "Shout Forgetting Probability",
+  "gui.minopp.bot_config.forget_chance.summary": "Chance of the bot forgetting to shout 'Mino' according to the rule.",
+  "gui.minopp.bot_config.category.behavior": "AI Behavior",
+  "gui.minopp.bot_config.no_delay": "Thinking Delay",
+  "gui.minopp.bot_config.no_delay.0": "Normal",
+  "gui.minopp.bot_config.no_delay.1": "Fast",
+  "gui.minopp.bot_config.no_delay.2": "Instant",
+  "gui.minopp.bot_config.start_game": "Proposes Starting the Game",
+  "gui.minopp.bot_config.start_game.summary": "If the bot should automatically propose starting the game when enough players are seated."
 }

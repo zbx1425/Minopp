@@ -91,5 +91,30 @@
   "subtitles.minopp.doubt_success": "Mino: 怀疑成功",
 
   "key.categories.minopp": "Mino++",
-  "key.minopp.shout_modifier": "出牌同时喊出 Mino"
+  "key.minopp.shout_modifier": "出牌同时喊出 Mino",
+
+  "gui.minopp.bot_config.title": "MinoBot 机器人偏好设置",
+  "gui.minopp.bot_config.category.entity": "MinoBot 实体设定",
+  "gui.minopp.bot_config.active": "电源",
+  "gui.minopp.bot_config.remove": "拆除",
+  "gui.minopp.bot_config.custom_name": "自定义名称",
+  "gui.minopp.bot_config.skin": "皮肤",
+  "gui.minopp.bot_config.skin.summary": "如要使用某玩家的皮肤，在此处填入名称或 UUID。",
+  "gui.minopp.bot_config.no_push": "禁用推动",
+  "gui.minopp.bot_config.no_push.summary": "防止其他玩家推动机器人。",
+  "gui.minopp.bot_config.category.difficulty": "AI 难度设定",
+  "gui.minopp.bot_config.no_win": "避免获胜",
+  "gui.minopp.bot_config.no_win.summary": "启用时，机器人从不打出最后一张牌。",
+  "gui.minopp.bot_config.no_player_draw": "避免让玩家抽牌",
+  "gui.minopp.bot_config.no_player_draw.summary": "启用时，如果下一位玩家是真人，机器人就会避免出 +2 或 +4。",
+  "gui.minopp.bot_config.forget_chance": "Mino 忘记概率",
+  "gui.minopp.bot_config.forget_chance.summary": "机器人忘记喊 'Mino' 的概率。",
+  "gui.minopp.bot_config.category.behavior": "AI 行为设定",
+  "gui.minopp.bot_config.no_delay": "思考延迟",
+  "gui.minopp.bot_config.no_delay.0": "正常",
+  "gui.minopp.bot_config.no_delay.1": "快速",
+  "gui.minopp.bot_config.no_delay.2": "最快",
+  "gui.minopp.bot_config.start_game": "自动开始游戏",
+  "gui.minopp.bot_config.start_game.summary": "启用时，机器人在入座人数满足条件时自动提议开始游戏。"
+
 }

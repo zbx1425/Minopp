@@ -31,7 +31,7 @@ public class PlayMinoTask extends MaidCheckRateTask {
     public PlayMinoTask() {
         super(ImmutableMap.of(MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_ABSENT,
                 InitEntities.TARGET_POS.get(), MemoryStatus.VALUE_ABSENT));
-        autoPlayer.aiNoForget = true;
+        autoPlayer.aiForgetChance = 0;
     }
 
     @Override

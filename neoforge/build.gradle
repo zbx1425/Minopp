@@ -48,6 +48,7 @@ dependencies {
     modImplementation ("org.teacon:SignMeUp-NeoForge-1.21.1:+") { transitive false }
 
 //    modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
+    modImplementation "dev.isxander:yet-another-config-lib:$rootProject.yacl_version-neoforge"
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
