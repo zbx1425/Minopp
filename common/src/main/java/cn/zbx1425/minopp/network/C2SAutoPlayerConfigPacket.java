@@ -9,6 +9,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 
 public class C2SAutoPlayerConfigPacket {
 
@@ -23,7 +24,7 @@ public class C2SAutoPlayerConfigPacket {
             if (!player.hasPermissions(2)) return; // Re-check permission on server side
             if (player.level().getEntity(entityId) instanceof EntityAutoPlayer autoPlayer) {
                 if (shouldDelete) {
-                    autoPlayer.kill();
+                    autoPlayer.remove(Entity.RemovalReason.KILLED);
                 } else {
                     autoPlayer.readConfigFromTag(config);
                 }

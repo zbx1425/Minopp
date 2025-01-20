@@ -96,7 +96,6 @@
   "gui.minopp.bot_config.title": "MinoBot 机器人偏好设置",
   "gui.minopp.bot_config.category.entity": "MinoBot 实体设定",
   "gui.minopp.bot_config.active": "电源",
-  "gui.minopp.bot_config.remove": "拆除",
   "gui.minopp.bot_config.custom_name": "自定义名称",
   "gui.minopp.bot_config.skin": "皮肤",
   "gui.minopp.bot_config.skin.summary": "如要使用某玩家的皮肤，在此处填入名称或 UUID。",
@@ -115,6 +114,7 @@
   "gui.minopp.bot_config.no_delay.1": "快速",
   "gui.minopp.bot_config.no_delay.2": "最快",
   "gui.minopp.bot_config.start_game": "自动开始游戏",
-  "gui.minopp.bot_config.start_game.summary": "启用时，机器人在入座人数满足条件时自动提议开始游戏。"
-
+  "gui.minopp.bot_config.start_game.summary": "启用时，机器人在入座人数满足条件时自动提议开始游戏。",
+  "gui.minopp.bot_config.remove": "拆除",
+  "gui.minopp.bot_config.yacl_missing": "需要安装 YetAnotherConfigLib 模组才能显示配置界面，请安装后再重新打开。"
 }

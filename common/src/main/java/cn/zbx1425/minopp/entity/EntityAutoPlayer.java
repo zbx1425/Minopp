@@ -189,10 +189,15 @@ public class EntityAutoPlayer extends LivingEntity {
         if (level().isClientSide) {
             if (player.hasPermissions(2) && player.isShiftKeyDown()) {
                 return InteractionResult.SUCCESS;
+            } else if (getActive() && !player.isShiftKeyDown()) {
+                return InteractionResult.SUCCESS;
             }
         } else {
-            if (player instanceof ServerPlayer serverPlayer && player.hasPermissions(2) && player.isShiftKeyDown()) {
-                S2CAutoPlayerScreenPacket.sendS2C(serverPlayer, this);
+            if (player.hasPermissions(2) && player.isShiftKeyDown()) {
+                S2CAutoPlayerScreenPacket.sendS2C((ServerPlayer) player, this);
+                return InteractionResult.SUCCESS;
+            } else if (!getActive() && !player.isShiftKeyDown()) {
+                setActive(true);
                 return InteractionResult.SUCCESS;
             }
         }

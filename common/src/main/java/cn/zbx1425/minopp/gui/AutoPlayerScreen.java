@@ -7,6 +7,7 @@ import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
 import dev.isxander.yacl3.api.controller.FloatSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.StringControllerBuilder;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -16,6 +17,7 @@ public class AutoPlayerScreen {
         ConfigCategory.Builder categoryBuilder = ConfigCategory.createBuilder();
         putEntityPreferences(categoryBuilder, target);
         putAIPreferences(categoryBuilder, target);
+        putDismantlePreferences(categoryBuilder, target);
         return YetAnotherConfigLib.createBuilder()
                 .title(Component.translatable("gui.minopp.bot_config.title"))
                 .category(categoryBuilder.name(Component.translatable("gui.minopp.bot_config.title")).build())
@@ -31,14 +33,6 @@ public class AutoPlayerScreen {
                         .name(Component.translatable("gui.minopp.bot_config.active"))
                         .binding(true, target::getActive, target::setActive)
                         .controller(opt -> BooleanControllerBuilder.create(opt).onOffFormatter())
-                        .build()
-                )
-                .option(ButtonOption.createBuilder()
-                        .name(Component.translatable("gui.minopp.bot_config.remove"))
-                        .action((screen, opt) -> {
-                            C2SAutoPlayerConfigPacket.Client.sendDeleteC2S(target);
-                            screen.onClose();
-                        })
                         .build()
                 )
                 .option(Option.<String>createBuilder()
@@ -111,5 +105,20 @@ public class AutoPlayerScreen {
                 )
                 .build();
         builder.group(aiOpts).group(aiMetaOpts);
+    }
+
+    private static void putDismantlePreferences(ConfigCategory.Builder builder, EntityAutoPlayer target) {
+        OptionGroup dismantleOpts = OptionGroup.createBuilder()
+                .name(Component.translatable("gui.minopp.bot_config.remove"))
+                .option(ButtonOption.createBuilder()
+                        .name(Component.translatable("gui.minopp.bot_config.remove").withStyle(ChatFormatting.RED))
+                        .action((screen, opt) -> {
+                            C2SAutoPlayerConfigPacket.Client.sendDeleteC2S(target);
+                            screen.onClose();
+                        })
+                        .build()
+                )
+                .build();
+        builder.group(dismantleOpts);
     }
 }

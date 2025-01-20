@@ -96,7 +96,6 @@
   "gui.minopp.bot_config.title": "MinoBot Preferences",
   "gui.minopp.bot_config.category.entity": "MinoBot Entity",
   "gui.minopp.bot_config.active": "Power",
-  "gui.minopp.bot_config.remove": "Dismantle",
   "gui.minopp.bot_config.custom_name": "Custom Name",
   "gui.minopp.bot_config.skin": "Skin",
   "gui.minopp.bot_config.skin.summary": "Name or UUID of the player whose skin is to be used.",
@@ -115,5 +114,7 @@
   "gui.minopp.bot_config.no_delay.1": "Fast",
   "gui.minopp.bot_config.no_delay.2": "Instant",
   "gui.minopp.bot_config.start_game": "Proposes Starting the Game",
-  "gui.minopp.bot_config.start_game.summary": "If the bot should automatically propose starting the game when enough players are seated."
+  "gui.minopp.bot_config.start_game.summary": "If the bot should automatically propose starting the game when enough players are seated.",
+  "gui.minopp.bot_config.remove": "Dismantle",
+  "gui.minopp.bot_config.yacl_missing": "YetAnotherConfigLib is required to show the configuration screen. Please install it and then try again."
 }
