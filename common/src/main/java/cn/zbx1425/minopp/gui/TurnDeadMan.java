@@ -5,14 +5,11 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
-import cn.zbx1425.minopp.platform.ClientPlatform;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 
 public class TurnDeadMan {
@@ -31,8 +28,8 @@ public class TurnDeadMan {
         deadManElapsedTicks = Math.min(0, deadManElapsedTicks);
     }
 
-    public static void tick(CardGame game, DeltaTracker deltaTracker) {
-        deadManElapsedTicks += deltaTracker.getGameTimeDeltaPartialTick(false);
+    public static void tick(CardGame game, float partialTicks) {
+        deadManElapsedTicks += partialTicks;
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         CardPlayer currentPlayer = game.players.get(game.currentPlayerIndex);

@@ -11,7 +11,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
-import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.client.resources.SkinManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -35,9 +34,9 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
-            return skinManager.getInsecureSkin(result.get()).texture();
+            return skinManager.getInsecureSkinLocation(result.get());
         }
-        return ResourceLocation.withDefaultNamespace("textures/entity/player/slim/alex.png");
+        return new ResourceLocation("textures/entity/player/slim/alex.png");
     }
 
     @Override
@@ -45,7 +44,8 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
-            model = skinManager.getInsecureSkin(result.get()).model() == PlayerSkin.Model.SLIM ? slimModel : wideModel;
+            model = slimModel;
+//            model = skinManager.getInsecureSkin(result.get()).model() == PlayerSkin.Model.SLIM ? slimModel : wideModel;
         } else {
             model = slimModel;
         }

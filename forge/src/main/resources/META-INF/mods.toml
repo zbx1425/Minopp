@@ -1,0 +1,28 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+#issueTrackerURL = ""
+license = "MIT"
+
+[[mods]]
+modId = "minopp"
+version = "${version}"
+displayName = "Minopp"
+authors = "Zbx1425, MalayP"
+description = '''
+Recreation of a classical card game in Minecraft
+'''
+logoFile = "minopp.png"
+
+[[dependencies.minopp]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.minopp]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1]"
+ordering = "NONE"
+side = "BOTH"

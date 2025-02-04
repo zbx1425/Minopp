@@ -4,12 +4,18 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.Card;
+import cn.zbx1425.minopp.platform.ClientPlatform;
 import cn.zbx1425.minopp.platform.RegistryObject;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.math.Axis;
+import net.fabricmc.loader.impl.util.log.Log;
+import net.fabricmc.loader.impl.util.log.LogCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -18,13 +24,12 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.client.resources.model.Material;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import java.util.Random;
@@ -32,11 +37,11 @@ import java.util.Random;
 public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEntityMinoTable> {
 
     private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
-    private static final RegistryObject<ItemStack> HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER = new RegistryObject<>(() -> {
-        ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get());
-        stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
-        return stack;
-    });
+//    private static final RegistryObject<ItemStack> HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER = new RegistryObject<>(() -> {
+//        ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get());
+//        stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+//        return stack;
+//    });
 
 
     private ItemRenderer itemRenderer;
@@ -46,15 +51,13 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     }
 
     @Override
-    public void render(BlockEntityMinoTable blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
+    public void render(BlockEntityMinoTable blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
         if (blockEntity.game == null) return;
 
         if (BlockMinoTable.Client.isCursorHittingPile()) {
             LevelRenderer.renderLineBox(poseStack, multiBufferSource.getBuffer(RenderType.lines()),
                     BlockMinoTable.Client.getPileAabb(blockEntity), 1, 1, 0, 1f);
         }
-
-        VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/deck.png")));
 
         poseStack.pushPose();
         poseStack.translate(0.5, 0.94, 0.5);
@@ -73,7 +76,10 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         poseStack.translate(1, 0.9 + 1 / 16f, 1);
         poseStack.scale(0.2f, 0.2f, 0.2f);
         poseStack.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
+
+        VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/deck.png")));
         Random discardRandom = new Random(1);
+
         for (int ci = 0; ci <= blockEntity.game.discardDeck.size(); ci++) {
             poseStack.pushPose();
             poseStack.translate(discardRandom.nextFloat() * 6 - 3, discardRandom.nextFloat() * 6 - 3, ci / 32f);
@@ -91,25 +97,46 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             float cardVH = 25 / 128f;
             int color = (ci == blockEntity.game.discardDeck.size())
                     ? 0xFFFFFFFF : 0xFFBBBBBB;
-            vertexConsumer
-                    .addVertex(poseStack.last(), -0.52f, 0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(poseStack.last(), -0.52f, -0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(poseStack.last(), 0.52f, -0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(poseStack.last(), 0.52f, 0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000);
+
+            Matrix4f matrix = poseStack.last().pose();
+
+            // VertexConsumer
+            // Must follow position->color->uv0->uv1->uv2->normal->padding
+            // If you dont follow will crash at "Not filled all elements of the vertex"
+            // Lost my three days to debug
+            vertexConsumer.vertex(matrix,-0.52f, 0.8f, 0).color(0xFF000000)
+                    .uv(cardU, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                    .normal( 0, 0, 1).endVertex();
+
+            vertexConsumer.vertex(matrix, -0.52f, -0.8f, 0).color(0xFF000000)
+                    .uv(cardU, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                    .normal(0, 0, 1).endVertex();
+
+            vertexConsumer.vertex(matrix, 0.52f, -0.8f, 0).color(0xFF000000)
+                    .uv(cardU + cardUW, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                    .normal(0, 0, 1).endVertex();
+
+            vertexConsumer.vertex(matrix, 0.52f, 0.8f, 0).color(0xFF000000)
+                    .uv(cardU + cardUW, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                    .normal(0, 0, 1).endVertex();
+
             poseStack.translate(0, 0, 1 / 64f);
-            vertexConsumer
-                    .addVertex(poseStack.last(), -0.5f, 0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(poseStack.last(), -0.5f, -0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(poseStack.last(), 0.5f, -0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(poseStack.last(), 0.5f, 0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color);
+
+            vertexConsumer.vertex(matrix, -0.5f, 0.78f, 0).color(color)
+                    .uv(cardU, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                    .normal(0, 0, 1).endVertex();
+
+            vertexConsumer.vertex(matrix, -0.5f, -0.78f, 0).color(color)
+                    .uv(cardU, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                    .normal(0, 0, 1).endVertex();
+
+            vertexConsumer.vertex(matrix, 0.5f, -0.78f, 0).color(color)
+                    .uv(cardU + cardUW, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                    .normal(0, 0, 1).endVertex();
+
+            vertexConsumer.vertex(matrix, 0.5f, 0.78f, 0).color(color)
+                    .uv(cardU + cardUW, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                    .normal(0, 0, 1).endVertex();
 
             if (ci == blockEntity.game.discardDeck.size()) {
 //                itemRenderer.render(HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,

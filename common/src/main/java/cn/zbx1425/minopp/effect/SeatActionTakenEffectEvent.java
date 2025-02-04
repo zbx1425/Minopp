@@ -5,7 +5,6 @@ import cn.zbx1425.minopp.gui.SeatControlScreen;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
@@ -14,12 +13,12 @@ import java.util.UUID;
 
 public record SeatActionTakenEffectEvent() implements EffectEvent {
 
-    public static final StreamCodec<ByteBuf, SeatActionTakenEffectEvent> STREAM_CODEC = StreamCodec.unit(new SeatActionTakenEffectEvent());
+//    public static final StreamCodec<ByteBuf, SeatActionTakenEffectEvent> STREAM_CODEC = StreamCodec.unit(new SeatActionTakenEffectEvent());
 
-    @Override
-    public Type<? extends EffectEvent> type() {
-        return EffectEvents.SEAT_ACTION_TAKEN;
-    }
+//    @Override
+//    public Type<? extends EffectEvent> type() {
+//        return EffectEvents.SEAT_ACTION_TAKEN;
+//    }
 
     @Override
     public int timeOffset() {

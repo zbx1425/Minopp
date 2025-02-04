@@ -35,13 +35,14 @@ public class WildSelectionScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        clearWidgets();
+//        clearWidgets();
         int xOff = (width - PANEL_WIDTH) / 2;
         int yOff = (height - PANEL_HEIGHT) / 2;
 
         for (Card.Suit suit : Card.Suit.values()) {
             if (suit == Card.Suit.WILD) continue;
-            addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(), "").withColor(suit.color), e -> {
+            addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(), "")
+                            .withStyle(s -> s.withColor(suit.color)), e -> {
                 C2SPlayCardPacket.Client.sendPlayCardC2S(gamePos, player, handCard, suit, shout);
                 onClose();
             }).pos(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * suit.ordinal(), yOff + MARGIN + 9 + MARGIN).size(BTN_WIDTH, BTN_HEIGHT).build());
@@ -52,8 +53,8 @@ public class WildSelectionScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+    public void renderBackground(GuiGraphics guiGraphics) {
+        super.renderBackground(guiGraphics);
 
         int xOff = (width - PANEL_WIDTH) / 2;
         int yOff = (height - PANEL_HEIGHT) / 2;

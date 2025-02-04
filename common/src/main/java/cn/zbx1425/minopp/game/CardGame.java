@@ -4,11 +4,9 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.effect.GrantRewardEffectEvent;
 import cn.zbx1425.minopp.effect.PlayerFireworkEffectEvent;
 import cn.zbx1425.minopp.effect.PlayerGlowEffectEvent;
-import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.component.FireworkExplosion;
 
 import java.util.*;
 
@@ -42,14 +40,14 @@ public class CardGame {
         Collections.shuffle(deck);
         for (int i = 0; i < initialCardCount; i++) {
             for (CardPlayer player : players) {
-                player.hand.add(deck.removeLast());
+                player.hand.add(deck.remove(deck.size() - 1));
             }
         }
-        Card tobeTopCard = deck.removeLast();
+        Card tobeTopCard = deck.remove(deck.size() - 1);
         while (tobeTopCard.family != Card.Family.NUMBER || tobeTopCard.suit == Card.Suit.WILD) {
             deck.add(tobeTopCard);
             Collections.shuffle(deck);
-            tobeTopCard = deck.removeLast();
+            tobeTopCard = deck.remove(deck.size() - 1);
         }
         topCard = tobeTopCard;
         return ActionReport.builder(this, cardPlayer)
@@ -88,9 +86,10 @@ public class CardGame {
 
             report.effect(new PlayerGlowEffectEvent(cardPlayer.uuid, 6 * 20));
             report.effect(new GrantRewardEffectEvent(cardPlayer.uuid));
-            for (int i = 0; i < 5; i++) {
-                report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, PlayerFireworkEffectEvent.WIN_EXPLOSION));
-            }
+            // TODO
+//            for (int i = 0; i < 5; i++) {
+//                report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, PlayerFireworkEffectEvent.WIN_EXPLOSION));
+//            }
 
             return report.gameWon();
         }
@@ -208,7 +207,7 @@ public class CardGame {
             return false;
         }
         for (int i = 0; i < drawCount; i++) {
-            cardPlayer.hand.add(deck.removeLast());
+            cardPlayer.hand.add(deck.remove(deck.size() - 1));
             report.sound(Mino.id("game.draw"), 500 * i);
             if (drawCount > 1) {
                 report.sound(Mino.id("game.draw_multi"), 500 * i + 200);

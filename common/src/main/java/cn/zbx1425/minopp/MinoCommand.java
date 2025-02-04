@@ -15,13 +15,10 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public class MinoCommand {
@@ -39,7 +36,7 @@ public class MinoCommand {
                             withPlayerAndGame(context, (game, player) -> {
                                 ActionReport report = ActionReport.builder(game, player);
                                 if (player.hand.isEmpty()) return;
-                                game.doDiscardCard(player, player.hand.getFirst(), report);
+                                game.doDiscardCard(player, player.hand.get(0), report);
                             });
                             return 1;
                         }))

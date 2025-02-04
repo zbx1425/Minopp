@@ -5,7 +5,7 @@ import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.*;
 import cn.zbx1425.minopp.gui.AutoPlayerScreen;
-import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.item.ItemDataUtils;
 import cn.zbx1425.minopp.network.S2CAutoPlayerScreenPacket;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
@@ -29,7 +29,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +70,11 @@ public class EntityAutoPlayer extends LivingEntity {
             if (!clientSkinGameProfileValidFor.equals(entityData.get(SKIN))) {
                 clientSkinGameProfileValidFor = entityData.get(SKIN);
                 try {
+                    // TODO
                     UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
-                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
+//                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
                 } catch (IllegalArgumentException e) {
-                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
+//                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
                 }
             }
             return;
@@ -110,7 +110,7 @@ public class EntityAutoPlayer extends LivingEntity {
                                 tablePos = corePos;
                                 tableFound = true;
                                 ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                                handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+                                ItemDataUtils.setCardGameBinding(handStack, tablePos, cardPlayer.uuid);
                                 entityData.set(HAND_STACK, handStack);
                                 break;
                             }
@@ -248,7 +248,7 @@ public class EntityAutoPlayer extends LivingEntity {
         super.addAdditionalSaveData(compound);
         if (tablePos != null) compound.putLong("TablePos", tablePos.asLong());
         if (cardPlayer != null) compound.put("CardPlayer", cardPlayer.toTag());
-        if (!entityData.get(HAND_STACK).isEmpty()) compound.put("HandStack", entityData.get(HAND_STACK).save(level().registryAccess(), new CompoundTag()));
+        if (!entityData.get(HAND_STACK).isEmpty()) compound.put("HandStack", entityData.get(HAND_STACK).save(new CompoundTag()));
         writeConfigToTag(compound); // Write config values directly to maintain backward compatibility
     }
 
@@ -270,7 +270,7 @@ public class EntityAutoPlayer extends LivingEntity {
         // Try fix hand stack
         if (tablePos != null && cardPlayer != null) {
             ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-            handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+            ItemDataUtils.setCardGameBinding(handStack, tablePos, cardPlayer.uuid);
             entityData.set(HAND_STACK, handStack);
         } else {
             entityData.set(HAND_STACK, ItemStack.EMPTY);
@@ -287,11 +287,11 @@ public class EntityAutoPlayer extends LivingEntity {
     private static final EntityDataAccessor<String> SKIN = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.STRING);
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        super.defineSynchedData(builder);
-        builder.define(HAND_STACK, ItemStack.EMPTY);
-        builder.define(ACTIVE, false);
-        builder.define(SKIN, "");
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        entityData.define(HAND_STACK, ItemStack.EMPTY);
+        entityData.define(ACTIVE, false);
+        entityData.define(SKIN, "");
     }
 
     public static AttributeSupplier createAttributes() {

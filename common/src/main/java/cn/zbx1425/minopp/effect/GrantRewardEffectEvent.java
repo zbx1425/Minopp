@@ -1,10 +1,7 @@
 package cn.zbx1425.minopp.effect;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -16,15 +13,15 @@ import java.util.UUID;
 
 public record GrantRewardEffectEvent(UUID targetPlayer) implements EffectEvent{
 
-    public static StreamCodec<ByteBuf, GrantRewardEffectEvent> STREAM_CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC, GrantRewardEffectEvent::targetPlayer,
-            GrantRewardEffectEvent::new
-    );
+//    public static StreamCodec<ByteBuf, GrantRewardEffectEvent> STREAM_CODEC = StreamCodec.composite(
+//            UUIDUtil.STREAM_CODEC, GrantRewardEffectEvent::targetPlayer,
+//            GrantRewardEffectEvent::new
+//    );
 
-    @Override
-    public Type<? extends EffectEvent> type() {
-        return EffectEvents.GRANT_REWARD;
-    }
+//    @Override
+//    public Type<? extends EffectEvent> type() {
+//        return EffectEvents.GRANT_REWARD;
+//    }
 
     @Override
     public int timeOffset() {

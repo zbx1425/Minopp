@@ -7,6 +7,7 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.gui.SeatControlScreen;
 import cn.zbx1425.minopp.gui.TurnDeadMan;
 import cn.zbx1425.minopp.gui.WildSelectionScreen;
+import cn.zbx1425.minopp.item.ItemDataUtils;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.mixin.KeyMappingAccessor;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
@@ -20,7 +21,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -57,39 +57,59 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
-        if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
-            BlockPos corePos = getCore(blockState, blockPos);
-            ItemHandCards.CardGameBindingComponent gameBinding = itemStack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
-            int handIndex = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
-            CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
-            BlockEntity blockEntity = level.getBlockEntity(corePos);
-            if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
-                if (tableEntity.game != null) {
-                    if (gameBinding == null || !gameBinding.tablePos().equals(corePos)) {
-                        player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
-                        return ItemInteractionResult.FAIL;
-                    }
-                    TurnDeadMan.pedal();
+    public @NotNull InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+        BlockPos corePos = getCore(blockState, blockPos);
+        BlockEntity blockEntity = level.getBlockEntity(corePos);
 
-                    CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
-                    if (realPlayer == null) return ItemInteractionResult.FAIL;
-                    if (Client.isCursorHittingPile()) {
-                        C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
-                    } else {
-                        Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
-                        if (selectedCard.suit == Card.Suit.WILD) {
-                            Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, Client.isShoutModifierHeld());
-                        } else {
-                            C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard,
-                                    null, Client.isShoutModifierHeld());
+        if (!player.getItemInHand(interactionHand).isEmpty()) {
+            ItemStack itemStack = player.getItemInHand(interactionHand);
+            if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
+                BlockPos tablePos = ItemDataUtils.getBlockPos(itemStack);
+                int handIndex = ItemDataUtils.getHandIndex(itemStack);
+                CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
+                if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
+                    if (tableEntity.game != null) {
+                        if (tablePos == null || !tablePos.equals(corePos)) {
+                            player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
+                            return InteractionResult.FAIL;
                         }
+                        TurnDeadMan.pedal();
+
+                        CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
+                        if (realPlayer == null) return InteractionResult.FAIL;
+                        if (Client.isCursorHittingPile()) {
+                            C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
+                        } else {
+                            Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
+                            if (selectedCard.suit == Card.Suit.WILD) {
+                                Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, Client.isShoutModifierHeld());
+                            } else {
+                                C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard,
+                                        null, Client.isShoutModifierHeld());
+                            }
+                        }
+                        return InteractionResult.SUCCESS;
                     }
-                    return ItemInteractionResult.SUCCESS;
                 }
             }
+        } else if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
+            CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
+            if (tableEntity.demo) {
+                player.displayClientMessage(Component.translatable("game.minopp.play.table_in_demo"), true);
+                return InteractionResult.FAIL;
+            }
+            if (level.isClientSide) {
+                Client.openSeatControlScreen(corePos);
+                return InteractionResult.SUCCESS;
+            }
+
+            if (tableEntity.game == null && !player.isSecondaryUseActive()) {
+                // Join player to table
+                tableEntity.joinPlayerToTable(cardPlayer, player.position());
+                return InteractionResult.SUCCESS;
+            }
         }
-        return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
+        return InteractionResult.FAIL;
     }
 
     public static class Client {
@@ -128,7 +148,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                 if (tableEntity.game == null) return false;
                 AABB pileAabb = getPileAabb(tableEntity);
                 Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
-                float partialTicks = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
+                float partialTicks = Minecraft.getInstance().getFrameTime();
                 float hitDistance = 20;
                 Vec3 rayBegin = cameraEntity.getEyePosition(partialTicks);
                 Vec3 rayDir = cameraEntity.getViewVector(partialTicks);
@@ -143,30 +163,6 @@ public class BlockMinoTable extends Block implements EntityBlock {
             return AABB.ofSize(new Vec3(0.5, 0.94, 0.5), 0.3, 1 / 16f, 0.5)
                     .expandTowards(0, Math.ceil(tableEntity.game.deck.size() / 5f) * (1 / 16f) * 0.3f, 0);
         }
-    }
-
-    @Override
-    protected @NotNull InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
-        BlockPos corePos = getCore(blockState, blockPos);
-        BlockEntity blockEntity = level.getBlockEntity(corePos);
-        if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
-            CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
-            if (tableEntity.demo) {
-                player.displayClientMessage(Component.translatable("game.minopp.play.table_in_demo"), true);
-                return InteractionResult.FAIL;
-            }
-            if (level.isClientSide) {
-                Client.openSeatControlScreen(corePos);
-                return InteractionResult.SUCCESS;
-            }
-
-            if (tableEntity.game == null && !player.isSecondaryUseActive()) {
-                // Join player to table
-                tableEntity.joinPlayerToTable(cardPlayer, player.position());
-                return InteractionResult.SUCCESS;
-            }
-        }
-        return InteractionResult.FAIL;
     }
 
     @Override
@@ -196,7 +192,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected @NotNull BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
+    public @NotNull BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
         BlockPos firstPartPos = getCore(blockState, blockPos);
         for (int i = 0; i < 4; i++) {
             TablePartType thisPart = TablePartType.values()[i];
@@ -209,7 +205,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    public @NotNull BlockState playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+    public void playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
         if (!level.isClientSide && player.isCreative()) {
             BlockPos firstPartPos = getCore(blockState, blockPos);
             for (int i = 0; i < 4; i++) {
@@ -219,7 +215,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                         Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
             }
         }
-        return super.playerWillDestroy(level, blockPos, blockState, player);
+        super.playerWillDestroy(level, blockPos, blockState, player);
     }
 
     public static BlockPos getCore(BlockState blockState, BlockPos blockPos) {
@@ -261,19 +257,19 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected float getShadeBrightness(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+    public float getShadeBrightness(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
         return 1.0F;
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+    public boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
         return true;
     }
 
     private static final VoxelShape VOXEL_SHAPE = Block.box(0, 0, 0, 16, 14.9, 16);
 
     @Override
-    protected @NotNull VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public @NotNull VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return VOXEL_SHAPE;
     }
 }

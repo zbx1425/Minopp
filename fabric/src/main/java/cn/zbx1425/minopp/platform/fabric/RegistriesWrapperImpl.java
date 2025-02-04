@@ -7,7 +7,6 @@ import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.core.Registry;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
@@ -54,10 +53,5 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
     @Override
     public void registerSoundEvent(String id, SoundEvent soundEvent) {
         Registry.register(BuiltInRegistries.SOUND_EVENT, Mino.id(id), soundEvent);
-    }
-
-    @Override
-    public <T> void registerDataComponentType(String id, RegistryObject<DataComponentType<T>> componentType) {
-        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Mino.id(id), componentType.get());
     }
 }

@@ -4,7 +4,7 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.CardPlayer;
-import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.item.ItemDataUtils;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -12,10 +12,7 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -24,6 +21,8 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Matrix4f;
+
+import java.util.UUID;
 
 public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer {
 
@@ -43,15 +42,15 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                 return;
             }
             case THIRD_PERSON_LEFT_HAND, THIRD_PERSON_RIGHT_HAND -> {
-                ItemHandCards.CardGameBindingComponent gameBinding = itemStack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
-                if (gameBinding == null) return;
-                BlockPos tablePos = gameBinding.tablePos();
+                BlockPos tablePos = ItemDataUtils.getBlockPos(itemStack);
+                UUID bearerId = ItemDataUtils.getBearerId(itemStack);
+                if (tablePos == null) return;
                 ClientLevel level = Minecraft.getInstance().level;
                 BlockState blockState = level.getBlockState(tablePos);
                 tablePos = BlockMinoTable.getCore(blockState, tablePos);
                 if (level.getBlockEntity(tablePos) instanceof BlockEntityMinoTable tableEntity) {
                     if (tableEntity.game == null) return;
-                    CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(gameBinding.bearerId()))
+                    CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(bearerId))
                             .findFirst().orElse(null);
                     if (realPlayer == null) return;
                     poseStack.popPose();
@@ -69,34 +68,37 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                         poseStack.translate(0, 0.3, 0.3);
                         poseStack.mulPose(Axis.XP.rotationDegrees(-110f));
                         poseStack.pushPose();
-                        VertexConsumer buffer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/arrow_down.png")));
                         float v0 = ((int)(System.currentTimeMillis() / 100L) % 5) * 0.2f;
                         float v1 = v0 + 0.2f;
                         // Transform must be somehow messed up but it works so I'm not going to fix it
                         poseStack.mulPose(Axis.YP.rotationDegrees(45));
                         poseStack.scale(0.2f, 0.2f, 1);
-                        buffer
-                                .addVertex(poseStack.last(), -1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), -1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), 1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), 1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF);
+
+                        VertexConsumer buffer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/arrow_down.png")));
+                        Matrix4f matrix = poseStack.last().pose();
+
+                        buffer.vertex(matrix, -1, 1, 0).color(0xFFFFFFFF)
+                                .uv(0, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, -1, 0).endVertex();
+                        buffer.vertex(matrix, -1, -1, 0).color(0xFFFFFFFF)
+                                .uv(0, v0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, -1, 0).endVertex();
+                        buffer.vertex(matrix, 1, -1, 0).color(0xFFFFFFFF)
+                                .uv(1, v0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, -1, 0).endVertex();
+                        buffer.vertex(matrix, 1, 1, 0).color(0xFFFFFFFF)
+                                .uv(1, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, -1, 0).endVertex();
+
                         poseStack.popPose();
                         poseStack.pushPose();
                         poseStack.mulPose(Axis.YP.rotationDegrees(-45));
                         poseStack.scale(0.2f, 0.2f, 1);
-                        buffer
-                                .addVertex(poseStack.last(), -1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), -1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), 1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), 1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF);
+
+                        buffer.vertex(matrix, -1, 1, 0).color(0xFFFFFFFF)
+                                .uv(0, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, -1, 0).endVertex();
+                        buffer.vertex(matrix, -1, -1, 0).color(0xFFFFFFFF)
+                                .uv(0, v0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, -1, 0).endVertex();
+                        buffer.vertex(matrix, 1, -1, 0).color(0xFFFFFFFF)
+                                .uv(1, v0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, -1, 0).endVertex();
+                        buffer.vertex(matrix, 1, 1, 0).color(0xFFFFFFFF)
+                                .uv(1, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, -1, 0).endVertex();
                         poseStack.popPose();
                     }
 

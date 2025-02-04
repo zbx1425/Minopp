@@ -4,8 +4,6 @@ import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -19,21 +17,21 @@ import java.util.UUID;
 
 public record PlayerGlowEffectEvent(UUID targetPlayer, int duration) implements EffectEvent {
 
-    public static StreamCodec<ByteBuf, PlayerGlowEffectEvent> STREAM_CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC, PlayerGlowEffectEvent::targetPlayer,
-            ByteBufCodecs.INT, PlayerGlowEffectEvent::duration,
-            PlayerGlowEffectEvent::new
-    );
+//    public static StreamCodec<ByteBuf, PlayerGlowEffectEvent> STREAM_CODEC = StreamCodec.composite(
+//            UUIDUtil.STREAM_CODEC, PlayerGlowEffectEvent::targetPlayer,
+//            ByteBufCodecs.INT, PlayerGlowEffectEvent::duration,
+//            PlayerGlowEffectEvent::new
+//    );
 
     @Override
     public Optional<UUID> target() {
         return Optional.empty();
     }
 
-    @Override
-    public Type<PlayerGlowEffectEvent> type() {
-        return EffectEvents.PLAYER_GLOW;
-    }
+//    @Override
+//    public Type<PlayerGlowEffectEvent> type() {
+//        return EffectEvents.PLAYER_GLOW;
+//    }
 
     @Override
     public int timeOffset() {

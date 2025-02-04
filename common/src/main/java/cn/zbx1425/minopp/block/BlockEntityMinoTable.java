@@ -8,13 +8,12 @@ import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
-import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.item.ItemDataUtils;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -61,8 +60,8 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
-        super.saveAdditional(compoundTag, provider);
+    protected void saveAdditional(CompoundTag compoundTag) {
+        super.saveAdditional(compoundTag);
         CompoundTag playersTag = new CompoundTag();
         for (Map.Entry<Direction, CardPlayer> entry : players.entrySet()) {
             if (entry.getValue() != null) {
@@ -74,13 +73,14 @@ public class BlockEntityMinoTable extends BlockEntity {
             compoundTag.put("game", game.toTag());
         }
         compoundTag.put("state", state.toTag());
-        if (!award.isEmpty()) compoundTag.put("award", award.save(provider));
+        // TODO
+//        if (!award.isEmpty()) compoundTag.put("award", award.save(provider));
         compoundTag.putBoolean("demo", demo);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
-        super.loadAdditional(compoundTag, provider);
+    public void load(CompoundTag compoundTag) {
+        super.load(compoundTag);
         CompoundTag playersTag = compoundTag.getCompound("players");
         for (Direction direction : PLAYER_ORDER) {
             if (playersTag.contains(direction.getSerializedName())) {
@@ -106,7 +106,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
         }
         if (compoundTag.contains("award")) {
-            award = ItemStack.parse(provider, compoundTag.get("award")).orElse(ItemStack.EMPTY);
+//            award = ItemStack.parse(provider, compoundTag.get("award")).orElse(ItemStack.EMPTY);
         } else {
             award = ItemStack.EMPTY;
         }
@@ -169,9 +169,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                     if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
                         // We've found the player, give them a card item
                         ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                        ItemHandCards.CardGameBindingComponent newBinding =
-                                new ItemHandCards.CardGameBindingComponent(getBlockPos(), cardPlayer.uuid);
-                        handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                        ItemDataUtils.setCardGameBinding(handCard, getBlockPos(), cardPlayer.uuid);
                         if (Inventory.isHotbarSlot(mcPlayer.getInventory().selected)
                             && mcPlayer.getInventory().getSelected().isEmpty()) {
                             // If the player has an empty hand slot, put the card there
@@ -226,8 +224,8 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (Player mcPlayer : level.players()) {
             for (ItemStack invItem : mcPlayer.getInventory().items) {
                 if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                ItemHandCards.CardGameBindingComponent gameBinding = invItem.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
-                if (gameBinding != null && gameBinding.tablePos().equals(getBlockPos())) {
+                BlockPos tablePos = ItemDataUtils.getBlockPos(invItem);
+                if (tablePos != null && tablePos.equals(getBlockPos())) {
                     // This is the one bound to this table, remove
                     mcPlayer.getInventory().removeItem(invItem);
                 }
@@ -287,7 +285,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                     if (serverPlayer.level().dimension() == level.dimension()) {
                         if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= EffectEvents.EFFECT_RADIUS * EffectEvents.EFFECT_RADIUS) {
                             boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(serverPlayer.getGameProfile().getId()));
-                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
+                            // S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
                         }
                     }
                 }
@@ -311,7 +309,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
             List<EffectEvent> events = List.of(new SeatActionTakenEffectEvent());
             if (mcPlayer != null) {
-                S2CEffectListPacket.sendS2C((ServerPlayer) mcPlayer, events, tableCenterPos, true);
+                // S2CEffectListPacket.sendS2C((ServerPlayer) mcPlayer, events, tableCenterPos, true);
             }
         }
     }
@@ -323,9 +321,9 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+    public @NotNull CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        saveAdditional(tag, provider);
+        saveAdditional(tag);
         return tag;
     }
 

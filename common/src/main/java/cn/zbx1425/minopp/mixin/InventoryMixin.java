@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.gui.TurnDeadMan;
+import cn.zbx1425.minopp.item.ItemDataUtils;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -35,9 +36,10 @@ public class InventoryMixin {
                             .filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
                     if (realPlayer == null) return;
 
-                    int handIndex = holding.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
-                    holding.set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(),
-                            Mth.clamp(handIndex - (int)Math.signum(direction), 0, realPlayer.hand.size() - 1));
+                    int handIndex = ItemDataUtils.getHandIndex(holding);
+                    ItemDataUtils.setHandIndex(holding,
+                            Mth.clamp(handIndex - (int)Math.signum(direction), 0, realPlayer.hand.size() - 1)
+                    );
 
                     TurnDeadMan.pedal();
                     ci.cancel();
