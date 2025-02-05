@@ -71,12 +71,12 @@ public class ActionReport {
     private static final int SOUND_RANGE = 16;
 
     public ActionReport sound(ResourceLocation sound, int timeOffset, CardPlayer target) {
-        effects.add(new SoundEffectEvent(timeOffset, Optional.of(target.uuid), SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE)));
+        effects.add(new SoundEffectEvent(timeOffset, Optional.of(target.uuid), sound));
         return this;
     }
 
     public ActionReport sound(ResourceLocation sound, int timeOffset) {
-        effects.add(new SoundEffectEvent(timeOffset, Optional.empty(), SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE)));
+        effects.add(new SoundEffectEvent(timeOffset, Optional.empty(), sound));
         return this;
     }
 

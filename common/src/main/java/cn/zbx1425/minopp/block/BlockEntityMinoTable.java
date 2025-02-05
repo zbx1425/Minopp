@@ -285,7 +285,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                     if (serverPlayer.level().dimension() == level.dimension()) {
                         if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= EffectEvents.EFFECT_RADIUS * EffectEvents.EFFECT_RADIUS) {
                             boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(serverPlayer.getGameProfile().getId()));
-                            // S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
+                             S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
                         }
                     }
                 }
@@ -309,7 +309,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
             List<EffectEvent> events = List.of(new SeatActionTakenEffectEvent());
             if (mcPlayer != null) {
-                // S2CEffectListPacket.sendS2C((ServerPlayer) mcPlayer, events, tableCenterPos, true);
+                S2CEffectListPacket.sendS2C((ServerPlayer) mcPlayer, events, tableCenterPos, true);
             }
         }
     }

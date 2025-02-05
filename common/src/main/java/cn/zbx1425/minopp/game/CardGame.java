@@ -86,10 +86,9 @@ public class CardGame {
 
             report.effect(new PlayerGlowEffectEvent(cardPlayer.uuid, 6 * 20));
             report.effect(new GrantRewardEffectEvent(cardPlayer.uuid));
-            // TODO
-//            for (int i = 0; i < 5; i++) {
-//                report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, PlayerFireworkEffectEvent.WIN_EXPLOSION));
-//            }
+            for (int i = 0; i < 5; i++) {
+                report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid));
+            }
 
             return report.gameWon();
         }

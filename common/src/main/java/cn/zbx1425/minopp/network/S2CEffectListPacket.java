@@ -20,13 +20,13 @@ public class S2CEffectListPacket {
     public static final ResourceLocation ID = Mino.id("effect_list");
 
     @SuppressWarnings("unchecked, rawtypes")
-    public static void sendS2C(ServerPlayer target, List<EffectEvent> sounds, BlockPos origin, boolean playerPartOfSourceGame) {
+    public static void sendS2C(ServerPlayer target, List<EffectEvent> events, BlockPos origin, boolean playerPartOfSourceGame) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
-        packet.writeInt(sounds.size());
-//        for (EffectEvent event : sounds) {
-//            packet.writeResourceLocation(event.type().id());
-//            ((StreamCodec)event.type().streamCodec()).encode(packet, event);
-//        }
+        packet.writeInt(events.size());
+        for (EffectEvent event : events) {
+            packet.writeResourceLocation(event.type().id());
+            event.encode(event, packet);
+        }
         packet.writeBlockPos(origin);
         packet.writeBoolean(playerPartOfSourceGame);
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
@@ -38,9 +38,9 @@ public class S2CEffectListPacket {
             int size = packet.readInt();
             List<EffectEvent> sounds = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
-                ResourceLocation id = packet.readResourceLocation();
-//                EffectEvent.Type<?> type = EffectEvents.REGISTRY.get(id);
-//                sounds.add(type.streamCodec().decode(packet));
+                var id = packet.readResourceLocation();
+                var type = EffectEvents.REGISTRY.get(id);
+                sounds.add(type.function().apply(packet));
             }
             BlockPos origin = packet.readBlockPos();
             boolean playerPartOfSourceGame = packet.readBoolean();
