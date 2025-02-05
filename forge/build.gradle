@@ -42,14 +42,14 @@ repositories {
         name = "TeaCon"
         url = "https://archive.teacon.cn/maven"
     }
-//    flatDir {
-//        dir "libs"
-//    }
+    flatDir {
+        dir "libs"
+    }
 }
 
 dependencies {
     forge "net.minecraftforge:forge:$rootProject.forge_version"
-//    modImplementation "libs:touhoulittlemaid:1.21-release-1.1.14"
+    modImplementation "libs:touhoulittlemaid:1.20.1-release-1.1.14"
 //    modImplementation ("org.teacon:SignMeUp-NeoForge-1.21.1:+") { transitive false }
 
 //    modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"

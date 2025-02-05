@@ -4,6 +4,8 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.MinoCommand;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
+import cn.zbx1425.minopp.forge.compat.touhou_little_maid.MemoryTypeRegister;
+import cn.zbx1425.minopp.forge.compat.touhou_little_maid.PoiRegistry;
 import cn.zbx1425.minopp.platform.forge.CompatPacket;
 import cn.zbx1425.minopp.platform.forge.CompatPacketRegistry;
 import cn.zbx1425.minopp.platform.forge.RegistriesWrapperImpl;
@@ -46,8 +48,8 @@ public final class MinoForge {
         NETWORK.registerMessage(0, CompatPacket.class, CompatPacket::encode, CompatPacket::decode, CompatPacket::handle);
 
         // Touhou Little Maid compat
-//        PoiRegistry.POI_TYPES.register(eventBus);
-//        MemoryTypeRegister.MEMORY_MODULE_TYPES.register(eventBus);
+        PoiRegistry.POI_TYPES.register(eventBus);
+        MemoryTypeRegister.MEMORY_MODULE_TYPES.register(eventBus);
 
         if (FMLEnvironment.dist.isClient()) {
             MinoClient.init();
