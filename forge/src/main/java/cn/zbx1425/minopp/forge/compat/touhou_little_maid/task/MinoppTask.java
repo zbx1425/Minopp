@@ -46,12 +46,6 @@ public class MinoppTask implements IMaidTask {
         return Lists.newArrayList(Pair.of(5, new PlayMinoTask()));
     }
 
-//    Unsupported in 1.20.1
-//    @Override
-//    public boolean canSitInJoy(@NotNull EntityMaid maid, String joyType) {
-//        return joyType.equals(MinoTable);
-//    }
-
     @Override
     public List<Pair<String, Predicate<EntityMaid>>> getConditionDescription(EntityMaid maid) {
         return Collections.singletonList(Pair.of("has_mino", this::hasMino));

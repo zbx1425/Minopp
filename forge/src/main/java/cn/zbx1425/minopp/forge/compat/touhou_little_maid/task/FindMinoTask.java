@@ -3,10 +3,10 @@ package cn.zbx1425.minopp.forge.compat.touhou_little_maid.task;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.forge.compat.touhou_little_maid.entity.MaidEntitySit;
 import cn.zbx1425.minopp.forge.compat.touhou_little_maid.MemoryTypeRegister;
 import cn.zbx1425.minopp.forge.compat.touhou_little_maid.PoiRegistry;
 import com.github.tartaricacid.touhoulittlemaid.entity.ai.brain.task.MaidCheckRateTask;
-import com.github.tartaricacid.touhoulittlemaid.entity.item.EntitySit;
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
 import com.google.common.collect.ImmutableMap;
@@ -81,35 +81,28 @@ public class FindMinoTask extends MaidCheckRateTask {
         BlockPos blockPos = maid.getBrainSearchPos();
         PoiManager poiManager = world.getPoiManager();
         int range = (int) maid.getRestrictRadius();
-        return poiManager.getInRange(
-                type -> type.value().equals(PoiRegistry.MINO_TABLE.get()), blockPos, range, PoiManager.Occupancy.ANY
-                )
+        return poiManager.getInRange(type -> type.value().equals(PoiRegistry.MINO_TABLE.get()), blockPos, range, PoiManager.Occupancy.ANY)
                 .map(poiRecord -> {
                     BlockPos pos = poiRecord.getPos();
                     BlockState state = world.getBlockState(pos);
                     return BlockMinoTable.getCore(state, pos);
                 })
-                .distinct()
                 .filter(pos -> !isOccupied(world, pos))
                 .min(Comparator.comparingDouble(pos -> pos.distSqr(maid.blockPosition()))).orElse(null);
     }
 
     public void startMaidSit(EntityMaid maid, BlockState state, Level worldIn, BlockPos pos) {
-        if (worldIn instanceof ServerLevel serverLevel) {
-            BlockEntity blockEntity = serverLevel.getBlockEntity(pos);
-            BlockPos corePos = BlockMinoTable.getCore(state, pos);
-            if (blockEntity instanceof BlockEntityMinoTable minoTable) {
-                List<Direction> emptyDirections = minoTable.getEmptyDirections();
-                if (!emptyDirections.isEmpty()) {
-                    Random random = new Random();
-                    Direction direction = emptyDirections.get(random.nextInt(emptyDirections.size()));
-                    Vec3i position = direction.getNormal().multiply(2).offset(1, 0, 1);
-                    EntitySit newSitEntity = new EntitySit(worldIn, Vec3.atLowerCornerWithOffset(pos, position.getX(), position.getY(), position.getZ()), MinoTable, pos.offset(1, 0, 1));
-                    newSitEntity.setYRot(direction.getOpposite().toYRot());
-                    worldIn.addFreshEntity(newSitEntity);
-                    minoTable.setChanged();
-                    maid.startRiding(newSitEntity);
-                }
+        if (worldIn instanceof ServerLevel serverLevel && worldIn.getBlockEntity(pos) instanceof BlockEntityMinoTable minoTable) {
+            List<Direction> emptyDirections = minoTable.getEmptyDirections();
+            if (!emptyDirections.isEmpty()) {
+                Random random = new Random();
+                Direction direction = emptyDirections.get(random.nextInt(emptyDirections.size()));
+                Vec3i position = direction.getNormal().multiply(2).offset(1, 0, 1);
+                MaidEntitySit newSitEntity = new MaidEntitySit(worldIn, Vec3.atLowerCornerWithOffset(pos, position.getX(), position.getY(), position.getZ()), MinoTable, pos.offset(1, 0, 1));
+                newSitEntity.setYRot(direction.getOpposite().toYRot());
+                worldIn.addFreshEntity(newSitEntity);
+                minoTable.setChanged();
+                maid.startRiding(newSitEntity);
             }
         }
     }
@@ -118,6 +111,7 @@ public class FindMinoTask extends MaidCheckRateTask {
         BlockEntity blockEntity = level.getBlockEntity(pos);
         if (blockEntity instanceof BlockEntityMinoTable minoTable) {
             return minoTable.getPlayersList().size() >= 4;
-        } else return true;
+        }
+        return true;
     }
 }
