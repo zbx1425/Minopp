@@ -73,8 +73,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             compoundTag.put("game", game.toTag());
         }
         compoundTag.put("state", state.toTag());
-        // TODO
-//        if (!award.isEmpty()) compoundTag.put("award", award.save(provider));
+        if (!award.isEmpty()) compoundTag.put("award", award.save(new CompoundTag()));
         compoundTag.putBoolean("demo", demo);
     }
 
@@ -106,7 +105,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
         }
         if (compoundTag.contains("award")) {
-//            award = ItemStack.parse(provider, compoundTag.get("award")).orElse(ItemStack.EMPTY);
+            award = ItemStack.of(compoundTag.getCompound("award"));
         } else {
             award = ItemStack.EMPTY;
         }
@@ -285,7 +284,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                     if (serverPlayer.level().dimension() == level.dimension()) {
                         if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= EffectEvents.EFFECT_RADIUS * EffectEvents.EFFECT_RADIUS) {
                             boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(serverPlayer.getGameProfile().getId()));
-                             S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
+                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
                         }
                     }
                 }
