@@ -82,7 +82,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
 
         for (int ci = 0; ci <= blockEntity.game.discardDeck.size(); ci++) {
             poseStack.pushPose();
-            poseStack.translate(discardRandom.nextFloat() * 6 - 3, discardRandom.nextFloat() * 6 - 3, ci / 32f);
+            poseStack.translate(discardRandom.nextFloat() * 6 - 3, discardRandom.nextFloat() * 6 - 3, ci / 128f);
             poseStack.mulPose(Axis.ZP.rotation(discardRandom.nextFloat() * 2 * (float)Math.PI));
 
             Card card = ci == blockEntity.game.discardDeck.size() ? blockEntity.game.topCard : blockEntity.game.discardDeck.get(ci);
