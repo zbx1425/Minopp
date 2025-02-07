@@ -2,6 +2,7 @@ package cn.zbx1425.minopp.render;
 
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -18,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Optional;
 
 public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPlayer, PlayerModel<EntityAutoPlayer>> {
+    private static final String SLIM_NAME = "slim";
 
     private PlayerModel<EntityAutoPlayer> slimModel;
     private PlayerModel<EntityAutoPlayer> wideModel;
@@ -42,12 +44,12 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
     @Override
     public void render(EntityAutoPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        model = wideModel;
         if (result.isPresent()) {
-            SkinManager skinManager = Minecraft.getInstance().getSkinManager();
-            model = slimModel;
-//            model = skinManager.getInsecureSkin(result.get()).model() == PlayerSkin.Model.SLIM ? slimModel : wideModel;
-        } else {
-            model = slimModel;
+            var info = Minecraft.getInstance().getSkinManager().getInsecureSkinInformation(result.get());
+            if (info.containsKey(MinecraftProfileTexture.Type.SKIN) && SLIM_NAME.equals(info.get(MinecraftProfileTexture.Type.SKIN).getMetadata("model"))) {
+                model = slimModel;
+            }
         }
 
         PlayerModel<EntityAutoPlayer> playerModel = this.getModel();
