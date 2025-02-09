@@ -248,7 +248,7 @@ public class EntityAutoPlayer extends LivingEntity {
         super.addAdditionalSaveData(compound);
         if (tablePos != null) compound.putLong("TablePos", tablePos.asLong());
         if (cardPlayer != null) compound.put("CardPlayer", cardPlayer.toTag());
-        if (!entityData.get(HAND_STACK).isEmpty()) compound.put("HandStack", entityData.get(HAND_STACK).save(level().registryAccess(), new CompoundTag()));
+        if (!entityData.get(HAND_STACK).isEmpty()) compound.put("HandStack", entityData.get(HAND_STACK).save(new CompoundTag()));
         writeConfigToTag(compound); // Write config values directly to maintain backward compatibility
     }
 

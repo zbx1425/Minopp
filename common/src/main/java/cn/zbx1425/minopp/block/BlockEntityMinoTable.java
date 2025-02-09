@@ -61,8 +61,7 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
-        super.saveAdditional(compoundTag, provider);
+    public void saveAdditional(CompoundTag compoundTag) {
         CompoundTag playersTag = new CompoundTag();
         for (Map.Entry<Direction, CardPlayer> entry : players.entrySet()) {
             if (entry.getValue() != null) {
@@ -74,13 +73,17 @@ public class BlockEntityMinoTable extends BlockEntity {
             compoundTag.put("game", game.toTag());
         }
         compoundTag.put("state", state.toTag());
-        if (!award.isEmpty()) compoundTag.put("award", award.save(provider));
+        if (!award.isEmpty()) {
+            CompoundTag awardTag = new CompoundTag();
+            award.save(awardTag);
+            compoundTag.put("award", awardTag);
+        }
         compoundTag.putBoolean("demo", demo);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
-        super.loadAdditional(compoundTag, provider);
+    public void load(CompoundTag compoundTag) {
+        super.load(compoundTag);
         CompoundTag playersTag = compoundTag.getCompound("players");
         for (Direction direction : PLAYER_ORDER) {
             if (playersTag.contains(direction.getSerializedName())) {
@@ -105,16 +108,12 @@ public class BlockEntityMinoTable extends BlockEntity {
             state = newState;
             clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
         }
-        if (compoundTag.contains("award")) {
-            award = ItemStack.parse(provider, compoundTag.get("award")).orElse(ItemStack.EMPTY);
+        if (compoundTag.contains("award", Tag.TAG_COMPOUND)) {
+            award = ItemStack.of(compoundTag.getCompound("award"));
         } else {
             award = ItemStack.EMPTY;
         }
-        if (compoundTag.contains("demo", Tag.TAG_BYTE)) {
-            demo = compoundTag.getBoolean("demo");
-        } else {
-            demo = false;
-        }
+        demo = compoundTag.getBoolean("demo");
     }
 
     public List<CardPlayer> getPlayersList() {
@@ -169,9 +168,11 @@ public class BlockEntityMinoTable extends BlockEntity {
                     if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
                         // We've found the player, give them a card item
                         ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                        ItemHandCards.CardGameBindingComponent newBinding =
-                                new ItemHandCards.CardGameBindingComponent(getBlockPos(), cardPlayer.uuid);
-                        handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                        CompoundTag binding = handCard.getOrCreateTagElement("CardGameBinding");
+                        binding.putLong("TablePos", getBlockPos().asLong());
+                        binding.putUUID("PlayerUUID", cardPlayer.uuid);
+                        binding.putString("PlayerName", cardPlayer.name);
+
                         if (Inventory.isHotbarSlot(mcPlayer.getInventory().selected)
                             && mcPlayer.getInventory().getSelected().isEmpty()) {
                             // If the player has an empty hand slot, put the card there
@@ -226,8 +227,8 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (Player mcPlayer : level.players()) {
             for (ItemStack invItem : mcPlayer.getInventory().items) {
                 if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                ItemHandCards.CardGameBindingComponent gameBinding = invItem.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
-                if (gameBinding != null && gameBinding.tablePos().equals(getBlockPos())) {
+                CompoundTag binding = invItem.getTagElement("CardGameBinding");
+                if (binding != null && BlockPos.of(binding.getLong("TablePos")).equals(getBlockPos())) {
                     // This is the one bound to this table, remove
                     mcPlayer.getInventory().removeItem(invItem);
                 }
@@ -309,7 +310,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (CardPlayer player : getPlayersList()) {
             Player mcPlayer = level.getPlayerByUUID(player.uuid);
             BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
-            List<EffectEvent> events = List.of(new SeatActionTakenEffectEvent());
+            List<EffectEvent> events = List.of(new SeatActionTakenEffectEvent(player.uuid));
             if (mcPlayer != null) {
                 S2CEffectListPacket.sendS2C((ServerPlayer) mcPlayer, events, tableCenterPos, true);
             }
@@ -323,13 +324,14 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+    public @NotNull CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        saveAdditional(tag, provider);
+        saveAdditional(tag);
         return tag;
     }
 
-    @Nullable @Override
+    @Nullable
+    @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }

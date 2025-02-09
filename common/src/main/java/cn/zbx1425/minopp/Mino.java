@@ -19,9 +19,7 @@ import cn.zbx1425.minopp.platform.RegistryObject;
 import cn.zbx1425.minopp.platform.ServerPlatform;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,7 +41,7 @@ public final class Mino {
     public static final Logger LOGGER = LoggerFactory.getLogger("Mino++");
 
     public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+        return new ResourceLocation(MOD_ID, path);
     }
 
     public static final RegistryObject<Block> BLOCK_MINO_TABLE = new RegistryObject<>(BlockMinoTable::new);
@@ -51,10 +49,6 @@ public final class Mino {
             ServerPlatform.createBlockEntityType(BlockEntityMinoTable::new, BLOCK_MINO_TABLE.get()));
 
     public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS = new RegistryObject<>(ItemHandCards::new);
-    public static final RegistryObject<DataComponentType<ItemHandCards.CardGameBindingComponent>> DATA_COMPONENT_TYPE_CARD_GAME_BINDING = new RegistryObject<>(() ->
-            ServerPlatform.createDataComponentType(ItemHandCards.CardGameBindingComponent.CODEC, ItemHandCards.CardGameBindingComponent.STREAM_CODEC));
-    public static final RegistryObject<DataComponentType<Integer>> DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX = new RegistryObject<>(() ->
-            ServerPlatform.createDataComponentType(Codec.INT, ByteBufCodecs.INT));
 
     public static final RegistryObject<GroupedItem> ITEM_COUPON = new RegistryObject<>(ItemCoupon::new);
 
@@ -66,13 +60,11 @@ public final class Mino {
 
     public static void init(RegistriesWrapper registries) {
         final ResourceKey<CreativeModeTab> FUNCTIONAL_BLOCKS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
-                ResourceLocation.withDefaultNamespace("functional_blocks"));
+                new ResourceLocation("functional_blocks"));
         registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE, FUNCTIONAL_BLOCKS);
         registries.registerBlockEntityType("mino_table", BLOCK_ENTITY_TYPE_MINO_TABLE);
         registries.registerItem("hand_cards", ITEM_HAND_CARDS);
         registries.registerItem("hand_cards_model_placeholder", ITEM_HAND_CARDS_MODEL_PLACEHOLDER);
-        registries.registerDataComponentType("card_game_binding", DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
-        registries.registerDataComponentType("client_hand_index", DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX);
         registries.registerItem("coupon", ITEM_COUPON);
 
         registries.registerEntityType("mino_auto_player", ENTITY_AUTO_PLAYER);

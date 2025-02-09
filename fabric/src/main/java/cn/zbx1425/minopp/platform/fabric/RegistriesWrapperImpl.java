@@ -1,14 +1,11 @@
 package cn.zbx1425.minopp.platform.fabric;
 
-
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.core.Registry;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
@@ -19,6 +16,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 public class RegistriesWrapperImpl implements RegistriesWrapper {
 
@@ -32,13 +30,15 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
         Registry.register(BuiltInRegistries.BLOCK, Mino.id(id), block.get());
         final BlockItem blockItem = new BlockItem(block.get(), new Item.Properties());
         Registry.register(BuiltInRegistries.ITEM, Mino.id(id), blockItem);
-        ItemGroupEvents.modifyEntriesEvent(tab).register(consumer -> consumer.accept(blockItem));
+        ItemGroupEvents.modifyEntriesEvent(tab).register(entries -> entries.accept(blockItem));
     }
 
     @Override
     public void registerItem(String id, RegistryObject<GroupedItem> item) {
         Registry.register(BuiltInRegistries.ITEM, Mino.id(id), item.get());
-        ItemGroupEvents.modifyEntriesEvent(item.get().tabSupplier.get()).register(consumer -> consumer.accept(item.get()));
+        if (item.get().tabSupplier.get() != null) {
+            ItemGroupEvents.modifyEntriesEvent(item.get().tabSupplier.get()).register(entries -> entries.accept(item.get()));
+        }
     }
 
     @Override
@@ -54,10 +54,5 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
     @Override
     public void registerSoundEvent(String id, SoundEvent soundEvent) {
         Registry.register(BuiltInRegistries.SOUND_EVENT, Mino.id(id), soundEvent);
-    }
-
-    @Override
-    public <T> void registerDataComponentType(String id, RegistryObject<DataComponentType<T>> componentType) {
-        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Mino.id(id), componentType.get());
     }
 }

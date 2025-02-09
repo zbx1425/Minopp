@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.component.FireworkExplosion;
 
 import java.util.*;
 
@@ -42,14 +41,14 @@ public class CardGame {
         Collections.shuffle(deck);
         for (int i = 0; i < initialCardCount; i++) {
             for (CardPlayer player : players) {
-                player.hand.add(deck.removeLast());
+                player.hand.add(deck.remove(deck.size() - 1));
             }
         }
-        Card tobeTopCard = deck.removeLast();
+        Card tobeTopCard = deck.remove(deck.size() - 1);
         while (tobeTopCard.family != Card.Family.NUMBER || tobeTopCard.suit == Card.Suit.WILD) {
             deck.add(tobeTopCard);
             Collections.shuffle(deck);
-            tobeTopCard = deck.removeLast();
+            tobeTopCard = deck.remove(deck.size() - 1);
         }
         topCard = tobeTopCard;
         return ActionReport.builder(this, cardPlayer)
@@ -208,7 +207,7 @@ public class CardGame {
             return false;
         }
         for (int i = 0; i < drawCount; i++) {
-            cardPlayer.hand.add(deck.removeLast());
+            cardPlayer.hand.add(deck.remove(deck.size() - 1));
             report.sound(Mino.id("game.draw"), 500 * i);
             if (drawCount > 1) {
                 report.sound(Mino.id("game.draw_multi"), 500 * i + 200);
@@ -233,28 +232,26 @@ public class CardGame {
     }
 
     public CardPlayer deAmputate(CardPlayer playerWithoutHand) {
-        return players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
+        for (CardPlayer player : players) {
+            if (player.equals(playerWithoutHand)) {
+                return player;
+            }
+        }
+        return null;
     }
 
     public CardPlayer deAmputate(UUID uuid) {
-        return players.stream().filter(p -> p.uuid.equals(uuid)).findFirst().orElse(null);
+        for (CardPlayer player : players) {
+            if (player.uuid.equals(uuid)) {
+                return player;
+            }
+        }
+        return null;
     }
 
     public enum PlayerActionPhase {
         DISCARD_HAND,
         DISCARD_DRAWN,
-    }
-
-    public CardGame(CompoundTag tag) {
-        currentPlayerIndex = tag.getInt("currentPlayer");
-        drawCount = tag.getInt("drawCount");
-        isSkipping = tag.getBoolean("isSkipping");
-        currentPlayerPhase = PlayerActionPhase.valueOf(tag.getString("currentPlayerPhase"));
-        isAntiClockwise = tag.getBoolean("isAntiClockwise");
-        deck = new ArrayList<>(tag.getList("deck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
-        discardDeck = new ArrayList<>(tag.getList("discardDeck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
-        topCard = new Card(tag.getCompound("topCard"));
-        players = new ArrayList<>(tag.getList("players", CompoundTag.TAG_COMPOUND).stream().map(t -> new CardPlayer((CompoundTag)t)).toList());
     }
 
     public CompoundTag toTag() {
@@ -264,16 +261,59 @@ public class CardGame {
         tag.putBoolean("isSkipping", isSkipping);
         tag.putString("currentPlayerPhase", currentPlayerPhase.name());
         tag.putBoolean("isAntiClockwise", isAntiClockwise);
-        ListTag deckTag = new ListTag();
-        deckTag.addAll(deck.stream().map(Card::toTag).toList());
-        tag.put("deck", deckTag);
-        ListTag discardDeckTag = new ListTag();
-        discardDeckTag.addAll(discardDeck.stream().map(Card::toTag).toList());
-        tag.put("discardDeck", discardDeckTag);
-        tag.put("topCard", topCard.toTag());
+
         ListTag playersTag = new ListTag();
-        playersTag.addAll(players.stream().map(CardPlayer::toTag).toList());
+        for (CardPlayer player : players) {
+            playersTag.add(player.toTag());
+        }
         tag.put("players", playersTag);
+
+        ListTag deckTag = new ListTag();
+        for (Card card : deck) {
+            deckTag.add(card.toTag());
+        }
+        tag.put("deck", deckTag);
+
+        ListTag discardDeckTag = new ListTag();
+        for (Card card : discardDeck) {
+            discardDeckTag.add(card.toTag());
+        }
+        tag.put("discardDeck", discardDeckTag);
+
+        if (topCard != null) {
+            tag.put("topCard", topCard.toTag());
+        }
+
         return tag;
+    }
+
+    public CardGame(CompoundTag tag) {
+        currentPlayerIndex = tag.getInt("currentPlayer");
+        drawCount = tag.getInt("drawCount");
+        isSkipping = tag.getBoolean("isSkipping");
+        currentPlayerPhase = PlayerActionPhase.valueOf(tag.getString("currentPlayerPhase"));
+        isAntiClockwise = tag.getBoolean("isAntiClockwise");
+
+        players = new ArrayList<>();
+        ListTag playersTag = tag.getList("players", 10);
+        for (int i = 0; i < playersTag.size(); i++) {
+            players.add(new CardPlayer(playersTag.getCompound(i)));
+        }
+
+        deck = new ArrayList<>();
+        ListTag deckTag = tag.getList("deck", 10);
+        for (int i = 0; i < deckTag.size(); i++) {
+            deck.add(new Card(deckTag.getCompound(i)));
+        }
+
+        discardDeck = new ArrayList<>();
+        ListTag discardDeckTag = tag.getList("discardDeck", 10);
+        for (int i = 0; i < discardDeckTag.size(); i++) {
+            discardDeck.add(new Card(discardDeckTag.getCompound(i)));
+        }
+
+        if (tag.contains("topCard")) {
+            topCard = new Card(tag.getCompound("topCard"));
+        }
     }
 }

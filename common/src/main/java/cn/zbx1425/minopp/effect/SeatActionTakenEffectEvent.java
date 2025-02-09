@@ -2,22 +2,31 @@ package cn.zbx1425.minopp.effect;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.gui.SeatControlScreen;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import java.util.Optional;
 import java.util.UUID;
 
-public record SeatActionTakenEffectEvent() implements EffectEvent {
+public record SeatActionTakenEffectEvent(UUID targetPlayer) implements EffectEvent {
 
-    public static final StreamCodec<ByteBuf, SeatActionTakenEffectEvent> STREAM_CODEC = StreamCodec.unit(new SeatActionTakenEffectEvent());
+    public static final Serializer<SeatActionTakenEffectEvent> SERIALIZER = new Serializer<>() {
+        @Override
+        public void serialize(FriendlyByteBuf buf, SeatActionTakenEffectEvent event) {
+            buf.writeUUID(event.targetPlayer);
+        }
+
+        @Override
+        public SeatActionTakenEffectEvent deserialize(FriendlyByteBuf buf) {
+            return new SeatActionTakenEffectEvent(buf.readUUID());
+        }
+    };
 
     @Override
-    public Type<? extends EffectEvent> type() {
+    public Type<SeatActionTakenEffectEvent> type() {
         return EffectEvents.SEAT_ACTION_TAKEN;
     }
 

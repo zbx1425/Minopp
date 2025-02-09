@@ -2,11 +2,8 @@ package cn.zbx1425.minopp.effect;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.gui.TurnDeadMan;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -17,12 +14,22 @@ import java.util.UUID;
 
 public record SoundEffectEvent(int timeOffset, Optional<UUID> target, SoundEvent sound) implements EffectEvent {
 
-    public static StreamCodec<ByteBuf, SoundEffectEvent> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.INT, SoundEffectEvent::timeOffset,
-            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), SoundEffectEvent::target,
-            SoundEvent.DIRECT_STREAM_CODEC, SoundEffectEvent::sound,
-            SoundEffectEvent::new
-    );
+    public static final Serializer<SoundEffectEvent> SERIALIZER = new Serializer<>() {
+        @Override
+        public void serialize(FriendlyByteBuf buf, SoundEffectEvent event) {
+            buf.writeInt(event.timeOffset);
+            buf.writeOptional(event.target, FriendlyByteBuf::writeUUID);
+            buf.writeResourceLocation(event.sound.getLocation());
+        }
+
+        @Override
+        public SoundEffectEvent deserialize(FriendlyByteBuf buf) {
+            int timeOffset = buf.readInt();
+            Optional<UUID> target = buf.readOptional(FriendlyByteBuf::readUUID);
+            SoundEvent sound = SoundEvent.createFixedRangeEvent(buf.readResourceLocation(), 16);
+            return new SoundEffectEvent(timeOffset, target, sound);
+        }
+    };
 
     @Override
     public Type<SoundEffectEvent> type() {

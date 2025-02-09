@@ -19,7 +19,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -34,10 +34,10 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
     private static final RegistryObject<ItemStack> HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER = new RegistryObject<>(() -> {
         ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get());
-        stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.putBoolean("Enchanted", true);
         return stack;
     });
-
 
     private ItemRenderer itemRenderer;
 
@@ -91,35 +91,30 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             float cardVH = 25 / 128f;
             int color = (ci == blockEntity.game.discardDeck.size())
                     ? 0xFFFFFFFF : 0xFFBBBBBB;
-            vertexConsumer
-                    .addVertex(poseStack.last(), -0.52f, 0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(poseStack.last(), -0.52f, -0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(poseStack.last(), 0.52f, -0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(poseStack.last(), 0.52f, 0.8f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000);
+            Matrix4f pose = poseStack.last().pose();
+            vertexConsumer.vertex(pose, -0.52f, 0.8f, 0).normal(0, 0, 1)
+                    .uv(cardU, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).color(0xFF000000).endVertex();
+            vertexConsumer.vertex(pose, -0.52f, -0.8f, 0).normal(0, 0, 1)
+                    .uv(cardU, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).color(0xFF000000).endVertex();
+            vertexConsumer.vertex(pose, 0.52f, -0.8f, 0).normal(0, 0, 1)
+                    .uv(cardU + cardUW, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).color(0xFF000000).endVertex();
+            vertexConsumer.vertex(pose, 0.52f, 0.8f, 0).normal(0, 0, 1)
+                    .uv(cardU + cardUW, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).color(0xFF000000).endVertex();
             poseStack.translate(0, 0, 1 / 64f);
-            vertexConsumer
-                    .addVertex(poseStack.last(), -0.5f, 0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(poseStack.last(), -0.5f, -0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(poseStack.last(), 0.5f, -0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(poseStack.last(), 0.5f, 0.78f, 0).setNormal(poseStack.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color);
+            vertexConsumer.vertex(pose, -0.5f, 0.78f, 0).normal(0, 0, 1)
+                    .uv(cardU, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).color(color).endVertex();
+            vertexConsumer.vertex(pose, -0.5f, -0.78f, 0).normal(0, 0, 1)
+                    .uv(cardU, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).color(color).endVertex();
+            vertexConsumer.vertex(pose, 0.5f, -0.78f, 0).normal(0, 0, 1)
+                    .uv(cardU + cardUW, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).color(color).endVertex();
+            vertexConsumer.vertex(pose, 0.5f, 0.78f, 0).normal(0, 0, 1)
+                    .uv(cardU + cardUW, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).color(color).endVertex();
 
             if (ci == blockEntity.game.discardDeck.size()) {
-//                itemRenderer.render(HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
-//                        poseStack, multiBufferSource, i, j, model);
                 Font font = Minecraft.getInstance().font;
                 poseStack.mulPose(Axis.XP.rotation((float)Math.PI / 2));
                 poseStack.translate(0, 1f, 0);
 
-//                poseStack.translate(0, 0, 1f);
-//                poseStack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
                 poseStack.scale(0.03F, -0.03F, 0.03F);
                 Matrix4f matrix4f = poseStack.last().pose();
                 float g = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);

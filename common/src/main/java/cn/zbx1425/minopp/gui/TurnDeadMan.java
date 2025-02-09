@@ -6,7 +6,6 @@ import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.ClientPlatform;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -31,8 +30,8 @@ public class TurnDeadMan {
         deadManElapsedTicks = Math.min(0, deadManElapsedTicks);
     }
 
-    public static void tick(CardGame game, DeltaTracker deltaTracker) {
-        deadManElapsedTicks += deltaTracker.getGameTimeDeltaPartialTick(false);
+    public static void tick(CardGame game, float partialTick) {
+        deadManElapsedTicks += partialTick;
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         CardPlayer currentPlayer = game.players.get(game.currentPlayerIndex);
@@ -53,10 +52,14 @@ public class TurnDeadMan {
 
     private static void playAlarmSound() {
         SoundManager soundManager = Minecraft.getInstance().getSoundManager();
-        if (isAlarmActive() && !Minecraft.getInstance().isPaused()) {
-            if (!soundManager.isActive(alarmSound)) soundManager.play(alarmSound);
+        if (isAlarmActive()) {
+            if (!soundManager.isActive(alarmSound)) {
+                soundManager.play(alarmSound);
+            }
         } else {
-            if (soundManager.isActive(alarmSound)) soundManager.stop(alarmSound);
+            if (soundManager.isActive(alarmSound)) {
+                soundManager.stop(alarmSound);
+            }
         }
     }
 }

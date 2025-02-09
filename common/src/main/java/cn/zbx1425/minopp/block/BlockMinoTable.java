@@ -16,6 +16,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
@@ -57,27 +58,34 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
-        if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
+    public @NotNull InteractionResult use(@NotNull BlockState blockState, @NotNull Level level, @NotNull BlockPos blockPos, 
+            @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hitResult) {
+        ItemStack itemStack = player.getItemInHand(hand);
+        if (itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
+            CompoundTag binding = itemStack.getOrCreateTagElement("CardGameBinding");
+            BlockPos tablePos = BlockPos.of(binding.getLong("TablePos"));
+            if (!tablePos.equals(blockPos)) {
+                return InteractionResult.PASS;
+            }
             BlockPos corePos = getCore(blockState, blockPos);
-            ItemHandCards.CardGameBindingComponent gameBinding = itemStack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
-            int handIndex = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
-            CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
-            BlockEntity blockEntity = level.getBlockEntity(corePos);
-            if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
+            CompoundTag handIndex = itemStack.getOrCreateTagElement("HandIndex");
+            int currentIndex = handIndex.getInt("Index");
+
+            if (level.getBlockEntity(corePos) instanceof BlockEntityMinoTable tableEntity) {
                 if (tableEntity.game != null) {
-                    if (gameBinding == null || !gameBinding.tablePos().equals(corePos)) {
+                    CardPlayer playerWithoutHand = new CardPlayer(player.getGameProfile().getId(), player.getName().getString());
+                    if (!binding.contains("TablePos") || !BlockPos.of(binding.getLong("TablePos")).equals(corePos)) {
                         player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
-                        return ItemInteractionResult.FAIL;
+                        return InteractionResult.FAIL;
                     }
                     TurnDeadMan.pedal();
 
                     CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
-                    if (realPlayer == null) return ItemInteractionResult.FAIL;
+                    if (realPlayer == null) return InteractionResult.FAIL;
                     if (Client.isCursorHittingPile()) {
                         C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
                     } else {
-                        Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
+                        Card selectedCard = realPlayer.hand.get(Mth.clamp(currentIndex, 0, realPlayer.hand.size() - 1));
                         if (selectedCard.suit == Card.Suit.WILD) {
                             Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, Client.isShoutModifierHeld());
                         } else {
@@ -85,11 +93,17 @@ public class BlockMinoTable extends Block implements EntityBlock {
                                     null, Client.isShoutModifierHeld());
                         }
                     }
-                    return ItemInteractionResult.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 }
             }
         }
-        return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
+        return super.use(blockState, level, blockPos, player, hand, hitResult);
+    }
+
+    public static void openWildSelectionScreen(ItemStack handCard, BlockPos tablePos) {
+        CompoundTag binding = handCard.getOrCreateTagElement("CardGameBinding");
+        binding.putLong("TablePos", tablePos.asLong());
+        // ... existing code ...
     }
 
     public static class Client {

@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 public class WildSelectionScreen extends Screen {
 
@@ -41,19 +42,20 @@ public class WildSelectionScreen extends Screen {
 
         for (Card.Suit suit : Card.Suit.values()) {
             if (suit == Card.Suit.WILD) continue;
-            addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(), "").withColor(suit.color), e -> {
+            addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase()).withStyle(style -> style.withColor(suit.color)), e -> {
                 C2SPlayCardPacket.Client.sendPlayCardC2S(gamePos, player, handCard, suit, shout);
                 onClose();
-            }).pos(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * suit.ordinal(), yOff + MARGIN + 9 + MARGIN).size(BTN_WIDTH, BTN_HEIGHT).build());
+            }).bounds(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * suit.ordinal(), yOff + MARGIN + 9 + MARGIN, BTN_WIDTH, BTN_HEIGHT).build());
         }
         addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), e -> {
             onClose();
-        }).pos(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * 2 + BTN_WIDTH / 2, yOff + MARGIN + 9 + MARGIN + BTN_HEIGHT + MARGIN).size(BTN_WIDTH, BTN_HEIGHT).build());
+        }).bounds(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * 2 + BTN_WIDTH / 2, yOff + MARGIN + 9 + MARGIN + BTN_HEIGHT + MARGIN, BTN_WIDTH, BTN_HEIGHT).build());
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        renderBackground(guiGraphics);
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         int xOff = (width - PANEL_WIDTH) / 2;
         int yOff = (height - PANEL_HEIGHT) / 2;

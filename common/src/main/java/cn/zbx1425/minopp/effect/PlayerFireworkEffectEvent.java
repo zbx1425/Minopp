@@ -1,12 +1,9 @@
 package cn.zbx1425.minopp.effect;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
-import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -21,12 +18,35 @@ import java.util.UUID;
 
 public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<FireworkExplosion> firework) implements EffectEvent {
 
-    public static StreamCodec<ByteBuf, PlayerFireworkEffectEvent> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.INT, PlayerFireworkEffectEvent::timeOffset,
-            UUIDUtil.STREAM_CODEC, PlayerFireworkEffectEvent::targetPlayer,
-            FireworkExplosion.STREAM_CODEC.apply(ByteBufCodecs.list()), PlayerFireworkEffectEvent::firework,
-            PlayerFireworkEffectEvent::new
-    );
+    public static final Serializer<PlayerFireworkEffectEvent> SERIALIZER = new Serializer<>() {
+        @Override
+        public void serialize(FriendlyByteBuf buf, PlayerFireworkEffectEvent event) {
+            buf.writeInt(event.timeOffset);
+            buf.writeUUID(event.targetPlayer);
+            buf.writeCollection(event.firework, (b, f) -> {
+                b.writeEnum(f.shape());
+                b.writeCollection(f.colors(), FriendlyByteBuf::writeInt);
+                b.writeCollection(f.fadeColors(), FriendlyByteBuf::writeInt);
+                b.writeBoolean(f.hasTrail());
+                b.writeBoolean(f.hasFlicker());
+            });
+        }
+
+        @Override
+        public PlayerFireworkEffectEvent deserialize(FriendlyByteBuf buf) {
+            int timeOffset = buf.readInt();
+            UUID targetPlayer = buf.readUUID();
+            List<FireworkExplosion> firework = buf.readList(b -> {
+                FireworkExplosion.Shape shape = b.readEnum(FireworkExplosion.Shape.class);
+                IntList colors = IntList.of(b.readList(FriendlyByteBuf::readInt).stream().mapToInt(Integer::intValue).toArray());
+                IntList fadeColors = IntList.of(b.readList(FriendlyByteBuf::readInt).stream().mapToInt(Integer::intValue).toArray());
+                boolean hasTrail = b.readBoolean();
+                boolean hasFlicker = b.readBoolean();
+                return new FireworkExplosion(shape, colors, fadeColors, hasTrail, hasFlicker);
+            });
+            return new PlayerFireworkEffectEvent(timeOffset, targetPlayer, firework);
+        }
+    };
 
     @Override
     public Optional<UUID> target() {

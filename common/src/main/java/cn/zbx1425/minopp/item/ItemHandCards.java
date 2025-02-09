@@ -5,21 +5,14 @@ import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.platform.GroupedItem;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -27,10 +20,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class ItemHandCards extends GroupedItem {
+    
+    private static final String NBT_TABLE_POS = "TablePos";
+    private static final String NBT_BEARER_ID = "BearerId";
+    private static final String NBT_CLIENT_HAND_INDEX = "ClientHandIndex";
     
     public ItemHandCards() {
         super(() -> null, p -> p.stacksTo(1));
@@ -57,9 +53,9 @@ public class ItemHandCards extends GroupedItem {
 
     public static BlockPos getHandCardGamePos(Player player) {
         if (!player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) return null;
-        CardGameBindingComponent binding = player.getMainHandItem().get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
-        if (binding == null) return null;
-        BlockPos tablePos = binding.tablePos();
+        CompoundTag tag = player.getMainHandItem().getTag();
+        if (tag == null || !tag.contains(NBT_TABLE_POS)) return null;
+        BlockPos tablePos = NbtUtils.readBlockPos(tag.getCompound(NBT_TABLE_POS));
         BlockState blockState = player.level().getBlockState(tablePos);
         if (!blockState.is(Mino.BLOCK_MINO_TABLE.get())) return null;
         return BlockMinoTable.getCore(blockState, tablePos);
@@ -67,36 +63,46 @@ public class ItemHandCards extends GroupedItem {
 
     public static int getClientHandIndex(Player player) {
         if (player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) {
-            return player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
+            CompoundTag tag = player.getMainHandItem().getTag();
+            return tag != null ? tag.getInt(NBT_CLIENT_HAND_INDEX) : 0;
         } else {
             return 0;
         }
     }
 
+    public static void setCardGameBinding(ItemStack stack, BlockPos tablePos, UUID bearerId) {
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.put(NBT_TABLE_POS, NbtUtils.writeBlockPos(tablePos));
+        tag.putUUID(NBT_BEARER_ID, bearerId);
+    }
+
+    public static void setClientHandIndex(ItemStack stack, int index) {
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.putInt(NBT_CLIENT_HAND_INDEX, index);
+    }
+
+    public static CardGameBinding getCardGameBinding(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains(NBT_TABLE_POS) || !tag.contains(NBT_BEARER_ID)) return null;
+        return new CardGameBinding(
+            NbtUtils.readBlockPos(tag.getCompound(NBT_TABLE_POS)),
+            tag.getUUID(NBT_BEARER_ID)
+        );
+    }
+
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        CardGameBindingComponent binding = stack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        CardGameBinding binding = getCardGameBinding(stack);
         if (binding != null) {
             tooltipComponents.add(Component.literal("Table: " + binding.tablePos().toShortString()));
-            if (binding.bearerId().equals(Minecraft.getInstance().player.getGameProfile().getId())) {
+            if (Minecraft.getInstance().player != null && binding.bearerId().equals(Minecraft.getInstance().player.getGameProfile().getId())) {
                 tooltipComponents.add(Component.literal("NOT YOUR CARD!").withStyle(ChatFormatting.RED));
             }
         }
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        super.appendHoverText(stack, level, tooltipComponents, tooltipFlag);
     }
 
-    public record CardGameBindingComponent(BlockPos tablePos, UUID bearerId) {
+    public record CardGameBinding(BlockPos tablePos, UUID bearerId) {
         // BearerId is to convey holder info into BEWLR
-
-        public static final Codec<CardGameBindingComponent> CODEC = RecordCodecBuilder.create(it -> it.group(
-                BlockPos.CODEC.fieldOf("tablePos").orElse(BlockPos.ZERO).forGetter(CardGameBindingComponent::tablePos),
-                UUIDUtil.CODEC.fieldOf("bearerId").orElse(Util.NIL_UUID).forGetter(CardGameBindingComponent::bearerId)
-        ).apply(it, CardGameBindingComponent::new));
-
-        public static final StreamCodec<ByteBuf, CardGameBindingComponent> STREAM_CODEC = StreamCodec.composite(
-                BlockPos.STREAM_CODEC, CardGameBindingComponent::tablePos,
-                UUIDUtil.STREAM_CODEC, CardGameBindingComponent::bearerId,
-                CardGameBindingComponent::new
-        );
     }
 }

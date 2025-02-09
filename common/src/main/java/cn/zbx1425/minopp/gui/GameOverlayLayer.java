@@ -10,11 +10,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.longs.Long2FloatArrayMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -32,15 +30,14 @@ import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Random;
 
-public class GameOverlayLayer implements LayeredDraw.Layer {
+public class GameOverlayLayer {
 
     // Some animation related stuff
     private double zoomAnimationProgress = 0;
     private double zoomAnimationTarget = 0;
     private final Long2FloatArrayMap handCardCurrentXOff = new Long2FloatArrayMap();
 
-    @Override
-    public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+    public void render(GuiGraphics guiGraphics, float partialTick) {
         LocalPlayer player = Minecraft.getInstance().player;
         BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
         ClientLevel level = Minecraft.getInstance().level;
@@ -61,23 +58,23 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         }
 
         if (tableEntity.game == null) {
-            renderGameInactive(guiGraphics, deltaTracker, tableEntity);
+            renderGameInactive(guiGraphics, partialTick, tableEntity);
             TurnDeadMan.setOutsideGame();
             zoomAnimationProgress = zoomAnimationTarget = 0;
         } else {
-            TurnDeadMan.tick(tableEntity.game, deltaTracker);
+            TurnDeadMan.tick(tableEntity.game, partialTick);
             if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
                 // Only render active view when the player is looking at the same table as the hand cards
-                renderGameActive(guiGraphics, deltaTracker, tableEntity);
+                renderGameActive(guiGraphics, partialTick, tableEntity);
             } else {
                 zoomAnimationTarget = 0;
             }
         }
-        performZoomAnimation(deltaTracker, tableEntity);
-        MinoClient.handCardOverlayActive = renderHandCards(guiGraphics, deltaTracker);
+        performZoomAnimation(partialTick, tableEntity);
+        MinoClient.handCardOverlayActive = renderHandCards(guiGraphics, partialTick);
     }
 
-    private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    private void renderGameInactive(GuiGraphics guiGraphics, float partialTick, BlockEntityMinoTable tableEntity) {
         if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
@@ -89,7 +86,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
     }
 
-    private void renderGameActive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    private void renderGameActive(GuiGraphics guiGraphics, float partialTick, BlockEntityMinoTable tableEntity) {
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
@@ -208,13 +205,13 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         guiGraphics.drawString(font, component, x, y, color, true);
     }
 
-    private static final ResourceLocation ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
+    private static final ResourceLocation ATLAS_LOCATION = new ResourceLocation(Mino.MOD_ID, "textures/gui/deck.png");
 
     /**
      * Render hand cards on the screen
      * @return whether the hand cards are rendered
      */
-    private boolean renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+    private boolean renderHandCards(GuiGraphics guiGraphics, float partialTick) {
         if (Minecraft.getInstance().options.hideGui) return false;
         RenderSystem.enableBlend();
 
@@ -239,9 +236,9 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         realPlayer.hand.sort(Card::compareTo);
         LongArrayList handCardHashes = new LongArrayList();
         for (Card card : realPlayer.hand) {
-            if (!handCardHashes.isEmpty() && card.hashCode() == (handCardHashes.getLast() & 0xFFFFFFFFL)) {
+            if (!handCardHashes.isEmpty() && card.hashCode() == (handCardHashes.getLong(handCardHashes.size() - 1) & 0xFFFFFFFFL)) {
                 // Tell duplicate identical cards apart; the list's already sorted
-                handCardHashes.add(handCardHashes.getLast() + 0x100000000L);
+                handCardHashes.add(handCardHashes.getLong(handCardHashes.size() - 1) + 0x100000000L);
             } else {
                 handCardHashes.add(card.hashCode());
             }
@@ -259,7 +256,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             float currentXOff = handCardCurrentXOff.computeIfAbsent(handCardHashes.getLong(i), ignored -> CARD_WIDTH + 10);
             int x = width - 10 - CARD_WIDTH + (int)currentXOff;
             handCardCurrentXOff.put(handCardHashes.getLong(i),
-                    (float)Mth.lerp(8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false),
+                    (float)Mth.lerp(8 * 0.05 * partialTick,
                             currentXOff, targetXOff));
             int y = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
             if (i == clientHandIndex) {
@@ -283,7 +280,6 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
 
             float shadowAlpha = (float) Math.max(Mth.lerp(zoomAnimationProgress, 0.5, 0), 0);
 
-//            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit.color);
             guiGraphics.blit(ATLAS_LOCATION, x + 5, y + 5, CARD_WIDTH - 10, CARD_HEIGHT - 10,
                     cardU + 1, cardV + 1, cardUW - 2, cardVH - 2, 256, 128);
             guiGraphics.pose().pushPose();
@@ -297,7 +293,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 228, 0, 10, 10, 256, 128);
             } else {
                 Component cardName = card.getCardFaceName().copy()
-                        .withStyle(Style.EMPTY.withFont(ResourceLocation.withDefaultNamespace("include/default")));
+                        .withStyle(Style.EMPTY.withFont(new ResourceLocation("include/default")));
                 // blend color with shadowAlpha
                 int colorA = (int)(0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
                 guiGraphics.drawString(font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
@@ -313,11 +309,11 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         return true;
     }
 
-    private void performZoomAnimation(DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    private void performZoomAnimation(float partialTick, BlockEntityMinoTable tableEntity) {
         if (Math.abs(zoomAnimationTarget - zoomAnimationProgress) < 0.01) {
             zoomAnimationProgress = zoomAnimationTarget;
         } else {
-            zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
+            zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * partialTick;
         }
         MinoClient.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
     }

@@ -8,7 +8,8 @@ import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -23,9 +24,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import org.joml.Matrix4f;
 
 public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer {
+
+    private static final Vector3f X_AXIS = new Vector3f(1.0F, 0.0F, 0.0F);
+    private static final Vector3f Y_AXIS = new Vector3f(0.0F, 1.0F, 0.0F);
+    private static final Vector3f Z_AXIS = new Vector3f(0.0F, 0.0F, 1.0F);
 
     public static RegistryObject<HandCardsWithoutLevelRenderer> INSTANCE = new RegistryObject<>(() -> new HandCardsWithoutLevelRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels()));
@@ -36,6 +40,10 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
 
     private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
 
+    private static float toRadians(float degrees) {
+        return degrees * (float)Math.PI / 180.0F;
+    }
+
     @Override
     public void renderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
         switch (itemDisplayContext) {
@@ -43,7 +51,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                 return;
             }
             case THIRD_PERSON_LEFT_HAND, THIRD_PERSON_RIGHT_HAND -> {
-                ItemHandCards.CardGameBindingComponent gameBinding = itemStack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+                var gameBinding = ItemHandCards.getCardGameBinding(itemStack);
                 if (gameBinding == null) return;
                 BlockPos tablePos = gameBinding.tablePos();
                 ClientLevel level = Minecraft.getInstance().level;
@@ -67,36 +75,76 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     // Render arrow texture
                     if (tableEntity.game.currentPlayerIndex == tableEntity.game.players.indexOf(realPlayer)) {
                         poseStack.translate(0, 0.3, 0.3);
-                        poseStack.mulPose(Axis.XP.rotationDegrees(-110f));
+                        poseStack.mulPose(X_AXIS.rotation(toRadians(-110f)));
                         poseStack.pushPose();
                         VertexConsumer buffer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/arrow_down.png")));
                         float v0 = ((int)(System.currentTimeMillis() / 100L) % 5) * 0.2f;
                         float v1 = v0 + 0.2f;
                         // Transform must be somehow messed up but it works so I'm not going to fix it
-                        poseStack.mulPose(Axis.YP.rotationDegrees(45));
+                        poseStack.mulPose(Y_AXIS.rotation(toRadians(45)));
                         poseStack.scale(0.2f, 0.2f, 1);
-                        buffer
-                                .addVertex(poseStack.last(), -1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), -1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), 1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), 1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF);
+                        Matrix4f pose = poseStack.last().pose();
+                        buffer.vertex(pose, -1, 1, 0)
+                                .color(255, 255, 255, 255)
+                                .uv(0, v1)
+                                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                                .uv2(packedLight)
+                                .normal(0, -1, 0)
+                                .endVertex();
+                        buffer.vertex(pose, -1, -1, 0)
+                                .color(255, 255, 255, 255)
+                                .uv(0, v0)
+                                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                                .uv2(packedLight)
+                                .normal(0, -1, 0)
+                                .endVertex();
+                        buffer.vertex(pose, 1, -1, 0)
+                                .color(255, 255, 255, 255)
+                                .uv(1, v0)
+                                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                                .uv2(packedLight)
+                                .normal(0, -1, 0)
+                                .endVertex();
+                        buffer.vertex(pose, 1, 1, 0)
+                                .color(255, 255, 255, 255)
+                                .uv(1, v1)
+                                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                                .uv2(packedLight)
+                                .normal(0, -1, 0)
+                                .endVertex();
                         poseStack.popPose();
                         poseStack.pushPose();
-                        poseStack.mulPose(Axis.YP.rotationDegrees(-45));
+                        poseStack.mulPose(Y_AXIS.rotation(toRadians(-45)));
                         poseStack.scale(0.2f, 0.2f, 1);
-                        buffer
-                                .addVertex(poseStack.last(), -1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), -1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), 1, -1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
-                                .addVertex(poseStack.last(), 1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
-                                .setUv(1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF);
+                        pose = poseStack.last().pose();
+                        buffer.vertex(pose, -1, 1, 0)
+                                .color(255, 255, 255, 255)
+                                .uv(0, v1)
+                                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                                .uv2(packedLight)
+                                .normal(0, -1, 0)
+                                .endVertex();
+                        buffer.vertex(pose, -1, -1, 0)
+                                .color(255, 255, 255, 255)
+                                .uv(0, v0)
+                                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                                .uv2(packedLight)
+                                .normal(0, -1, 0)
+                                .endVertex();
+                        buffer.vertex(pose, 1, -1, 0)
+                                .color(255, 255, 255, 255)
+                                .uv(1, v0)
+                                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                                .uv2(packedLight)
+                                .normal(0, -1, 0)
+                                .endVertex();
+                        buffer.vertex(pose, 1, 1, 0)
+                                .color(255, 255, 255, 255)
+                                .uv(1, v1)
+                                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                                .uv2(packedLight)
+                                .normal(0, -1, 0)
+                                .endVertex();
                         poseStack.popPose();
                     }
 
@@ -106,7 +154,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
             }
             case GUI -> {
                 poseStack.popPose();
-                poseStack.mulPose(Axis.ZP.rotationDegrees(15f));
+                poseStack.mulPose(Z_AXIS.rotation(toRadians(15f)));
                 ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
                 itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, LightTexture.FULL_BRIGHT, packedOverlay,
                         itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));
