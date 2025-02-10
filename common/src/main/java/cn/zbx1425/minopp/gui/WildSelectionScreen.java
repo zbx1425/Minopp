@@ -56,8 +56,6 @@ public class WildSelectionScreen extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(guiGraphics);
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-
         int xOff = (width - PANEL_WIDTH) / 2;
         int yOff = (height - PANEL_HEIGHT) / 2;
         guiGraphics.fill(xOff + MARGIN, yOff + MARGIN, xOff + PANEL_WIDTH + MARGIN, yOff + PANEL_HEIGHT + MARGIN, 0x66000000);
@@ -67,6 +65,7 @@ public class WildSelectionScreen extends Screen {
         if (shout) {
             guiGraphics.drawString(font, Component.translatable("gui.minopp.play.cursor.shout"), xOff + MARGIN, yOff + PANEL_HEIGHT - MARGIN - 9, 0xFFFFFFFF);
         }
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override

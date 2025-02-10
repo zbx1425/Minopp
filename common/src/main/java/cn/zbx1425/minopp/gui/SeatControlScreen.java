@@ -60,8 +60,6 @@ public class SeatControlScreen extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(guiGraphics);
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-
         if (minecraft.level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
             startButton.active = tableEntity.game == null && tableEntity.getPlayersList().size() >= 2;
             stopButton.active = tableEntity.game != null;
@@ -89,6 +87,7 @@ public class SeatControlScreen extends Screen {
             guiGraphics.drawCenteredString(font, getPlayerName(tableEntity, Direction.SOUTH),
                     width / 2, yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT + MARGIN, 0xFFAAAAAA);
         }
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     private static String getPlayerName(BlockEntityMinoTable tableEntity, Direction direction) {

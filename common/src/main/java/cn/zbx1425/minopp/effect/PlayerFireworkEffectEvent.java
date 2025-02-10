@@ -74,8 +74,8 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, Compo
     static {
         try {
             WIN_EXPLOSION = TagParser.parseTag("{Explosions:[" +
-                    "{Type:0,Colors:[13840175,16011550],FadeColors:[15702682,16755601],Trail:0,Flicker:0}," +
-                    "{Type:1,Colors:[16635957,12634675],FadeColors:[16774557,15134364],Trail:0,Flicker:0}" +
+                    "{Type:0,Colors:[I;13840175,16011550],FadeColors:[I;15702682,16755601],Trail:0,Flicker:0}," +
+                    "{Type:1,Colors:[I;16635957,12634675],FadeColors:[I;16774557,15134364],Trail:0,Flicker:0}" +
                     "]}");
         } catch (CommandSyntaxException e) {
             throw new RuntimeException(e);

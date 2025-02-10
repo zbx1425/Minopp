@@ -25,6 +25,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.Random;
@@ -92,23 +93,24 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             int color = (ci == blockEntity.game.discardDeck.size())
                     ? 0xFFFFFFFF : 0xFFBBBBBB;
             Matrix4f pose = poseStack.last().pose();
+            Matrix3f normalPose = poseStack.last().normal();
             vertexConsumer.vertex(pose, -0.52f, 0.8f, 0).color(0xFF000000)
-                    .uv(cardU, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, 0, 1).endVertex();
+                    .uv(cardU, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normalPose, 0, 0, 1).endVertex();
             vertexConsumer.vertex(pose, -0.52f, -0.8f, 0).color(0xFF000000)
-                    .uv(cardU, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, 0, 1).endVertex();
+                    .uv(cardU, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normalPose, 0, 0, 1).endVertex();
             vertexConsumer.vertex(pose, 0.52f, -0.8f, 0).color(0xFF000000)
-                    .uv(cardU + cardUW, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, 0, 1).endVertex();
+                    .uv(cardU + cardUW, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normalPose, 0, 0, 1).endVertex();
             vertexConsumer.vertex(pose, 0.52f, 0.8f, 0).color(0xFF000000)
-                    .uv(cardU + cardUW, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, 0, 1).endVertex();
+                    .uv(cardU + cardUW, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normalPose, 0, 0, 1).endVertex();
             poseStack.translate(0, 0, 1 / 64f);
             vertexConsumer.vertex(pose, -0.5f, 0.78f, 0).color(color)
-                    .uv(cardU, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, 0, 1).endVertex();
+                    .uv(cardU, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normalPose, 0, 0, 1).endVertex();
             vertexConsumer.vertex(pose, -0.5f, -0.78f, 0).color(color)
-                    .uv(cardU, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, 0, 1).endVertex();
+                    .uv(cardU, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normalPose, 0, 0, 1).endVertex();
             vertexConsumer.vertex(pose, 0.5f, -0.78f, 0).color(color)
-                    .uv(cardU + cardUW, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, 0, 1).endVertex();
+                    .uv(cardU + cardUW, cardV + cardVH).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normalPose, 0, 0, 1).endVertex();
             vertexConsumer.vertex(pose, 0.5f, 0.78f, 0).color(color)
-                    .uv(cardU + cardUW, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(0, 0, 1).endVertex();
+                    .uv(cardU + cardUW, cardV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normalPose, 0, 0, 1).endVertex();
 
             if (ci == blockEntity.game.discardDeck.size()) {
                 Font font = Minecraft.getInstance().font;

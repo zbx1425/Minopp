@@ -9,6 +9,7 @@ import cn.zbx1425.minopp.platform.RegistryObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import net.minecraft.client.Minecraft;
@@ -77,33 +78,34 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                         poseStack.mulPose(Axis.YP.rotationDegrees(45));
                         poseStack.scale(0.2f, 0.2f, 1);
                         Matrix4f pose = poseStack.last().pose();
+                        Matrix3f normalPose = poseStack.last().normal();
                         buffer.vertex(pose, -1, 1, 0)
                                 .color(255, 255, 255, 255)
                                 .uv(0, v1)
                                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                                 .uv2(packedLight)
-                                .normal(0, -1, 0)
+                                .normal(normalPose, 0, -1, 0)
                                 .endVertex();
                         buffer.vertex(pose, -1, -1, 0)
                                 .color(255, 255, 255, 255)
                                 .uv(0, v0)
                                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                                 .uv2(packedLight)
-                                .normal(0, -1, 0)
+                                .normal(normalPose, 0, -1, 0)
                                 .endVertex();
                         buffer.vertex(pose, 1, -1, 0)
                                 .color(255, 255, 255, 255)
                                 .uv(1, v0)
                                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                                 .uv2(packedLight)
-                                .normal(0, -1, 0)
+                                .normal(normalPose, 0, -1, 0)
                                 .endVertex();
                         buffer.vertex(pose, 1, 1, 0)
                                 .color(255, 255, 255, 255)
                                 .uv(1, v1)
                                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                                 .uv2(packedLight)
-                                .normal(0, -1, 0)
+                                .normal(normalPose, 0, -1, 0)
                                 .endVertex();
                         poseStack.popPose();
                         poseStack.pushPose();
@@ -115,28 +117,28 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                                 .uv(0, v1)
                                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                                 .uv2(packedLight)
-                                .normal(0, -1, 0)
+                                .normal(normalPose, 0, -1, 0)
                                 .endVertex();
                         buffer.vertex(pose, -1, -1, 0)
                                 .color(255, 255, 255, 255)
                                 .uv(0, v0)
                                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                                 .uv2(packedLight)
-                                .normal(0, -1, 0)
+                                .normal(normalPose, 0, -1, 0)
                                 .endVertex();
                         buffer.vertex(pose, 1, -1, 0)
                                 .color(255, 255, 255, 255)
                                 .uv(1, v0)
                                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                                 .uv2(packedLight)
-                                .normal(0, -1, 0)
+                                .normal(normalPose, 0, -1, 0)
                                 .endVertex();
                         buffer.vertex(pose, 1, 1, 0)
                                 .color(255, 255, 255, 255)
                                 .uv(1, v1)
                                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                                 .uv2(packedLight)
-                                .normal(0, -1, 0)
+                                .normal(normalPose, 0, -1, 0)
                                 .endVertex();
                         poseStack.popPose();
                     }
