@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.gui.TurnDeadMan;
+import cn.zbx1425.minopp.item.ItemHandCards;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -20,30 +21,28 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class InventoryMixin {
 
     @Inject(method = "swapPaint", at = @At("HEAD"), cancellable = true)
-    private void swapPaint(int fromIndex, int toIndex, CallbackInfo ci) {
-        Inventory inventory = (Inventory)(Object)this;
-        ItemStack fromStack = inventory.getItem(fromIndex);
-        if (!fromStack.is(Mino.ITEM_HAND_CARDS.get())) return;
-        CompoundTag binding = fromStack.getOrCreateTagElement("CardGameBinding");
-        if (binding == null) return;
-        BlockPos tablePos = BlockPos.of(binding.getLong("TablePos"));
+    void swapPaint(double direction, CallbackInfo ci) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
+        ItemStack holding = player.getMainHandItem();
+        if (holding.is(Mino.ITEM_HAND_CARDS.get())) {
+            BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
+            if (handCardGamePos != null) {
+                if (player.level().getBlockEntity(handCardGamePos) instanceof BlockEntityMinoTable tableEntity) {
+                    if (tableEntity.game == null) return;
 
-        if (player.level().getBlockEntity(tablePos) instanceof BlockEntityMinoTable table) {
-            CardPlayer realPlayer = null;
-            for (CardPlayer p : table.getPlayersList()) {
-                if (p.uuid.equals(player.getGameProfile().getId())) {
-                    realPlayer = p;
-                    break;
+                    CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
+                    CardPlayer realPlayer = tableEntity.game.players.stream()
+                            .filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
+                    if (realPlayer == null) return;
+
+                    int handIndex = ItemHandCards.getClientHandIndex(holding);
+                    ItemHandCards.setClientHandIndex(holding,
+                            Mth.clamp(handIndex - (int)Math.signum(direction), 0, realPlayer.hand.size() - 1));
+
+                    TurnDeadMan.pedal();
+                    ci.cancel();
                 }
-            }
-            if (realPlayer != null) {
-                CompoundTag handIndex = fromStack.getOrCreateTagElement("HandIndex");
-                int currentIndex = handIndex.getInt("Index");
-                handIndex.putInt("Index", Mth.clamp(currentIndex - (int)Math.signum(toIndex - fromIndex), 0, realPlayer.hand.size() - 1));
-                TurnDeadMan.pedal();
-                ci.cancel();
             }
         }
     }

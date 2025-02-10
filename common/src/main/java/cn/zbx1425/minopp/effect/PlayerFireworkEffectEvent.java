@@ -1,13 +1,14 @@
 package cn.zbx1425.minopp.effect;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
-import it.unimi.dsi.fastutil.ints.IntList;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.component.FireworkExplosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -16,34 +17,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<FireworkExplosion> firework) implements EffectEvent {
+public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, CompoundTag firework) implements EffectEvent {
 
     public static final Serializer<PlayerFireworkEffectEvent> SERIALIZER = new Serializer<>() {
         @Override
         public void serialize(FriendlyByteBuf buf, PlayerFireworkEffectEvent event) {
             buf.writeInt(event.timeOffset);
             buf.writeUUID(event.targetPlayer);
-            buf.writeCollection(event.firework, (b, f) -> {
-                b.writeEnum(f.shape());
-                b.writeCollection(f.colors(), FriendlyByteBuf::writeInt);
-                b.writeCollection(f.fadeColors(), FriendlyByteBuf::writeInt);
-                b.writeBoolean(f.hasTrail());
-                b.writeBoolean(f.hasFlicker());
-            });
+            buf.writeNbt(event.firework);
         }
 
         @Override
         public PlayerFireworkEffectEvent deserialize(FriendlyByteBuf buf) {
             int timeOffset = buf.readInt();
             UUID targetPlayer = buf.readUUID();
-            List<FireworkExplosion> firework = buf.readList(b -> {
-                FireworkExplosion.Shape shape = b.readEnum(FireworkExplosion.Shape.class);
-                IntList colors = IntList.of(b.readList(FriendlyByteBuf::readInt).stream().mapToInt(Integer::intValue).toArray());
-                IntList fadeColors = IntList.of(b.readList(FriendlyByteBuf::readInt).stream().mapToInt(Integer::intValue).toArray());
-                boolean hasTrail = b.readBoolean();
-                boolean hasFlicker = b.readBoolean();
-                return new FireworkExplosion(shape, colors, fadeColors, hasTrail, hasFlicker);
-            });
+            CompoundTag firework = buf.readNbt();
             return new PlayerFireworkEffectEvent(timeOffset, targetPlayer, firework);
         }
     };
@@ -69,7 +57,7 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
                 AABB.ofSize(Vec3.atLowerCornerOf(origin), 8, 8, 4),
                 it -> it.getUUID().equals(targetPlayer));
         if (!entities.isEmpty()) {
-            Entity entity = entities.getFirst();
+            Entity entity = entities.get(0);
             level.createFireworks(entity.getX(), entity.getY() + 3, entity.getZ(), 0, 0, 0, firework);
             return;
         }
@@ -81,10 +69,16 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
 
     }
 
-    public static final List<FireworkExplosion> WIN_EXPLOSION = List.of(
-            new FireworkExplosion(FireworkExplosion.Shape.SMALL_BALL, IntList.of(0xD32F2F, 0xF4511E),
-                    IntList.of(0xEF9A9A, 0xFFAB91), false, false),
-            new FireworkExplosion(FireworkExplosion.Shape.LARGE_BALL, IntList.of(0xFDD835, 0xC0CA33),
-                    IntList.of(0xFFF59D, 0xE6EE9C), false, false)
-    );
+    public static final CompoundTag WIN_EXPLOSION;
+
+    static {
+        try {
+            WIN_EXPLOSION = TagParser.parseTag("{Explosions:[" +
+                    "{Type:0,Colors:[13840175,16011550],FadeColors:[15702682,16755601],Trail:0,Flicker:0}," +
+                    "{Type:1,Colors:[16635957,12634675],FadeColors:[16774557,15134364],Trail:0,Flicker:0}" +
+                    "]}");
+        } catch (CommandSyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

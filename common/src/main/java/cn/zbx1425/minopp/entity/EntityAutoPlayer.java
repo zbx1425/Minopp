@@ -70,12 +70,13 @@ public class EntityAutoPlayer extends LivingEntity {
         if (level().isClientSide) {
             if (!clientSkinGameProfileValidFor.equals(entityData.get(SKIN))) {
                 clientSkinGameProfileValidFor = entityData.get(SKIN);
-                try {
-                    UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
-                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
-                } catch (IllegalArgumentException e) {
-                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
-                }
+                // TODO Load skin
+//                try {
+//                    UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
+//                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
+//                } catch (IllegalArgumentException e) {
+//                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
+//                }
             }
             return;
         }
@@ -110,7 +111,7 @@ public class EntityAutoPlayer extends LivingEntity {
                                 tablePos = corePos;
                                 tableFound = true;
                                 ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                                handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+                                ItemHandCards.setCardGameBinding(handStack, tablePos, cardPlayer.uuid);
                                 entityData.set(HAND_STACK, handStack);
                                 break;
                             }
@@ -270,7 +271,7 @@ public class EntityAutoPlayer extends LivingEntity {
         // Try fix hand stack
         if (tablePos != null && cardPlayer != null) {
             ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-            handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+            ItemHandCards.setCardGameBinding(handStack, tablePos, cardPlayer.uuid);
             entityData.set(HAND_STACK, handStack);
         } else {
             entityData.set(HAND_STACK, ItemStack.EMPTY);
@@ -287,11 +288,11 @@ public class EntityAutoPlayer extends LivingEntity {
     private static final EntityDataAccessor<String> SKIN = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.STRING);
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        super.defineSynchedData(builder);
-        builder.define(HAND_STACK, ItemStack.EMPTY);
-        builder.define(ACTIVE, false);
-        builder.define(SKIN, "");
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        entityData.define(HAND_STACK, ItemStack.EMPTY);
+        entityData.define(ACTIVE, false);
+        entityData.define(SKIN, "");
     }
 
     public static AttributeSupplier createAttributes() {

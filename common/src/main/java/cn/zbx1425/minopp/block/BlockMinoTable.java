@@ -21,7 +21,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -61,20 +60,17 @@ public class BlockMinoTable extends Block implements EntityBlock {
     public @NotNull InteractionResult use(@NotNull BlockState blockState, @NotNull Level level, @NotNull BlockPos blockPos, 
             @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hitResult) {
         ItemStack itemStack = player.getItemInHand(hand);
-        if (itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
-            CompoundTag binding = itemStack.getOrCreateTagElement("CardGameBinding");
-            BlockPos tablePos = BlockPos.of(binding.getLong("TablePos"));
-            if (!tablePos.equals(blockPos)) {
-                return InteractionResult.PASS;
-            }
+        if (itemStack.isEmpty()) {
+            return useWithoutItem(blockState, level, blockPos, player, hitResult);
+        } else if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockPos corePos = getCore(blockState, blockPos);
-            CompoundTag handIndex = itemStack.getOrCreateTagElement("HandIndex");
-            int currentIndex = handIndex.getInt("Index");
-
-            if (level.getBlockEntity(corePos) instanceof BlockEntityMinoTable tableEntity) {
+            ItemHandCards.CardGameBinding gameBinding = ItemHandCards.getCardGameBinding(itemStack);
+            int handIndex = ItemHandCards.getClientHandIndex(itemStack);
+            CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
+            BlockEntity blockEntity = level.getBlockEntity(corePos);
+            if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                 if (tableEntity.game != null) {
-                    CardPlayer playerWithoutHand = new CardPlayer(player.getGameProfile().getId(), player.getName().getString());
-                    if (!binding.contains("TablePos") || !BlockPos.of(binding.getLong("TablePos")).equals(corePos)) {
+                    if (gameBinding == null || !gameBinding.tablePos().equals(corePos)) {
                         player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
                         return InteractionResult.FAIL;
                     }
@@ -85,7 +81,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                     if (Client.isCursorHittingPile()) {
                         C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
                     } else {
-                        Card selectedCard = realPlayer.hand.get(Mth.clamp(currentIndex, 0, realPlayer.hand.size() - 1));
+                        Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
                         if (selectedCard.suit == Card.Suit.WILD) {
                             Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, Client.isShoutModifierHeld());
                         } else {
@@ -98,12 +94,6 @@ public class BlockMinoTable extends Block implements EntityBlock {
             }
         }
         return super.use(blockState, level, blockPos, player, hand, hitResult);
-    }
-
-    public static void openWildSelectionScreen(ItemStack handCard, BlockPos tablePos) {
-        CompoundTag binding = handCard.getOrCreateTagElement("CardGameBinding");
-        binding.putLong("TablePos", tablePos.asLong());
-        // ... existing code ...
     }
 
     public static class Client {
@@ -142,7 +132,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                 if (tableEntity.game == null) return false;
                 AABB pileAabb = getPileAabb(tableEntity);
                 Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
-                float partialTicks = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
+                float partialTicks = Minecraft.getInstance().getFrameTime();
                 float hitDistance = 20;
                 Vec3 rayBegin = cameraEntity.getEyePosition(partialTicks);
                 Vec3 rayDir = cameraEntity.getViewVector(partialTicks);
@@ -159,7 +149,6 @@ public class BlockMinoTable extends Block implements EntityBlock {
         }
     }
 
-    @Override
     protected @NotNull InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
         BlockPos corePos = getCore(blockState, blockPos);
         BlockEntity blockEntity = level.getBlockEntity(corePos);
@@ -210,7 +199,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected @NotNull BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
+    public @NotNull BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
         BlockPos firstPartPos = getCore(blockState, blockPos);
         for (int i = 0; i < 4; i++) {
             TablePartType thisPart = TablePartType.values()[i];
@@ -223,7 +212,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    public @NotNull BlockState playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+    public void playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
         if (!level.isClientSide && player.isCreative()) {
             BlockPos firstPartPos = getCore(blockState, blockPos);
             for (int i = 0; i < 4; i++) {
@@ -233,7 +222,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
                         Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
             }
         }
-        return super.playerWillDestroy(level, blockPos, blockState, player);
+        super.playerWillDestroy(level, blockPos, blockState, player);
     }
 
     public static BlockPos getCore(BlockState blockState, BlockPos blockPos) {
@@ -275,19 +264,19 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected float getShadeBrightness(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+    public float getShadeBrightness(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
         return 1.0F;
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+    public boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
         return true;
     }
 
     private static final VoxelShape VOXEL_SHAPE = Block.box(0, 0, 0, 16, 14.9, 16);
 
     @Override
-    protected @NotNull VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public @NotNull VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return VOXEL_SHAPE;
     }
 }

@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Style;
 
 public class WildSelectionScreen extends Screen {
 
@@ -42,14 +43,14 @@ public class WildSelectionScreen extends Screen {
 
         for (Card.Suit suit : Card.Suit.values()) {
             if (suit == Card.Suit.WILD) continue;
-            addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase()).withStyle(style -> style.withColor(suit.color)), e -> {
+            addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(), "").withStyle(Style.EMPTY.withColor(suit.color)), e -> {
                 C2SPlayCardPacket.Client.sendPlayCardC2S(gamePos, player, handCard, suit, shout);
                 onClose();
-            }).bounds(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * suit.ordinal(), yOff + MARGIN + 9 + MARGIN, BTN_WIDTH, BTN_HEIGHT).build());
+            }).pos(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * suit.ordinal(), yOff + MARGIN + 9 + MARGIN).size(BTN_WIDTH, BTN_HEIGHT).build());
         }
         addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), e -> {
             onClose();
-        }).bounds(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * 2 + BTN_WIDTH / 2, yOff + MARGIN + 9 + MARGIN + BTN_HEIGHT + MARGIN, BTN_WIDTH, BTN_HEIGHT).build());
+        }).pos(xOff + MARGIN + (BTN_WIDTH + BTN_SPACING) * 2 + BTN_WIDTH / 2, yOff + MARGIN + 9 + MARGIN + BTN_HEIGHT + MARGIN).size(BTN_WIDTH, BTN_HEIGHT).build());
     }
 
     @Override

@@ -205,7 +205,7 @@ public class GameOverlayLayer {
         guiGraphics.drawString(font, component, x, y, color, true);
     }
 
-    private static final ResourceLocation ATLAS_LOCATION = new ResourceLocation(Mino.MOD_ID, "textures/gui/deck.png");
+    private static final ResourceLocation ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
     /**
      * Render hand cards on the screen

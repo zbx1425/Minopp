@@ -1,6 +1,5 @@
 package cn.zbx1425.minopp.game;
 
-import cn.zbx1425.minopp.platform.DummyLookupProvider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
@@ -9,14 +8,14 @@ public record ActionMessage(Type type, Component message) {
     public ActionMessage(CompoundTag tag) {
         this(
             Type.valueOf(tag.getString("type")),
-            Component.Serializer.fromJson(tag.getString("message"), DummyLookupProvider.INSTANCE)
+            Component.Serializer.fromJson(tag.getString("message"))
         );
     }
 
     public CompoundTag toTag() {
         CompoundTag tag = new CompoundTag();
         tag.putString("type", type.name());
-        tag.putString("message", Component.Serializer.toJson(message, DummyLookupProvider.INSTANCE));
+        tag.putString("message", Component.Serializer.toJson(message));
         return tag;
     }
 

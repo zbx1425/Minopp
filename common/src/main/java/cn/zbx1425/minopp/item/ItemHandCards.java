@@ -76,9 +76,18 @@ public class ItemHandCards extends GroupedItem {
         tag.putUUID(NBT_BEARER_ID, bearerId);
     }
 
+    public static void setCardGameBinding(ItemStack stack, CardGameBinding binding) {
+        setCardGameBinding(stack, binding.tablePos(), binding.bearerId());
+    }
+
     public static void setClientHandIndex(ItemStack stack, int index) {
         CompoundTag tag = stack.getOrCreateTag();
         tag.putInt(NBT_CLIENT_HAND_INDEX, index);
+    }
+
+    public static int getClientHandIndex(ItemStack stack) {
+        CompoundTag tag = stack.getOrCreateTag();
+        return tag.getInt(NBT_CLIENT_HAND_INDEX);
     }
 
     public static CardGameBinding getCardGameBinding(ItemStack stack) {

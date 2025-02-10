@@ -232,26 +232,28 @@ public class CardGame {
     }
 
     public CardPlayer deAmputate(CardPlayer playerWithoutHand) {
-        for (CardPlayer player : players) {
-            if (player.equals(playerWithoutHand)) {
-                return player;
-            }
-        }
-        return null;
+        return players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
     }
 
     public CardPlayer deAmputate(UUID uuid) {
-        for (CardPlayer player : players) {
-            if (player.uuid.equals(uuid)) {
-                return player;
-            }
-        }
-        return null;
+        return players.stream().filter(p -> p.uuid.equals(uuid)).findFirst().orElse(null);
     }
 
     public enum PlayerActionPhase {
         DISCARD_HAND,
         DISCARD_DRAWN,
+    }
+
+    public CardGame(CompoundTag tag) {
+        currentPlayerIndex = tag.getInt("currentPlayer");
+        drawCount = tag.getInt("drawCount");
+        isSkipping = tag.getBoolean("isSkipping");
+        currentPlayerPhase = PlayerActionPhase.valueOf(tag.getString("currentPlayerPhase"));
+        isAntiClockwise = tag.getBoolean("isAntiClockwise");
+        deck = new ArrayList<>(tag.getList("deck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
+        discardDeck = new ArrayList<>(tag.getList("discardDeck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
+        topCard = new Card(tag.getCompound("topCard"));
+        players = new ArrayList<>(tag.getList("players", CompoundTag.TAG_COMPOUND).stream().map(t -> new CardPlayer((CompoundTag)t)).toList());
     }
 
     public CompoundTag toTag() {
@@ -261,59 +263,16 @@ public class CardGame {
         tag.putBoolean("isSkipping", isSkipping);
         tag.putString("currentPlayerPhase", currentPlayerPhase.name());
         tag.putBoolean("isAntiClockwise", isAntiClockwise);
-
-        ListTag playersTag = new ListTag();
-        for (CardPlayer player : players) {
-            playersTag.add(player.toTag());
-        }
-        tag.put("players", playersTag);
-
         ListTag deckTag = new ListTag();
-        for (Card card : deck) {
-            deckTag.add(card.toTag());
-        }
+        deckTag.addAll(deck.stream().map(Card::toTag).toList());
         tag.put("deck", deckTag);
-
         ListTag discardDeckTag = new ListTag();
-        for (Card card : discardDeck) {
-            discardDeckTag.add(card.toTag());
-        }
+        discardDeckTag.addAll(discardDeck.stream().map(Card::toTag).toList());
         tag.put("discardDeck", discardDeckTag);
-
-        if (topCard != null) {
-            tag.put("topCard", topCard.toTag());
-        }
-
+        tag.put("topCard", topCard.toTag());
+        ListTag playersTag = new ListTag();
+        playersTag.addAll(players.stream().map(CardPlayer::toTag).toList());
+        tag.put("players", playersTag);
         return tag;
-    }
-
-    public CardGame(CompoundTag tag) {
-        currentPlayerIndex = tag.getInt("currentPlayer");
-        drawCount = tag.getInt("drawCount");
-        isSkipping = tag.getBoolean("isSkipping");
-        currentPlayerPhase = PlayerActionPhase.valueOf(tag.getString("currentPlayerPhase"));
-        isAntiClockwise = tag.getBoolean("isAntiClockwise");
-
-        players = new ArrayList<>();
-        ListTag playersTag = tag.getList("players", 10);
-        for (int i = 0; i < playersTag.size(); i++) {
-            players.add(new CardPlayer(playersTag.getCompound(i)));
-        }
-
-        deck = new ArrayList<>();
-        ListTag deckTag = tag.getList("deck", 10);
-        for (int i = 0; i < deckTag.size(); i++) {
-            deck.add(new Card(deckTag.getCompound(i)));
-        }
-
-        discardDeck = new ArrayList<>();
-        ListTag discardDeckTag = tag.getList("discardDeck", 10);
-        for (int i = 0; i < discardDeckTag.size(); i++) {
-            discardDeck.add(new Card(discardDeckTag.getCompound(i)));
-        }
-
-        if (tag.contains("topCard")) {
-            topCard = new Card(tag.getCompound("topCard"));
-        }
     }
 }

@@ -62,6 +62,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     @Override
     public void saveAdditional(CompoundTag compoundTag) {
+        super.saveAdditional(compoundTag);
         CompoundTag playersTag = new CompoundTag();
         for (Map.Entry<Direction, CardPlayer> entry : players.entrySet()) {
             if (entry.getValue() != null) {
@@ -74,9 +75,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         }
         compoundTag.put("state", state.toTag());
         if (!award.isEmpty()) {
-            CompoundTag awardTag = new CompoundTag();
-            award.save(awardTag);
-            compoundTag.put("award", awardTag);
+            compoundTag.put("award", award.save(new CompoundTag()));
         }
         compoundTag.putBoolean("demo", demo);
     }
@@ -168,10 +167,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                     if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
                         // We've found the player, give them a card item
                         ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                        CompoundTag binding = handCard.getOrCreateTagElement("CardGameBinding");
-                        binding.putLong("TablePos", getBlockPos().asLong());
-                        binding.putUUID("PlayerUUID", cardPlayer.uuid);
-                        binding.putString("PlayerName", cardPlayer.name);
+                        ItemHandCards.setCardGameBinding(handCard, getBlockPos(), cardPlayer.uuid);
 
                         if (Inventory.isHotbarSlot(mcPlayer.getInventory().selected)
                             && mcPlayer.getInventory().getSelected().isEmpty()) {
@@ -227,8 +223,8 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (Player mcPlayer : level.players()) {
             for (ItemStack invItem : mcPlayer.getInventory().items) {
                 if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                CompoundTag binding = invItem.getTagElement("CardGameBinding");
-                if (binding != null && BlockPos.of(binding.getLong("TablePos")).equals(getBlockPos())) {
+                ItemHandCards.CardGameBinding binding = ItemHandCards.getCardGameBinding(invItem);
+                if (binding != null && binding.tablePos().equals(getBlockPos())) {
                     // This is the one bound to this table, remove
                     mcPlayer.getInventory().removeItem(invItem);
                 }

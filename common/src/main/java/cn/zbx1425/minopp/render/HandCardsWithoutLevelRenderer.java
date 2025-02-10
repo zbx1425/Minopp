@@ -8,6 +8,7 @@ import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import net.minecraft.client.Minecraft;
@@ -27,10 +28,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer {
 
-    private static final Vector3f X_AXIS = new Vector3f(1.0F, 0.0F, 0.0F);
-    private static final Vector3f Y_AXIS = new Vector3f(0.0F, 1.0F, 0.0F);
-    private static final Vector3f Z_AXIS = new Vector3f(0.0F, 0.0F, 1.0F);
-
     public static RegistryObject<HandCardsWithoutLevelRenderer> INSTANCE = new RegistryObject<>(() -> new HandCardsWithoutLevelRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels()));
 
@@ -39,10 +36,6 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
     }
 
     private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
-
-    private static float toRadians(float degrees) {
-        return degrees * (float)Math.PI / 180.0F;
-    }
 
     @Override
     public void renderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
@@ -75,13 +68,13 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     // Render arrow texture
                     if (tableEntity.game.currentPlayerIndex == tableEntity.game.players.indexOf(realPlayer)) {
                         poseStack.translate(0, 0.3, 0.3);
-                        poseStack.mulPose(X_AXIS.rotation(toRadians(-110f)));
+                        poseStack.mulPose(Axis.XP.rotationDegrees(-110f));
                         poseStack.pushPose();
                         VertexConsumer buffer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/arrow_down.png")));
                         float v0 = ((int)(System.currentTimeMillis() / 100L) % 5) * 0.2f;
                         float v1 = v0 + 0.2f;
                         // Transform must be somehow messed up but it works so I'm not going to fix it
-                        poseStack.mulPose(Y_AXIS.rotation(toRadians(45)));
+                        poseStack.mulPose(Axis.YP.rotationDegrees(45));
                         poseStack.scale(0.2f, 0.2f, 1);
                         Matrix4f pose = poseStack.last().pose();
                         buffer.vertex(pose, -1, 1, 0)
@@ -114,7 +107,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                                 .endVertex();
                         poseStack.popPose();
                         poseStack.pushPose();
-                        poseStack.mulPose(Y_AXIS.rotation(toRadians(-45)));
+                        poseStack.mulPose(Axis.YP.rotationDegrees(-45));
                         poseStack.scale(0.2f, 0.2f, 1);
                         pose = poseStack.last().pose();
                         buffer.vertex(pose, -1, 1, 0)
@@ -154,7 +147,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
             }
             case GUI -> {
                 poseStack.popPose();
-                poseStack.mulPose(Z_AXIS.rotation(toRadians(15f)));
+                poseStack.mulPose(Axis.ZP.rotationDegrees(15f));
                 ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
                 itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, LightTexture.FULL_BRIGHT, packedOverlay,
                         itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));

@@ -40,19 +40,19 @@ public class SeatControlScreen extends Screen {
         stopButton = Button.builder(Component.translatable("gui.minopp.seats.stop"), e -> {
             C2SSeatControlPacket.Client.sendGameEnableC2S(gamePos, false);
             onClose();
-        }).bounds(xOff + MARGIN, yOff + PANEL_HEIGHT - MARGIN - BTN_HEIGHT, BTN_WIDTH, BTN_HEIGHT).build();
+        }).pos(xOff + MARGIN, yOff + PANEL_HEIGHT - MARGIN - BTN_HEIGHT).size(BTN_WIDTH, BTN_HEIGHT).build();
         stopButton.active = false;
         addRenderableWidget(stopButton);
         startButton = Button.builder(Component.translatable("gui.minopp.seats.start"), e -> {
             C2SSeatControlPacket.Client.sendGameEnableC2S(gamePos, true);
             onClose();
-        }).bounds(xOff + MARGIN + BTN_WIDTH + MARGIN, yOff + PANEL_HEIGHT - MARGIN - BTN_HEIGHT, BTN_WIDTH, BTN_HEIGHT).build();
+        }).pos(xOff + MARGIN + BTN_WIDTH + MARGIN, yOff + PANEL_HEIGHT - MARGIN - BTN_HEIGHT).size(BTN_WIDTH, BTN_HEIGHT).build();
         startButton.active = false;
         addRenderableWidget(startButton);
         leaveButton = Button.builder(Component.translatable("gui.minopp.seats.reset"), e -> {
             C2SSeatControlPacket.Client.sendResetSeatsC2S(gamePos);
             onClose();
-        }).bounds(xOff + PANEL_WIDTH - MARGIN - BTN_WIDTH, yOff + PANEL_HEIGHT - BTN_HEIGHT - MARGIN - BTN_HEIGHT, BTN_WIDTH, BTN_HEIGHT).build();
+        }).pos(xOff + PANEL_WIDTH - MARGIN - BTN_WIDTH, yOff + PANEL_HEIGHT - BTN_HEIGHT - MARGIN - BTN_HEIGHT).size(BTN_WIDTH, BTN_HEIGHT).build();
         leaveButton.active = false;
         addRenderableWidget(leaveButton);
     }
