@@ -18,6 +18,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -242,7 +243,7 @@ public class EntityAutoPlayer extends LivingEntity {
 
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
-        return true;
+        return isRemoved() || !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
     @Override
