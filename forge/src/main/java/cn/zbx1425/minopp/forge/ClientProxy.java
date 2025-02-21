@@ -43,14 +43,6 @@ public class ClientProxy {
         }
 
         @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            event.enqueueWork(() -> {
-                net.minecraft.client.renderer.item.ItemProperties.register(Mino.ITEM_HAND_CARDS.get(),
-                    Mino.id("custom_renderer"), (stack, level, entity, seed) -> 1.0F);
-            });
-        }
-
-        @SubscribeEvent
         public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerBlockEntityRenderer(Mino.BLOCK_ENTITY_TYPE_MINO_TABLE.get(), BlockEntityMinoTableRenderer::new);
             event.registerEntityRenderer(Mino.ENTITY_AUTO_PLAYER.get(), EntityAutoPlayerRenderer::new);

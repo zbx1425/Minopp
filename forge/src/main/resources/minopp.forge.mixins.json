@@ -6,7 +6,7 @@
   "mixins": [
   ],
   "client": [
-    "BlockEntityMinoTableRendererMixin",
+    "BlockEntityMinoTableMixin",
     "ItemHandCardsMixin"
   ],
   "injectors": {

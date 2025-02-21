@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.MinoCommand;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
+import cn.zbx1425.minopp.forge.compat.touhou_little_maid.TouhouLittleMaidCompat;
 import cn.zbx1425.minopp.platform.forge.CompatPacketRegistry;
 import cn.zbx1425.minopp.platform.forge.RegistriesWrapperImpl;
 import net.minecraftforge.api.distmarker.Dist;
@@ -34,6 +35,8 @@ public final class MinoForge {
         eventBus.register(RegistriesWrapperImpl.RegisterCreativeTabs.class);
         eventBus.register(ModEventBusListener.class);
         MinecraftForge.EVENT_BUS.register(ForgeEventBusListener.class);
+
+        TouhouLittleMaidCompat.init(eventBus);
 
         if (FMLEnvironment.dist.isClient()) {
             MinoClient.init();

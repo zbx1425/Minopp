@@ -16,6 +16,7 @@ import java.util.function.Supplier;
 
 @Mixin(ItemHandCards.class)
 public class ItemHandCardsMixin extends GroupedItem {
+
     public ItemHandCardsMixin(Supplier<ResourceKey<CreativeModeTab>> tabSupplier, Function<Properties, Properties> properties) {
         super(tabSupplier, properties);
     }
