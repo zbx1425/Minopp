@@ -9,8 +9,10 @@ architectury {
 
 loom {
     forge {
-        mixinConfig "minopp.mixins.json"
-        mixinConfig "minopp.forge.mixins.json"
+        mixinConfigs = [
+            "minopp.mixins.json",
+            "minopp.forge.mixins.json"
+        ]
     }
 }
 
@@ -40,6 +42,10 @@ repositories {
         name = "Modrinth"
         url = "https://api.modrinth.com/maven"
     }
+    maven {
+        name = 'Xander Maven'
+        url = "https://maven.isxander.dev/releases"
+    }
     flatDir {
         dir "libs"
     }
@@ -47,12 +53,17 @@ repositories {
 
 dependencies {
     forge "net.minecraftforge:forge:$rootProject.forge_version"
+    modImplementation "libs:touhoulittlemaid:1.20.1-release-1.1.14"
+//    modImplementation ("org.teacon:SignMeUp-NeoForge-1.21.1:+") { transitive false }
 
 //    modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
-    // modImplementation "dev.isxander:yet-another-config-lib:$rootProject.yacl_version-neoforge"
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    shadowBundle project(path: ':common', configuration: 'transformProductionForge')
+    shadowBundle(project(path: ':common', configuration: 'transformProductionForge')) { transitive false }
+
+    forgeRuntimeLibrary "org.quiltmc.parsers:gson:0.3.1"
+
+    modImplementation ("dev.isxander:yet-another-config-lib:$rootProject.yacl_version-forge") { transitive false }
 }
 
 processResources {
@@ -64,6 +75,9 @@ processResources {
 }
 
 shadowJar {
+    exclude "fabric.mod.json"
+    exclude "architectury.common.json"
+
     configurations = [project.configurations.shadowBundle]
     archiveClassifier = 'dev-shadow'
 }

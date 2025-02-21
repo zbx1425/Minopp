@@ -70,13 +70,15 @@ public class EntityAutoPlayer extends LivingEntity {
         if (level().isClientSide) {
             if (!clientSkinGameProfileValidFor.equals(entityData.get(SKIN))) {
                 clientSkinGameProfileValidFor = entityData.get(SKIN);
-                // TODO Load skin
-//                try {
-//                    UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
-//                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
-//                } catch (IllegalArgumentException e) {
+                try {
+                    UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
+                    GameProfile profile = new GameProfile(skinAsUUID, null);
+                    SkullBlockEntity.updateGameprofile(profile, profileNew -> {
+                        clientSkinGameProfile = CompletableFuture.completedFuture(Optional.of(profileNew));
+                    });
+                } catch (IllegalArgumentException e) {
 //                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
-//                }
+                }
             }
             return;
         }

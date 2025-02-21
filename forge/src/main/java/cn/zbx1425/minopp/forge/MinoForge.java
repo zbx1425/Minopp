@@ -16,6 +16,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @Mod(Mino.MOD_ID)
@@ -24,7 +25,9 @@ public final class MinoForge {
     private static final RegistriesWrapperImpl registries = new RegistriesWrapperImpl();
     public static final CompatPacketRegistry PACKET_REGISTRY = new CompatPacketRegistry();
 
-    public MinoForge(IEventBus eventBus) {
+    public MinoForge() {
+        IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
         Mino.init(registries);
 
         registries.registerAllDeferred(eventBus);

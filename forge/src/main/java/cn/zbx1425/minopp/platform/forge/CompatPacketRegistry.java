@@ -85,11 +85,11 @@ public class CompatPacketRegistry {
 
     public void sendS2C(ServerPlayer player, ResourceLocation id, FriendlyByteBuf payload) {
         CompatPacket packet = packets.get(id);
-        channel.sendTo(packet.new Payload(payload), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+        channel.sendTo(new CompatPacket.Payload(payload), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
 
     public void sendC2S(ResourceLocation id, FriendlyByteBuf payload) {
         CompatPacket packet = packets.get(id);
-        channel.sendToServer(packet.new Payload(payload));
+        channel.sendToServer(new CompatPacket.Payload(payload));
     }
 }

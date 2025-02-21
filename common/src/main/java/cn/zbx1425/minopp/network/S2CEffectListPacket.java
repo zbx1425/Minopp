@@ -5,7 +5,6 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.effect.EffectEvent;
 import cn.zbx1425.minopp.effect.EffectEvents;
 import cn.zbx1425.minopp.platform.ServerPlatform;
-import cn.zbx1425.minopp.effect.EffectQueue;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;

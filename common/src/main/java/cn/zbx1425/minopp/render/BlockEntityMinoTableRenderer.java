@@ -47,7 +47,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     }
 
     @Override
-    public void render(BlockEntityMinoTable blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
+    public void render(BlockEntityMinoTable blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {
         if (blockEntity.game == null) return;
 
         if (BlockMinoTable.Client.isCursorHittingPile()) {

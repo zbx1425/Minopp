@@ -14,7 +14,6 @@ import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -61,7 +60,7 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
-    public void saveAdditional(CompoundTag compoundTag) {
+    protected void saveAdditional(CompoundTag compoundTag) {
         super.saveAdditional(compoundTag);
         CompoundTag playersTag = new CompoundTag();
         for (Map.Entry<Direction, CardPlayer> entry : players.entrySet()) {
@@ -74,9 +73,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             compoundTag.put("game", game.toTag());
         }
         compoundTag.put("state", state.toTag());
-        if (!award.isEmpty()) {
-            compoundTag.put("award", award.save(new CompoundTag()));
-        }
+        if (!award.isEmpty()) compoundTag.put("award", award.save(new CompoundTag()));
         compoundTag.putBoolean("demo", demo);
     }
 
