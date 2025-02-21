@@ -13,6 +13,8 @@ import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -335,6 +337,11 @@ public class EntityAutoPlayer extends LivingEntity {
         tag.putBoolean("NoPush", getNoPush());
         tag.putString("Skin", getSkin());
         tag.put("AI", autoPlayer.toConfigNbt());
+
+        Component component = this.getCustomName();
+        if (component != null) {
+            tag.putString("CustomName", Component.Serializer.toJson(component));
+        }
     }
 
     public void readConfigFromTag(CompoundTag tag) {
@@ -342,6 +349,12 @@ public class EntityAutoPlayer extends LivingEntity {
         setNoPush(tag.getBoolean("NoPush"));
         setSkin(tag.getString("Skin"));
         autoPlayer.useConfigNbt(tag.getCompound("AI"));
+
+        if (tag.contains("CustomName", Tag.TAG_STRING)) {
+            try {
+                this.setCustomName(Component.Serializer.fromJson(tag.getString("CustomName")));
+            } catch (Exception ignored) { }
+        }
     }
 
     private static class Client {
