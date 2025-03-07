@@ -213,7 +213,6 @@ public class GameOverlayLayer {
      */
     private boolean renderHandCards(GuiGraphics guiGraphics, float partialTick) {
         if (Minecraft.getInstance().options.hideGui) return false;
-        RenderSystem.enableBlend();
 
         Font font = Minecraft.getInstance().font;
         LocalPlayer player = Minecraft.getInstance().player;
@@ -245,6 +244,7 @@ public class GameOverlayLayer {
         }
         handCardCurrentXOff.keySet().removeIf(hash -> !handCardHashes.contains(hash));
 
+        RenderSystem.enableBlend();
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
         int handSize = realPlayer.hand.size();
