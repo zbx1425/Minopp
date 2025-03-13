@@ -63,7 +63,7 @@ public class EntityAutoPlayer extends LivingEntity {
 
     public final AutoPlayer autoPlayer = new AutoPlayer();
 
-    public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
+    public Optional<GameProfile> clientSkinGameProfile = Optional.empty();
     public String clientSkinGameProfileValidFor = "";
 
     @Override
@@ -73,14 +73,21 @@ public class EntityAutoPlayer extends LivingEntity {
         if (level().isClientSide) {
             if (!clientSkinGameProfileValidFor.equals(entityData.get(SKIN))) {
                 clientSkinGameProfileValidFor = entityData.get(SKIN);
+                if (clientSkinGameProfileValidFor.isEmpty()) {
+                    clientSkinGameProfile = Optional.empty();
+                    return;
+                }
                 try {
                     UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
                     GameProfile profile = new GameProfile(skinAsUUID, null);
                     SkullBlockEntity.updateGameprofile(profile, profileNew -> {
-                        clientSkinGameProfile = CompletableFuture.completedFuture(Optional.of(profileNew));
+                        clientSkinGameProfile = Optional.of(profileNew);
                     });
                 } catch (IllegalArgumentException e) {
-//                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
+                    GameProfile profile = new GameProfile(null, clientSkinGameProfileValidFor);
+                    SkullBlockEntity.updateGameprofile(profile, profileNew -> {
+                        clientSkinGameProfile = Optional.of(profileNew);
+                    });
                 }
             }
             return;

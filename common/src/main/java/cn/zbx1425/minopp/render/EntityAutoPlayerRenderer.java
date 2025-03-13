@@ -33,7 +33,7 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
 
     @Override
     public ResourceLocation getTextureLocation(EntityAutoPlayer entity) {
-        Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        Optional<GameProfile> result = entity.clientSkinGameProfile;
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
             return skinManager.getInsecureSkinLocation(result.get());
@@ -43,13 +43,15 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
 
     @Override
     public void render(EntityAutoPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        Optional<GameProfile> result = entity.clientSkinGameProfile;
         model = wideModel;
         if (result.isPresent()) {
             var info = Minecraft.getInstance().getSkinManager().getInsecureSkinInformation(result.get());
             if (info.containsKey(MinecraftProfileTexture.Type.SKIN) && SLIM_NAME.equals(info.get(MinecraftProfileTexture.Type.SKIN).getMetadata("model"))) {
                 model = slimModel;
             }
+        } else {
+            model = slimModel;
         }
 
         PlayerModel<EntityAutoPlayer> playerModel = this.getModel();
