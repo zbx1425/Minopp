@@ -341,7 +341,7 @@ public class EntityAutoPlayer extends LivingEntity {
 
         Component component = this.getCustomName();
         if (component != null) {
-            tag.putString("CustomName", Component.Serializer.toJson(component));
+            tag.putString("CustomName", Component.Serializer.toJson(component, registryAccess()));
         }
     }
 
@@ -353,7 +353,7 @@ public class EntityAutoPlayer extends LivingEntity {
 
         if (tag.contains("CustomName", Tag.TAG_STRING)) {
             try {
-                this.setCustomName(Component.Serializer.fromJson(tag.getString("CustomName")));
+                this.setCustomName(Component.Serializer.fromJson(tag.getString("CustomName"), registryAccess()));
             } catch (Exception ignored) { }
         }
     }
