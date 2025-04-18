@@ -61,6 +61,7 @@ public class ActionReport {
     }
 
     public ActionReport combineWith(ActionReport other) {
+        if (other == null) return this;
         if (this.state == null) this.state = other.state;
         this.messages.addAll(other.messages);
         this.shouldDestroyGame |= other.shouldDestroyGame;
