@@ -64,7 +64,7 @@ public class CardGame {
 
         boolean isCut = false;
         // Cut
-        if (topCard.equals(card) && playerIndex != currentPlayerIndex) {
+        if (topCard.equals(card) && playerIndex != currentPlayerIndex && topCard.suit != Card.Suit.WILD) {
             isCut = true;
         } else {
             if (playerIndex != currentPlayerIndex) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
