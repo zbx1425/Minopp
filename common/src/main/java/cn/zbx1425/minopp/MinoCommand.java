@@ -34,31 +34,6 @@ public class MinoCommand {
                             if (!success) throw new SimpleCommandExceptionType(Component.translatable("game.minopp.play.no_game")).create();
                             return 1;
                         }))
-                .then(Commands.literal("force_discard").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
-                        .executes(context -> {
-                            withPlayerAndGame(context, (game, player) -> {
-                                ActionReport report = ActionReport.builder(game, player);
-                                if (player.hand.isEmpty()) return;
-                                game.doDiscardCard(player, player.hand.getFirst(), report);
-                            });
-                            return 1;
-                        }))
-                .then(Commands.literal("force_draw").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
-                        .then(Commands.argument("draw_count", IntegerArgumentType.integer(1))
-                            .executes(context -> {
-                                withPlayerAndGame(context, (game, player) -> {
-                                    ActionReport report = ActionReport.builder(game, player);
-                                    game.doDrawCard(player, IntegerArgumentType.getInteger(context, "draw_count"), report);
-                                });
-                                return 1;
-                            }))
-                        .executes(context -> {
-                            withPlayerAndGame(context, (game, player) -> {
-                                ActionReport report = ActionReport.builder(game, player);
-                                game.doDrawCard(player, 1, report);
-                            });
-                            return 1;
-                        }))
                 .then(Commands.literal("set_table_award").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
                     .executes(context -> {
                         ServerPlayer player = context.getSource().getPlayerOrException();
