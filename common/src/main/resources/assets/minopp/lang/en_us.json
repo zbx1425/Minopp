@@ -93,6 +93,7 @@
   "key.categories.minopp": "Mino++",
   "key.minopp.shout_modifier": "Shout Mino while Playing",
 
+  "gui.minopp.seats.players": "List of Players",
   "gui.minopp.bot_config.title": "MinoBot Preferences",
   "gui.minopp.bot_config.category.entity": "MinoBot Entity",
   "gui.minopp.bot_config.active": "Power",

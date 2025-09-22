@@ -22,13 +22,12 @@ import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class FindMinoTask extends MaidCheckRateTask {
     public static final String MinoTable = "mino_table";
@@ -88,7 +87,7 @@ public class FindMinoTask extends MaidCheckRateTask {
                     return BlockMinoTable.getCore(state, pos);
                 })
                 .distinct()
-                .filter(pos -> !isOccupied(world, pos))
+                .filter(pos -> hasAnyFreeSeat(world, pos))
                 .min(Comparator.comparingDouble(pos -> pos.distSqr(maid.blockPosition()))).orElse(null);
     }
 
@@ -97,7 +96,7 @@ public class FindMinoTask extends MaidCheckRateTask {
             BlockEntity blockEntity = serverLevel.getBlockEntity(pos);
             BlockPos corePos = BlockMinoTable.getCore(state, pos);
             if (blockEntity instanceof BlockEntityMinoTable minoTable) {
-                List<Direction> emptyDirections = minoTable.getEmptyDirections();
+                List<Direction> emptyDirections = getEmptySeatDirections(serverLevel, corePos);
                 if (!emptyDirections.isEmpty()) {
                     Random random = new Random();
                     Direction direction = emptyDirections.get(random.nextInt(emptyDirections.size()));
@@ -112,10 +111,25 @@ public class FindMinoTask extends MaidCheckRateTask {
         }
     }
 
+    private boolean hasAnyFreeSeat(ServerLevel level, BlockPos corePos) {
+        return !getEmptySeatDirections(level, corePos).isEmpty();
+    }
+
+    private List<Direction> getEmptySeatDirections(ServerLevel level, BlockPos corePos) {
+        List<Direction> result = new ArrayList<>();
+        for (Direction dir : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
+            Vec3i offset = dir.getNormal().multiply(2).offset(1, 0, 1);
+            Vec3 seatCenter = Vec3.atLowerCornerWithOffset(corePos, offset.getX(), offset.getY(), offset.getZ());
+            AABB box = AABB.ofSize(seatCenter, 0.5, 1.0, 0.5);
+            boolean occupied = level.getEntitiesOfClass(EntitySit.class, box, e -> true)
+                    .stream().anyMatch(EntitySit::isVehicle); // has rider
+            if (!occupied) result.add(dir);
+        }
+        return result;
+    }
+
     private boolean isOccupied(ServerLevel level, BlockPos pos) {
-        BlockEntity blockEntity = level.getBlockEntity(pos);
-        if (blockEntity instanceof BlockEntityMinoTable minoTable) {
-            return minoTable.getPlayersList().size() >= 4;
-        } else return true;
+        // Backward-compat method kept to reduce diff; now uses dynamic seat availability instead of fixed 4-player limit
+        return !hasAnyFreeSeat(level, pos);
     }
 }

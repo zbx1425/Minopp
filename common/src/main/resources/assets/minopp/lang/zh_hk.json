@@ -93,6 +93,7 @@
   "key.categories.minopp": "Mino++",
   "key.minopp.shout_modifier": "出卡同時喊出 Mino",
 
+  "gui.minopp.seats.players": "List of Players",
   "gui.minopp.bot_config.title": "MinoBot 機器人偏好設定",
   "gui.minopp.bot_config.category.entity": "MinoBot 實體設定",
   "gui.minopp.bot_config.active": "電源",

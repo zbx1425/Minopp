@@ -49,6 +49,7 @@
   "game.minopp.card.family.reverse": "反轉",
   "game.minopp.card.family.draw": "+%s",
 
+  "gui.minopp.seats.players": "List of Players",
   "gui.minopp.wild_selection.title": "選擇顏色",
   "gui.minopp.play.pass": "不出",
   "gui.minopp.play.start_hint": "走到桌子旁，按右鍵以加入對局。",

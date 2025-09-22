@@ -40,6 +40,16 @@ public class CardGame {
         isAntiClockwise = false;
         deck = Card.createDeck();
         Collections.shuffle(deck);
+        // Ensure we won't underflow deck with large player counts
+        int capacity = deck.size() - 1; // leave 1 for top card
+        int maxInit = Math.max(0, capacity / players.size());
+        if (initialCardCount > maxInit) {
+            if (maxInit <= 0) {
+                return ActionReport.builder(this, cardPlayer)
+                        .panic(Component.translatable("game.minopp.play.deck_depleted"));
+            }
+            initialCardCount = maxInit;
+        }
         for (int i = 0; i < initialCardCount; i++) {
             for (CardPlayer player : players) {
                 player.hand.add(deck.removeLast());

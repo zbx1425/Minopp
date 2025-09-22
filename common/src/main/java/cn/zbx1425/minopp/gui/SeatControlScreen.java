@@ -8,8 +8,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+
+import java.util.List;
 
 public class SeatControlScreen extends Screen {
 
@@ -74,24 +75,22 @@ public class SeatControlScreen extends Screen {
             guiGraphics.fill(xOff, yOff + PANEL_HEIGHT - BTN_HEIGHT, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0x66546E7A);
             guiGraphics.drawCenteredString(font, title, width / 2, yOff + MARGIN, 0xFFFFFFFF);
 
-            guiGraphics.fill(width / 2 - BTN_HEIGHT / 2, yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN,
-                    width / 2 + BTN_HEIGHT / 2, yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT, 0xFF00492e);
+            // Player list header
+            String header = Component.translatable("gui.minopp.seats.players", tableEntity.getPlayersList().size()).getString();
+            guiGraphics.drawCenteredString(font, header, width / 2, yOff + MARGIN + 9 + MARGIN, 0xFFAAAAAA);
 
-            guiGraphics.drawCenteredString(font, getPlayerName(tableEntity, Direction.NORTH),
-                    width / 2, yOff + MARGIN + 9 + MARGIN + MARGIN, 0xFFAAAAAA);
-            guiGraphics.drawString(font, getPlayerName(tableEntity, Direction.WEST),
-                    width / 2 - MARGIN - BTN_HEIGHT / 2 - font.width(getPlayerName(tableEntity, Direction.WEST)),
-                    yOff + MARGIN + 9 + MARGIN  + MARGIN + 9 + MARGIN + BTN_HEIGHT / 2 - 9 / 2, 0xFFAAAAAA);
-            guiGraphics.drawString(font, getPlayerName(tableEntity, Direction.EAST),
-                    width / 2 + MARGIN + BTN_HEIGHT / 2,
-                    yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT / 2 - 9 / 2, 0xFFAAAAAA);
-            guiGraphics.drawCenteredString(font, getPlayerName(tableEntity, Direction.SOUTH),
-                    width / 2, yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT + MARGIN, 0xFFAAAAAA);
+            // Draw dynamic player list
+            List<CardPlayer> players = tableEntity.getPlayersList();
+            int listStartY = yOff + MARGIN + 9 + MARGIN + 12;
+            int maxVisible = (PANEL_HEIGHT - (listStartY - yOff) - BTN_HEIGHT - MARGIN * 2) / font.lineHeight;
+            int idx = 0;
+            for (CardPlayer p : players) {
+                if (idx >= maxVisible) break;
+                String name = (idx + 1) + ". " + p.name;
+                guiGraphics.drawString(font, name, xOff + MARGIN, listStartY + idx * font.lineHeight, 0xFFCCCCCC);
+                idx++;
+            }
         }
-    }
-
-    private static String getPlayerName(BlockEntityMinoTable tableEntity, Direction direction) {
-        return tableEntity.players.get(direction) == null ? "-" : tableEntity.players.get(direction).name;
     }
 
     @Override

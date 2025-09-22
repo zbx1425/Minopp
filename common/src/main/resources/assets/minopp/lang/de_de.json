@@ -90,6 +90,8 @@
   "subtitles.minopp.mino_shout_invalid": "Mino wurde nachweislich falsch ausgerufen",
   "subtitles.minopp.doubt_success": "Zweifel an Mino erfolgreich",
 
+  "gui.minopp.seats.players": "List of Players",
+
   "key.categories.minopp": "Mino++",
   "key.minopp.shout_modifier": "ruft Mino während des Spiels"
 }

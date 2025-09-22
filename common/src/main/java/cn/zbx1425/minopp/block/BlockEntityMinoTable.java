@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -24,7 +25,6 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -43,7 +43,7 @@ import java.util.*;
 
 public class BlockEntityMinoTable extends BlockEntity {
 
-    public Map<Direction, CardPlayer> players = new HashMap<>();
+    public List<CardPlayer> players = new ArrayList<>();
     public CardGame game = null;
     public ActionMessage state = ActionMessage.NO_GAME;
 
@@ -52,22 +52,17 @@ public class BlockEntityMinoTable extends BlockEntity {
     public ItemStack award = ItemStack.EMPTY;
     public boolean demo = false;
 
-    public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
         super(Mino.BLOCK_ENTITY_TYPE_MINO_TABLE.get(), blockPos, blockState);
-        for (Direction direction : PLAYER_ORDER) {
-            players.put(direction, null);
-        }
     }
 
     @Override
     protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
         super.saveAdditional(compoundTag, provider);
-        CompoundTag playersTag = new CompoundTag();
-        for (Map.Entry<Direction, CardPlayer> entry : players.entrySet()) {
-            if (entry.getValue() != null) {
-                playersTag.put(entry.getKey().getSerializedName(), entry.getValue().toTag());
-            }
+        // Save players as a list for arbitrary size
+        ListTag playersTag = new ListTag();
+        for (CardPlayer player : players) {
+            playersTag.add(player.toTag());
         }
         compoundTag.put("players", playersTag);
         if (game != null) {
@@ -81,12 +76,21 @@ public class BlockEntityMinoTable extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
         super.loadAdditional(compoundTag, provider);
-        CompoundTag playersTag = compoundTag.getCompound("players");
-        for (Direction direction : PLAYER_ORDER) {
-            if (playersTag.contains(direction.getSerializedName())) {
-                players.put(direction, new CardPlayer(playersTag.getCompound(direction.getSerializedName())));
-            } else {
-                players.put(direction, null);
+        // Load players list; support legacy map format (N/E/S/W) if encountered
+        players.clear();
+        if (compoundTag.contains("players", Tag.TAG_LIST)) {
+            ListTag playersTag = compoundTag.getList("players", Tag.TAG_COMPOUND);
+            for (Tag t : playersTag) {
+                players.add(new CardPlayer((CompoundTag) t));
+            }
+        } else if (compoundTag.contains("players", Tag.TAG_COMPOUND)) {
+            // Legacy: a map keyed by directions. Read in fixed order for stability
+            CompoundTag playersTag = compoundTag.getCompound("players");
+            List<Direction> legacyOrder = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
+            for (Direction dir : legacyOrder) {
+                if (playersTag.contains(dir.getSerializedName(), Tag.TAG_COMPOUND)) {
+                    players.add(new CardPlayer(playersTag.getCompound(dir.getSerializedName())));
+                }
             }
         }
         CardGame previousGame = game;
@@ -118,39 +122,17 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     public List<CardPlayer> getPlayersList() {
-        // Return a list of players in the order of NORTH, EAST, SOUTH, WEST, without null elements
-        List<CardPlayer> playersList = new ArrayList<>();
-        for (Direction direction : PLAYER_ORDER) {
-            if (players.get(direction) != null) {
-                playersList.add(players.get(direction));
-            }
-        }
-        return playersList;
-    }
-
-    public List<Direction> getEmptyDirections() {
-        List<Direction> emptyDirections = new ArrayList<>();
-        for (Direction direction : PLAYER_ORDER) {
-            if (players.get(direction) == null) {
-                emptyDirections.add(direction);
-            }
-        }
-        return emptyDirections;
+        // Return copy to avoid accidental external mutation
+        return new ArrayList<>(players);
     }
 
     private static final int PLAYER_RANGE = 20;
 
     public void joinPlayerToTable(CardPlayer cardPlayer, Vec3 playerPos) {
         if (game != null) return;
-        BlockPos centerPos = getBlockPos().offset(1, 0, 1);
-        Vec3 playerOffset = playerPos.subtract(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-        Direction playerDirection = Direction.fromYRot(Mth.atan2(playerOffset.z, playerOffset.x) * 180 / Math.PI - 90);
-        for (Direction checkDir : players.keySet()) {
-            if (cardPlayer.equals(players.get(checkDir))) {
-                players.put(checkDir, null);
-            }
-        }
-        players.put(playerDirection, cardPlayer);
+        // Remove existing entry if present, then append to preserve join order
+        players.removeIf(p -> p.equals(cardPlayer));
+        players.add(cardPlayer);
         sync();
     }
 
@@ -208,7 +190,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
         }
 
-        players.values().forEach(p -> { if (p != null) {
+        players.forEach(p -> { if (p != null) {
             p.hand.clear();
             p.hasShoutedMino = false;
         } });
@@ -235,7 +217,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         }
 
         // Remove hand card from other entities eg. AutoPlayer, TLM
-        for (CardPlayer cardPlayer : players.values()) {
+        for (CardPlayer cardPlayer : players) {
             if (cardPlayer == null) continue;
             Entity entity = ((ServerLevel)level).getEntity(cardPlayer.uuid);
             if (entity instanceof LivingEntity livingEntity) {
@@ -248,7 +230,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
         }
 
-        players.values().forEach(p -> { if (p != null) {
+        players.forEach(p -> { if (p != null) {
             p.hand.clear();
             p.hasShoutedMino = false;
         } });
@@ -258,7 +240,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     public void resetSeats(CardPlayer initiator) {
         sendSeatActionTakenToAll();
-        players.replaceAll((d, v) -> null);
+        players.clear();
         state = ActionReport.builder(initiator).panic(Component.translatable("game.minopp.play.seats_reset", initiator.name)).state;
         sync();
     }
