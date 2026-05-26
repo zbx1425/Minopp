@@ -19,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -29,9 +30,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
@@ -110,7 +109,12 @@ public class BlockMinoTable extends Block implements EntityBlock {
         public static boolean isShoutModifierHeld() {
             InputConstants.Key boundKey = ((KeyMappingAccessor)MinoClient.KEY_SHOUT_MODIFIER.get()).getKey();
             return boundKey.getType() == InputConstants.Type.KEYSYM
-                    && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), boundKey.getValue());
+                    && InputConstants.isKeyDown(
+                        //? if <26.1
+                        //Minecraft.getInstance().getWindow().getWindow(),
+                        //? if >=26.1
+                        Minecraft.getInstance().getWindow(),
+                        boundKey.getValue());
         }
 
         public static @Nullable BlockPos getCursorPickedGame() {
@@ -133,7 +137,8 @@ public class BlockMinoTable extends Block implements EntityBlock {
                 if (tableEntity.game == null) return false;
                 AABB pileAabb = getPileAabb(tableEntity);
                 Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
-                float partialTicks = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
+                //~ if >=26.1 'getTimer' -> 'getDeltaTracker'
+                float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
                 float hitDistance = 20;
                 Vec3 rayBegin = cameraEntity.getEyePosition(partialTicks);
                 Vec3 rayDir = cameraEntity.getViewVector(partialTicks);
@@ -201,16 +206,22 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected @NotNull BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
+    //?if <26.1
+    //protected @NotNull BlockState updateShape(BlockState blockState, Direction directionToNeighbour, BlockState neighbourState, LevelAccessor level, BlockPos blockPos, BlockPos neighbourPos) {
+    //? if >=26.1
+    protected BlockState updateShape(BlockState blockState, LevelReader level, ScheduledTickAccess ticks, BlockPos blockPos, Direction directionToNeighbour, BlockPos neighbourPos, BlockState neighbourState, RandomSource random) {
         BlockPos firstPartPos = getCore(blockState, blockPos);
         for (int i = 0; i < 4; i++) {
             TablePartType thisPart = TablePartType.values()[i];
             BlockPos thisPartPos = firstPartPos.offset(thisPart.xOff, 0, thisPart.zOff);
-            if (!levelAccessor.getBlockState(thisPartPos).is(this)) {
+            if (!level.getBlockState(thisPartPos).is(this)) {
                 return Blocks.AIR.defaultBlockState();
             }
         }
-        return super.updateShape(blockState, direction, blockState2, levelAccessor, blockPos, blockPos2);
+        //? if <26.1
+        //return super.updateShape(blockState, directionToNeighbour, neighbourState, level, blockPos, neighbourPos);
+        //? if >=26.1
+        return super.updateShape(blockState, level, ticks, blockPos, directionToNeighbour, neighbourPos, neighbourState, random);
     }
 
     @Override
@@ -271,7 +282,10 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+    //? if <26.1
+    //protected boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+    //? if >=26.1
+    protected boolean propagatesSkylightDown(BlockState state) {
         return true;
     }
 

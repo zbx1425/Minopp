@@ -6,7 +6,6 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
-import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -15,6 +14,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 //? if <26.1 {
 /*import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
 *///? }
 
 public final class MinoFabricClient implements ClientModInitializer {

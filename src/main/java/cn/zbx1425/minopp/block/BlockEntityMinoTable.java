@@ -11,6 +11,7 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
+import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
@@ -175,10 +176,13 @@ public class BlockEntityMinoTable extends BlockEntity {
                         ItemHandCards.CardGameBindingComponent newBinding =
                                 new ItemHandCards.CardGameBindingComponent(getBlockPos(), cardPlayer.uuid);
                         handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
-                        if (Inventory.isHotbarSlot(mcPlayer.getInventory().selected)
-                            && mcPlayer.getInventory().getSelected().isEmpty()) {
+                        //~ if >=26.1 '.selected' -> '.getSelectedSlot()'
+                        if (Inventory.isHotbarSlot(mcPlayer.getInventory().getSelectedSlot())
+                            //~ if >=26.1 '.getSelected()' -> '.getSelectedItem()'
+                            && mcPlayer.getInventory().getSelectedItem().isEmpty()) {
                             // If the player has an empty hand slot, put the card there
-                            mcPlayer.getInventory().setItem(mcPlayer.getInventory().selected, handCard);
+                            //~ if >=26.1 '.selected' -> '.getSelectedSlot()'
+                            mcPlayer.getInventory().setItem(mcPlayer.getInventory().getSelectedSlot(), handCard);
                             playerFound = true;
                         } else {
                             // Main hand is occupied, try to put the card in the inventory
@@ -191,7 +195,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                                     itemEntity.setTarget(mcPlayer.getUUID());
                                 }
                             }
-                            mcPlayer.displayClientMessage(Component.translatable("game.minopp.play.hand_card_in_inventory"), false);
+                            PlayerShim.sendSystemMessage(mcPlayer, Component.translatable("game.minopp.play.hand_card_in_inventory"));
                             playerFound = true;
                         }
                     }
@@ -227,12 +231,13 @@ public class BlockEntityMinoTable extends BlockEntity {
 
         // Remove hand card items from players
         for (Player mcPlayer : level.players()) {
-            for (ItemStack invItem : mcPlayer.getInventory().items) {
+            for (int i = 0; i < mcPlayer.getInventory().getContainerSize(); i++) {
+                ItemStack invItem =  mcPlayer.getInventory().getItem(i);
                 if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
                 ItemHandCards.CardGameBindingComponent gameBinding = invItem.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
                 if (gameBinding != null && gameBinding.tablePos().equals(getBlockPos())) {
                     // This is the one bound to this table, remove
-                    mcPlayer.getInventory().removeItem(invItem);
+                    mcPlayer.getInventory().setItem(i, ItemStack.EMPTY);
                 }
             }
         }
@@ -327,9 +332,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     @Override
     public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider provider) {
-        CompoundTag tag = new CompoundTag();
-        saveAdditional(tag, provider);
-        return tag;
+        return NbtIOShim.pourOne(this::saveAdditional);
     }
 
     @Nullable @Override
