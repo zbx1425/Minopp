@@ -6,6 +6,7 @@ import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -20,6 +21,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -34,7 +36,9 @@ public class MinoCommand {
                             if (!success) throw new SimpleCommandExceptionType(Component.translatable("game.minopp.play.no_game")).create();
                             return 1;
                         }))
-                .then(Commands.literal("set_table_award").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+                .then(Commands.literal("set_table_award")
+                    .requires((commandSourceStack) -> commandSourceStack.isPlayer()
+                        && PlayerShim.hasPermissions(Objects.requireNonNull(commandSourceStack.getPlayer()), 2))
                     .executes(context -> {
                         ServerPlayer player = context.getSource().getPlayerOrException();
                         ItemStack holdingItem = player.getMainHandItem();
@@ -47,7 +51,7 @@ public class MinoCommand {
                             return 0;
                         }
                         BlockPos corePos = BlockMinoTable.getCore(player.getBlockStateOn(), player.getOnPos());
-                        if (player.serverLevel().getBlockEntity(corePos) instanceof BlockEntityMinoTable tableEntity) {
+                        if (PlayerShim.serverLevel(player).getBlockEntity(corePos) instanceof BlockEntityMinoTable tableEntity) {
                             tableEntity.award = holdingItem.copy();
                             tableEntity.sync();
                             context.getSource().sendSuccess(() -> Component.literal("Table award set"), true);
@@ -57,7 +61,9 @@ public class MinoCommand {
                             return 0;
                         }
                     }))
-                .then(Commands.literal("set_table_demo").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+                .then(Commands.literal("set_table_demo")
+                        .requires((commandSourceStack) -> commandSourceStack.isPlayer()
+                            && PlayerShim.hasPermissions(Objects.requireNonNull(commandSourceStack.getPlayer()), 2))
                         .then(Commands.argument("demo", BoolArgumentType.bool())
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
@@ -66,7 +72,7 @@ public class MinoCommand {
                                 return 0;
                             }
                             BlockPos corePos = BlockMinoTable.getCore(player.getBlockStateOn(), player.getOnPos());
-                            if (player.serverLevel().getBlockEntity(corePos) instanceof BlockEntityMinoTable tableEntity) {
+                            if (PlayerShim.serverLevel(player).getBlockEntity(corePos) instanceof BlockEntityMinoTable tableEntity) {
                                 tableEntity.demo = BoolArgumentType.getBool(context, "demo");
                                 tableEntity.sync();
                                 context.getSource().sendSuccess(() -> Component.literal("Table demo set"), true);

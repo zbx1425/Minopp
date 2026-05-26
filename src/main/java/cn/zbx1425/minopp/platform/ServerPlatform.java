@@ -2,6 +2,7 @@ package cn.zbx1425.minopp.platform;
 
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.FriendlyByteBuf;
@@ -37,7 +38,10 @@ public class ServerPlatform {
     }
 
     public static <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ServerPlatform.BlockEntitySupplier<T> supplier, Block block) {
-        return BlockEntityType.Builder.of(supplier::supplier, block).build(null);
+        //? if <26.1
+        // return BlockEntityType.Builder.of(supplier::supplier, block).build(null);
+        //? if >=26.1
+        return FabricBlockEntityTypeBuilder.create(supplier::supplier, block).build();
     }
 
     public static void registerPacket(Identifier resourceLocation) {

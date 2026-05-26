@@ -36,8 +36,10 @@ public class CompatPacketRegistry {
     public void commitCommon() {
         for (Map.Entry<Identifier, CompatPacket> packetEntry : packets.entrySet()) {
             CompatPacket packet = packetEntry.getValue();
-            PayloadTypeRegistry.playC2S().register(packet.TYPE, packet.STREAM_CODEC);
-            PayloadTypeRegistry.playS2C().register(packet.TYPE, packet.STREAM_CODEC);
+            //~ if >=26.1 'playC2S' -> 'serverboundPlay'
+            PayloadTypeRegistry.serverboundPlay().register(packet.TYPE, packet.STREAM_CODEC);
+            //~ if >=26.1 'playS2C' -> 'clientboundPlay'
+            PayloadTypeRegistry.clientboundPlay().register(packet.TYPE, packet.STREAM_CODEC);
         }
         for (Map.Entry<Identifier, ServerPlatform.C2SPacketHandler> packetC2S : packetsC2S.entrySet()) {
             ServerPlatform.C2SPacketHandler handlerC2S = packetC2S.getValue();

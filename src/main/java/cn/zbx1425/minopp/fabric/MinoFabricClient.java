@@ -15,7 +15,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 //? if <26.1 {
 /*import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
- */
+*///? }
 
 public final class MinoFabricClient implements ClientModInitializer {
 
