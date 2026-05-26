@@ -22,14 +22,10 @@
       "cn.zbx1425.minopp.fabric.MinoFabricClient"
     ]
   },
-  "mixins": [
-    "minopp.mixins.json",
-    "minopp.fabric.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=0.16.2",
-    "minecraft": "~1.21.1",
     "java": ">=21",
-    "fabric-api": "*"
+    "minecraft": "${mc}",
+    "fabric-api": ">=${fapi}"
   }
 }

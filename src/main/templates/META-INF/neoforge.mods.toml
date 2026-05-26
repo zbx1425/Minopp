@@ -11,22 +11,15 @@ license = "MIT"
     logoFile = "minopp.png"
     authors = "Zbx1425, MalayP"
 
-[[dependencies.minopp]]
+[[dependencies.${mod_id}]]
     modId = "neoforge"
     type = "required"
-    versionRange = "[21,)"
     ordering = "NONE"
     side = "BOTH"
 
-[[dependencies.minopp]]
+[[dependencies.${mod_id}]]
     modId = "minecraft"
     type = "required"
-    versionRange = "[1.21.1,)"
+    versionRange = "${mc}"
     ordering = "NONE"
     side = "BOTH"
-
-[[mixins]]
-    config = "minopp.mixins.json"
-
-[[mixins]]
-    config = "minopp.neoforge.mixins.json"

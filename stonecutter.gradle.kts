@@ -42,7 +42,7 @@ allprojects {
             filter { includeGroup("org.teacon") }
         }
         flatDir {
-            dir("libs")
+            dir(rootDir.resolve("libs"))
         }
 
         mavenCentral()
