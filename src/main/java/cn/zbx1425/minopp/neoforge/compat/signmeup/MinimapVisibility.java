@@ -1,6 +1,6 @@
 package cn.zbx1425.minopp.neoforge.compat.signmeup;
 
-//? if 0 {
+//? if neoforge && 1.21.1 {
 
 /*import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;

@@ -1,15 +1,21 @@
 package cn.zbx1425.minopp.platform;
 
-import cn.zbx1425.minopp.fabric.MinoFabric;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+//? if fabric {
+import cn.zbx1425.minopp.fabric.MinoFabric;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+//? } else if neoforge {
+/*import cn.zbx1425.minopp.neoforge.MinoNeoForge;
+*///? }
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class ClientPlatform {

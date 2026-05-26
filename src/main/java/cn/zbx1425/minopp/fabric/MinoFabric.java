@@ -1,4 +1,5 @@
 package cn.zbx1425.minopp.fabric;
+//? if fabric {
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoCommand;
@@ -38,3 +39,5 @@ public final class MinoFabric implements ModInitializer {
         FabricDefaultAttributeRegistry.register(Mino.ENTITY_AUTO_PLAYER.get(), EntityAutoPlayer.createAttributes());
     }
 }
+
+//? }

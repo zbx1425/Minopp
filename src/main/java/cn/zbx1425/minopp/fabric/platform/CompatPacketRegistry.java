@@ -1,4 +1,6 @@
 package cn.zbx1425.minopp.fabric.platform;
+//? if fabric {
+
 
 import cn.zbx1425.minopp.platform.ServerPlatform;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -11,8 +13,6 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-
-
 public class CompatPacketRegistry {
 
     public HashMap<ResourceLocation, CompatPacket> packets = new HashMap<>();
@@ -68,3 +68,5 @@ public class CompatPacketRegistry {
         ClientPlayNetworking.send(packet.new Payload(payload));
     }
 }
+
+//? }

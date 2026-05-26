@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.fabric.platform;
-
+//? if fabric {
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.platform.GroupedItem;
@@ -61,3 +61,5 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Mino.id(id), componentType.get());
     }
 }
+
+//? }

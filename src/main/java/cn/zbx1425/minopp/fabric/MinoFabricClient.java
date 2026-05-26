@@ -1,4 +1,5 @@
 package cn.zbx1425.minopp.fabric;
+//? if fabric {
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
@@ -32,3 +33,5 @@ public final class MinoFabricClient implements ClientModInitializer {
         ClientTickEvents.START_CLIENT_TICK.register(event -> MinoClient.tick());
     }
 }
+
+//? }

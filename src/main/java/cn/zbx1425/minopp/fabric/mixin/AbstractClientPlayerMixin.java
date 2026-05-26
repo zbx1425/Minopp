@@ -1,4 +1,5 @@
 package cn.zbx1425.minopp.fabric.mixin;
+//? if fabric {
 
 import cn.zbx1425.minopp.MinoClient;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -14,3 +15,5 @@ public class AbstractClientPlayerMixin {
         return original * (float) MinoClient.globalFovModifier;
     }
 }
+
+//? }

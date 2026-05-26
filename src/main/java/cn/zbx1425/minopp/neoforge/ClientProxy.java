@@ -4,10 +4,10 @@ package cn.zbx1425.minopp.neoforge;
 /*import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
-import cn.zbx1425.minopp.neoforge.compat.signmeup.MinimapVisibility;
+//? if neoforge && 1.21.1
+//import cn.zbx1425.minopp.neoforge.compat.signmeup.MinimapVisibility;
 import cn.zbx1425.minopp.platform.ClientPlatform;
 import cn.zbx1425.minopp.platform.RegistryObject;
-import cn.zbx1425.minopp.platform.neoforge.ClientPlatformImpl;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
 import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
@@ -32,7 +32,7 @@ public class ClientProxy {
 
         @SubscribeEvent
         public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
-            for (RegistryObject<KeyMapping> keyMapping : ClientPlatformImpl.KEY_MAPPINGS) {
+            for (RegistryObject<KeyMapping> keyMapping : ClientPlatform.KEY_MAPPINGS) {
                 KeyMapping key = keyMapping.get();
                 key.setKeyConflictContext(NoConflictKeyConflictContext.INSTANCE);
                 event.register(key);
@@ -66,7 +66,9 @@ public class ClientProxy {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Pre event) {
             MinoClient.tick();
-            MinimapVisibility.tick();
+
+            //? if neoforge && 1.21.1
+            //MinimapVisibility.tick();
         }
 
     }

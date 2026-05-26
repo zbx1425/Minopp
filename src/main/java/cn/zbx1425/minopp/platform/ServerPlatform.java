@@ -1,13 +1,7 @@
 package cn.zbx1425.minopp.platform;
 
-
-import cn.zbx1425.minopp.fabric.MinoFabric;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.FriendlyByteBuf;
@@ -20,6 +14,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+
+//? if fabric {
+import cn.zbx1425.minopp.fabric.MinoFabric;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+//? } else if neoforge {
+/*import cn.zbx1425.minopp.neoforge.MinoNeoForge;
+*///? }
 
 import java.util.function.Consumer;
 
