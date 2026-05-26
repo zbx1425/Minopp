@@ -23,9 +23,28 @@ tasks.register("clean") {
 
 allprojects {
     repositories {
-        mavenCentral()
         mavenLocal()
         maven("https://maven.neoforged.net/releases")
         maven("https://maven.fabricmc.net/")
+
+        maven("https://maven.isxander.dev/releases")
+        exclusiveContent {
+            forRepository { maven("https://maven.quiltmc.org/repository/release") }
+            filter { includeGroupAndSubgroups("org.quiltmc") }
+        }
+        exclusiveContent {
+            forRepository { maven("https://thedarkcolour.github.io/KotlinForForge/") }
+            filter { includeGroup("thedarkcolour") }
+        }
+
+        exclusiveContent {
+            forRepository { maven("https://archive.teacon.cn/maven") }
+            filter { includeGroup("org.teacon") }
+        }
+        flatDir {
+            dir("libs")
+        }
+
+        mavenCentral()
     }
 }

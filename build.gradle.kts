@@ -186,8 +186,15 @@ dependencies {
         modDependency("fabricApi", { "net.fabricmc.fabric-api:fabric-api:$it" }, requiredByDependants = true)
     }
     if (isNeoforge) {
-        //modstitchModRuntimeOnly("thedarkcolour:kotlinforforge-neoforge:${findProperty("deps.kotlinForForge")}")
+//        modstitchModRuntimeOnly("thedarkcolour:kotlinforforge-neoforge:${findProperty("deps.kotlinForForge")}")
     }
+
+    if (isNeoforge && mcSemverVersion == "1.21.1") {
+        modstitchModImplementation("libs:touhoulittlemaid:1.21-release-1.1.14")
+        modstitchModImplementation("org.teacon:SignMeUp-NeoForge-1.21.1:+") { isTransitive = false }
+    }
+
+    modDependency("yacl", { "dev.isxander:yet-another-config-lib:$it" })
 }
 
 fun <T> prop(property: String, required: Boolean = false, ifNull: () -> String? = { null }, block: (String) -> T?): T? {

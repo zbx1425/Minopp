@@ -1,9 +1,13 @@
 package cn.zbx1425.minopp.platform;
 
 
+import cn.zbx1425.minopp.fabric.MinoFabric;
 import com.mojang.serialization.Codec;
-import dev.architectury.injectables.annotations.ExpectPlatform;
 import io.netty.buffer.ByteBuf;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.FriendlyByteBuf;
@@ -21,60 +25,106 @@ import java.util.function.Consumer;
 
 public class ServerPlatform {
 
-    @ExpectPlatform
+    //? if fabric {
+
+
     public static boolean isFabric() {
-        throw new AssertionError();
+        return true;
     }
 
-    @ExpectPlatform
-    public static <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(BlockEntitySupplier<T> supplier, Block block) {
-        throw new AssertionError();
+    public static <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ServerPlatform.BlockEntitySupplier<T> supplier, Block block) {
+        return BlockEntityType.Builder.of(supplier::supplier, block).build(null);
     }
+
+    public static void registerPacket(ResourceLocation resourceLocation) {
+        MinoFabric.PACKET_REGISTRY.registerPacket(resourceLocation);
+    }
+
+    public static void registerNetworkReceiver(ResourceLocation resourceLocation, ServerPlatform.C2SPacketHandler packetCallback) {
+        MinoFabric.PACKET_REGISTRY.registerNetworkReceiverC2S(resourceLocation, packetCallback);
+    }
+
+    public static void registerPlayerJoinEvent(Consumer<ServerPlayer> consumer) {
+        ServerEntityEvents.ENTITY_LOAD.register((entity, serverWorld) -> {
+            if (entity instanceof ServerPlayer) {
+                consumer.accept((ServerPlayer) entity);
+            }
+        });
+    }
+
+    public static void registerPlayerQuitEvent(Consumer<ServerPlayer> consumer) {
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> consumer.accept(handler.player));
+    }
+
+    public static void registerServerStartingEvent(Consumer<MinecraftServer> consumer) {
+        ServerLifecycleEvents.SERVER_STARTING.register(consumer::accept);
+    }
+
+    public static void registerServerStoppingEvent(Consumer<MinecraftServer> consumer) {
+        ServerLifecycleEvents.SERVER_STOPPING.register(consumer::accept);
+    }
+
+    public static void registerTickEvent(Consumer<MinecraftServer> consumer) {
+        ServerTickEvents.START_SERVER_TICK.register(consumer::accept);
+    }
+
+    public static void sendPacketToPlayer(ServerPlayer player, ResourceLocation id, FriendlyByteBuf packet) {
+        MinoFabric.PACKET_REGISTRY.sendS2C(player, id, packet);
+    }
+
+    //? }
+
+    //? if neoforge {
+
+
+    /*public static boolean isFabric() {
+        return false;
+    }
+
+    public static <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ServerPlatform.BlockEntitySupplier<T> supplier, Block block) {
+        return BlockEntityType.Builder.of(supplier::supplier, block).build(null);
+    }
+
+    public static void registerPacket(ResourceLocation resourceLocation) {
+        MinoNeoForge.PACKET_REGISTRY.registerPacket(resourceLocation);
+    }
+
+    public static void registerNetworkReceiver(ResourceLocation resourceLocation, ServerPlatform.C2SPacketHandler packetCallback) {
+        MinoNeoForge.PACKET_REGISTRY.registerNetworkReceiverC2S(resourceLocation, packetCallback);
+    }
+
+    public static void registerPlayerJoinEvent(Consumer<ServerPlayer> consumer) {
+//        RegistryUtilities.registerPlayerJoinEvent(consumer);
+//        RegistryUtilities.registerPlayerChangeDimensionEvent(consumer);
+    }
+
+    public static void registerPlayerQuitEvent(Consumer<ServerPlayer> consumer) {
+//        RegistryUtilities.registerPlayerQuitEvent(consumer);
+    }
+
+    public static void registerServerStartingEvent(Consumer<MinecraftServer> consumer) {
+//        RegistryUtilities.registerServerStartingEvent(consumer);
+    }
+
+    public static void registerServerStoppingEvent(Consumer<MinecraftServer> consumer) {
+//        RegistryUtilities.registerServerStoppingEvent(consumer);
+    }
+
+    public static void registerTickEvent(Consumer<MinecraftServer> consumer) {
+//        RegistryUtilities.registerTickEvent(consumer);
+    }
+
+    public static void sendPacketToPlayer(ServerPlayer player, ResourceLocation id, FriendlyByteBuf packet) {
+        packet.readerIndex(0);
+        MinoNeoForge.PACKET_REGISTRY.sendS2C(player, id, packet);
+    }
+
+    *///? }
 
     @SuppressWarnings("unchecked")
     public static <T> DataComponentType<T> createDataComponentType(Codec<T> codec, StreamCodec<ByteBuf, T> streamCodec) {
         return (DataComponentType<T>) DataComponentType.builder().persistent((Codec<Object>)codec)
-                .networkSynchronized((StreamCodec<? super RegistryFriendlyByteBuf, Object>)streamCodec).build();
-    }
-
-    @ExpectPlatform
-    public static void registerPacket(ResourceLocation resourceLocation) {
-        throw new AssertionError();
-    }
-
-    @ExpectPlatform
-    public static void registerNetworkReceiver(ResourceLocation resourceLocation, C2SPacketHandler packetCallback) {
-        throw new AssertionError();
-    }
-
-    @ExpectPlatform
-    public static void registerPlayerJoinEvent(Consumer<ServerPlayer> consumer) {
-        throw new AssertionError();
-    }
-
-    @ExpectPlatform
-    public static void registerPlayerQuitEvent(Consumer<ServerPlayer> consumer) {
-        throw new AssertionError();
-    }
-
-    @ExpectPlatform
-    public static void registerServerStartingEvent(Consumer<MinecraftServer> consumer) {
-        throw new AssertionError();
-    }
-
-    @ExpectPlatform
-    public static void registerServerStoppingEvent(Consumer<MinecraftServer> consumer) {
-        throw new AssertionError();
-    }
-
-    @ExpectPlatform
-    public static void registerTickEvent(Consumer<MinecraftServer> consumer) {
-        throw new AssertionError();
-    }
-
-    @ExpectPlatform
-    public static void sendPacketToPlayer(ServerPlayer player, ResourceLocation id, FriendlyByteBuf packet) {
-        throw new AssertionError();
+            .networkSynchronized((StreamCodec<? super RegistryFriendlyByteBuf, Object>)streamCodec).build();
     }
 
     @FunctionalInterface
@@ -87,4 +137,5 @@ public class ServerPlatform {
     public interface BlockEntitySupplier<T extends BlockEntity> {
         T supplier(BlockPos pos, BlockState state);
     }
+
 }
