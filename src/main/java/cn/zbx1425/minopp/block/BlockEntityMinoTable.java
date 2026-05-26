@@ -83,10 +83,8 @@ public class BlockEntityMinoTable extends BlockEntity {
                 entry.getValue().nbtWriteTo(playerOutput.child(entry.getKey().getSerializedName()));
             }
         }
-        if (game != null) {
-            compoundTag.put("game", game.toTag());
-        }
-        compoundTag.put("state", state.toTag());
+        if (game != null) game.nbtWriteTo(playerOutput.child("game"));
+        state.nbtWriteTo(output.child("state"));
         if (!award.isEmpty()) {
             output.store("award", ItemStack.CODEC, award);
         }
@@ -107,12 +105,8 @@ public class BlockEntityMinoTable extends BlockEntity {
                 playersTag.child(direction.getSerializedName()).map(CardPlayer::new).orElse(null));
         }
         CardGame previousGame = game;
-        if (compoundTag.contains("game")) {
-            game = new CardGame(compoundTag.getCompound("game"));
-        } else {
-            game = null;
-        }
-        ActionMessage newState = new ActionMessage(compoundTag.getCompound("state"));
+        game = input.child("game").map(CardGame::new).orElse(null);
+        ActionMessage newState = new ActionMessage(input.childOrEmpty("state"));
         if (!newState.equals(state)) {
             if (previousGame == null && game != null) {
                 clientMessageList.clear();
@@ -122,16 +116,8 @@ public class BlockEntityMinoTable extends BlockEntity {
             state = newState;
             clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
         }
-        if (compoundTag.contains("award")) {
-            award = ItemStack.parse(provider, compoundTag.get("award")).orElse(ItemStack.EMPTY);
-        } else {
-            award = ItemStack.EMPTY;
-        }
-        if (compoundTag.contains("demo", Tag.TAG_BYTE)) {
-            demo = compoundTag.getBoolean("demo");
-        } else {
-            demo = false;
-        }
+        award = input.read("award", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
+        demo = input.getBooleanOr("demo", false);
     }
 
     public List<CardPlayer> getPlayersList() {

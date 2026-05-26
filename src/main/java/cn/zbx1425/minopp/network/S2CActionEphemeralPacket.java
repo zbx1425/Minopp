@@ -3,8 +3,8 @@ package cn.zbx1425.minopp.network;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.game.ActionMessage;
-import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.platform.ServerPlatform;
+import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
 import com.mojang.datafixers.util.Pair;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
@@ -22,7 +22,7 @@ public class S2CActionEphemeralPacket {
     public static void sendS2C(ServerPlayer target, BlockPos gamePos, ActionMessage message) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
         packet.writeBlockPos(gamePos);
-        packet.writeNbt(message.toTag());
+        packet.writeNbt(NbtIOShim.fillOne(message::nbtWriteTo));
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
     }
 
@@ -30,7 +30,7 @@ public class S2CActionEphemeralPacket {
 
         public static void handleS2C(FriendlyByteBuf packet) {
             BlockPos gamePos = packet.readBlockPos();
-            ActionMessage message = new ActionMessage(Objects.requireNonNull(packet.readNbt()));
+            ActionMessage message = NbtIOShim.pourOne(ActionMessage::new, packet.readNbt());
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
                     tableEntity.clientMessageList.add(new Pair<>(message, System.currentTimeMillis() + 8000));

@@ -10,7 +10,15 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.component.FireworkExplosion;
 
+//? if >=26.1 {
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+//? } else {
+/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
+ *///? }
+
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CardGame {
 
@@ -245,35 +253,33 @@ public class CardGame {
         DISCARD_DRAWN,
     }
 
-    public CardGame(CompoundTag tag) {
-        currentPlayerIndex = tag.getInt("currentPlayer");
-        drawCount = tag.getInt("drawCount");
-        isSkipping = tag.getBoolean("isSkipping");
-        currentPlayerPhase = PlayerActionPhase.valueOf(tag.getString("currentPlayerPhase"));
-        isAntiClockwise = tag.getBoolean("isAntiClockwise");
-        deck = new ArrayList<>(tag.getList("deck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
-        discardDeck = new ArrayList<>(tag.getList("discardDeck", CompoundTag.TAG_COMPOUND).stream().map(t -> new Card((CompoundTag) t)).toList());
-        topCard = new Card(tag.getCompound("topCard"));
-        players = new ArrayList<>(tag.getList("players", CompoundTag.TAG_COMPOUND).stream().map(t -> new CardPlayer((CompoundTag)t)).toList());
+    public CardGame(ValueInput input) {
+        currentPlayerIndex = input.getIntOr("currentPlayer", 0);
+        drawCount = input.getIntOr("drawCount", 0);
+        isSkipping = input.getBooleanOr("isSkipping", false);
+        currentPlayerPhase = input.getString("currentPlayerPhase").map(PlayerActionPhase::valueOf).orElse(PlayerActionPhase.DISCARD_HAND);
+        isAntiClockwise = input.getBooleanOr("isAntiClockwise", false);
+        deck = input.childrenListOrEmpty("deck").stream().map(Card::new)
+            .collect(Collectors.toCollection(ArrayList::new));
+        discardDeck = input.childrenListOrEmpty("discardDeck").stream().map(Card::new)
+            .collect(Collectors.toCollection(ArrayList::new));
+        topCard = new Card(input.childOrEmpty("topCard"));
+        players = input.childrenListOrEmpty("players").stream().map(CardPlayer::new)
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
-        tag.putInt("currentPlayer", currentPlayerIndex);
-        tag.putInt("drawCount", drawCount);
-        tag.putBoolean("isSkipping", isSkipping);
-        tag.putString("currentPlayerPhase", currentPlayerPhase.name());
-        tag.putBoolean("isAntiClockwise", isAntiClockwise);
-        ListTag deckTag = new ListTag();
-        deckTag.addAll(deck.stream().map(Card::toTag).toList());
-        tag.put("deck", deckTag);
-        ListTag discardDeckTag = new ListTag();
-        discardDeckTag.addAll(discardDeck.stream().map(Card::toTag).toList());
-        tag.put("discardDeck", discardDeckTag);
-        tag.put("topCard", topCard.toTag());
-        ListTag playersTag = new ListTag();
-        playersTag.addAll(players.stream().map(CardPlayer::toTag).toList());
-        tag.put("players", playersTag);
-        return tag;
+    public void nbtWriteTo(ValueOutput output) {
+        output.putInt("currentPlayer", currentPlayerIndex);
+        output.putInt("drawCount", drawCount);
+        output.putBoolean("isSkipping", isSkipping);
+        output.putString("currentPlayerPhase", currentPlayerPhase.name());
+        output.putBoolean("isAntiClockwise", isAntiClockwise);
+        var deckOutput = output.childrenList("deck");
+        for (Card card : deck) card.nbtWriteTo(deckOutput.addChild());
+        var discardDeckOutput = output.childrenList("discardDeck");
+        for (Card card : discardDeck) card.nbtWriteTo(discardDeckOutput.addChild());
+        topCard.nbtWriteTo(output.child("topCard"));
+        var playersOutput = output.childrenList("players");
+        for (CardPlayer player : players) player.nbtWriteTo(playersOutput.addChild());
     }
 }

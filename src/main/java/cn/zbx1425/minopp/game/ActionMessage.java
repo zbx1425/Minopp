@@ -1,23 +1,35 @@
 package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.platform.DummyLookupProvider;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
+//? if >=26.1 {
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+//? } else {
+/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
+ *///? }
+
+
 public record ActionMessage(Type type, Component message) {
 
-    public ActionMessage(CompoundTag tag) {
+    public ActionMessage(ValueInput input) {
         this(
-            Type.valueOf(tag.getString("type")),
-            Component.Serializer.fromJson(tag.getString("message"), DummyLookupProvider.INSTANCE)
+            input.getString("type").map(Type::valueOf).orElse(Type.STATE),
+            // This is ugly but we did it in the first place, so for backward compatibility...
+            ComponentSerialization.CODEC.parse(JsonOps.INSTANCE,
+                JsonParser.parseString(input.getStringOr("message", ""))).getOrThrow()
         );
     }
 
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("type", type.name());
-        tag.putString("message", Component.Serializer.toJson(message, DummyLookupProvider.INSTANCE));
-        return tag;
+    public void nbtWriteTo(ValueOutput output) {
+        output.putString("type", type.name());
+        output.putString("message", ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, message)
+            .getOrThrow().toString());
     }
 
     public enum Type {
