@@ -11,6 +11,7 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -34,10 +35,17 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+//? if >=26.1 {
+import net.minecraft.world.level.storage.ValueOutput;
+//? } else {
+/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
+ *///? }
 
 import java.util.*;
 
@@ -61,33 +69,42 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
+    //? if <26.1 {
+    /*protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
         super.saveAdditional(compoundTag, provider);
-        CompoundTag playersTag = new CompoundTag();
+        ValueOutput output = new ValueOutput(compoundTag);
+    *///? } else if >=26.1 {
+    protected void saveAdditional(final ValueOutput output) {
+        super.saveAdditional(output);
+    //? }
+        ValueOutput playerOutput = output.child("players");
         for (Map.Entry<Direction, CardPlayer> entry : players.entrySet()) {
             if (entry.getValue() != null) {
-                playersTag.put(entry.getKey().getSerializedName(), entry.getValue().toTag());
+                entry.getValue().nbtWriteTo(playerOutput.child(entry.getKey().getSerializedName()));
             }
         }
-        compoundTag.put("players", playersTag);
         if (game != null) {
             compoundTag.put("game", game.toTag());
         }
         compoundTag.put("state", state.toTag());
-        if (!award.isEmpty()) compoundTag.put("award", award.save(provider));
-        compoundTag.putBoolean("demo", demo);
+        if (!award.isEmpty()) {
+            output.store("award", ItemStack.CODEC, award);
+        }
+        output.putBoolean("demo", demo);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
+    //? if <26.1 {
+    /*protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
         super.loadAdditional(compoundTag, provider);
-        CompoundTag playersTag = compoundTag.getCompound("players");
+    *///? } else if >= 26.1 {
+    protected void loadAdditional(final ValueInput input) {
+        super.loadAdditional(input);
+    //? }
+        ValueInput playersTag = input.childOrEmpty("players");
         for (Direction direction : PLAYER_ORDER) {
-            if (playersTag.contains(direction.getSerializedName())) {
-                players.put(direction, new CardPlayer(playersTag.getCompound(direction.getSerializedName())));
-            } else {
-                players.put(direction, null);
-            }
+            players.put(direction,
+                playersTag.child(direction.getSerializedName()).map(CardPlayer::new).orElse(null));
         }
         CardGame previousGame = game;
         if (compoundTag.contains("game")) {
@@ -166,7 +183,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             boolean playerFound = false;
             for (Entity entity : level.getEntities(null, searchArea)) {
                 if (entity instanceof Player mcPlayer) {
-                    if (cardPlayer.uuid.equals(mcPlayer.getGameProfile().getId())) {
+                    if (cardPlayer.uuid.equals(PlayerShim.getGameProfileId(mcPlayer))) {
                         // We've found the player, give them a card item
                         ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                         ItemHandCards.CardGameBindingComponent newBinding =
@@ -286,7 +303,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                 for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                     if (serverPlayer.level().dimension() == level.dimension()) {
                         if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= EffectEvents.EFFECT_RADIUS * EffectEvents.EFFECT_RADIUS) {
-                            boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(serverPlayer.getGameProfile().getId()));
+                            boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(PlayerShim.getGameProfileId(serverPlayer)));
                             S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
                         }
                     }

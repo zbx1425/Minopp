@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.effect;
 
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayPriorityQueue;
 import net.minecraft.core.BlockPos;
@@ -26,7 +27,7 @@ public class EffectQueue {
         synchronized (queue) {
             long time = System.currentTimeMillis();
             for (EffectEvent event : events) {
-                if (event.target().isEmpty() || event.target().get().equals(self.getGameProfile().getId())) {
+                if (event.target().isEmpty() || event.target().get().equals(PlayerShim.getGameProfileId(self))) {
                     queue.enqueue(new TimedEvent(event, time, origin, selfIsPartOfSourceGame));
                 }
             }

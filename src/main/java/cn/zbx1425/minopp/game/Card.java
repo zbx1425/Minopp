@@ -2,7 +2,14 @@ package cn.zbx1425.minopp.game;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.storage.ValueInput;
 import org.jetbrains.annotations.NotNull;
+
+//? if >=26.1 {
+import net.minecraft.world.level.storage.ValueOutput;
+//? } else {
+/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
+ *///? }
 
 import java.util.ArrayList;
 import java.util.List;
@@ -142,17 +149,19 @@ public class Card implements Comparable<Card> {
         DRAW
     }
 
-    public Card(CompoundTag tag) {
-        this(Family.valueOf(tag.getString("family")), Suit.valueOf(tag.getString("suit")), tag.getInt("number"),
-                tag.contains("actualCard") ? new Card(tag.getCompound("actualCard")) : null);
+    public Card(ValueInput input) {
+        this(
+            input.getString("family").map(Family::valueOf).orElse(Family.DRAW),
+            input.getString("suit").map(Suit::valueOf).orElse(Suit.BLUE),
+            input.getIntOr("number", 0),
+            input.child("actualCard").map(Card::new).orElse(null)
+        );
     }
 
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("family", family.name());
-        tag.putString("suit", suit.name());
-        tag.putInt("number", number);
-        if (equivCard != null) tag.put("actualCard", equivCard.toTag());
-        return tag;
+    public void nbtWriteTo(ValueOutput output) {
+        output.putString("family", family.name());
+        output.putString("suit", suit.name());
+        output.putInt("number", number);
+        if (equivCard != null) equivCard.nbtWriteTo(output.child("actualCard"));
     }
 }

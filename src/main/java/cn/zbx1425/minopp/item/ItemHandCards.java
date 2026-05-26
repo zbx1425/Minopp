@@ -5,6 +5,7 @@ import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.platform.GroupedItem;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
@@ -17,18 +18,24 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+
+//? if <26.1
+//import net.minecraft.world.InteractionResultHolder;
+//? if >=26.1
+import net.minecraft.world.InteractionResult;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class ItemHandCards extends GroupedItem {
     
@@ -37,18 +44,25 @@ public class ItemHandCards extends GroupedItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
+    //~ if >=26.1 'InteractionResultHolder<ItemStack>' -> 'InteractionResult'
+    public InteractionResult use(Level level, Player player, InteractionHand usedHand) {
         if (usedHand != InteractionHand.MAIN_HAND) return super.use(level, player, usedHand);
         BlockPos gamePos = getHandCardGamePos(player);
         if (gamePos != null && level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-            if (tableEntity.game != null && tableEntity.getPlayersList().stream().anyMatch(p -> p.uuid.equals(player.getGameProfile().getId()))) {
+            if (tableEntity.game != null && tableEntity.getPlayersList().stream().anyMatch(p -> p.uuid.equals(PlayerShim.getGameProfileId(player)))) {
                 // Card is valid
-                return InteractionResultHolder.fail(player.getItemInHand(usedHand));
+                //? if <26.1
+                //return InteractionResultHolder.fail(player.getItemInHand(usedHand));
+                //? if >=26.1
+                return InteractionResult.FAIL;
             }
         }
         // Game table not found, card no longer usable
         player.setItemInHand(usedHand, ItemStack.EMPTY);
-        return InteractionResultHolder.consume(player.getItemInHand(usedHand));
+        //? if <26.1
+        //return InteractionResultHolder.consume(player.getItemInHand(usedHand));
+        //? if >=26.1
+        return InteractionResult.CONSUME;
     }
 
     public static CardPlayer getCardPlayer(Player player) {
@@ -74,15 +88,23 @@ public class ItemHandCards extends GroupedItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    //? if <26.1
+    //public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    //? if >=26.1
+    public void appendHoverText(final ItemStack stack, final TooltipContext context, final TooltipDisplay display, final Consumer<Component> builder, final TooltipFlag tooltipFlag) {
         CardGameBindingComponent binding = stack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+        //~ if >=26.1 'tooltipComponents.add(' -> 'builder.accept(' {
         if (binding != null) {
-            tooltipComponents.add(Component.literal("Table: " + binding.tablePos().toShortString()));
-            if (binding.bearerId().equals(Minecraft.getInstance().player.getGameProfile().getId())) {
-                tooltipComponents.add(Component.literal("NOT YOUR CARD!").withStyle(ChatFormatting.RED));
+            builder.accept(Component.literal("Table: " + binding.tablePos().toShortString()));
+            if (binding.bearerId().equals(PlayerShim.getGameProfileId(Minecraft.getInstance().player))) {
+                builder.accept(Component.literal("NOT YOUR CARD!").withStyle(ChatFormatting.RED));
             }
         }
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        //~ }
+        //? if <26.1
+        //super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        //? if >=26.1
+        super.appendHoverText(stack, context, display, builder, tooltipFlag);
     }
 
     public record CardGameBindingComponent(BlockPos tablePos, UUID bearerId) {
