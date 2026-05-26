@@ -139,6 +139,11 @@ stonecutter {
         string {
             direction = eval(current.version, ">=26.1")
             replace("GuiGraphics", "GuiGraphicsExtractor")
+            replace("renderBackground", "extractBackground")
+            replace("guiGraphics.drawString", "guiGraphics.text")
+            replace("guiGraphics.drawCenteredString", "guiGraphics.centeredText")
+            replace("popPose()", "popMatrix()")
+            replace("pushPose()", "pushMatrix()")
         }
     }
 }

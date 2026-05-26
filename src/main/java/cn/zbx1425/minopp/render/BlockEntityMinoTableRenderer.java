@@ -56,7 +56,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
 
         VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/deck.png")));
 
-        poseStack.pushPose();
+        poseStack.pushMatrix();
         poseStack.translate(0.5, 0.94, 0.5);
         poseStack.scale(0.4f, 0.3f, 0.4f);
         BakedModel model = itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0);
@@ -67,15 +67,15 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
                     poseStack, multiBufferSource, packedLight, packedOverlay, model);
         }
-        poseStack.popPose();
+        poseStack.popMatrix();
 
-        poseStack.pushPose();
+        poseStack.pushMatrix();
         poseStack.translate(1, 0.9 + 1 / 16f, 1);
         poseStack.scale(0.2f, 0.2f, 0.2f);
         poseStack.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
         Random discardRandom = new Random(1);
         for (int ci = 0; ci <= blockEntity.game.discardDeck.size(); ci++) {
-            poseStack.pushPose();
+            poseStack.pushMatrix();
             poseStack.translate(discardRandom.nextFloat() * 6 - 3, discardRandom.nextFloat() * 6 - 3, ci / 32f);
             poseStack.mulPose(Axis.ZP.rotation(discardRandom.nextFloat() * 2 * (float)Math.PI));
 
@@ -134,9 +134,9 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                 font.drawInBatch(component, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
                 font.drawInBatch(component, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
             }
-            poseStack.popPose();
+            poseStack.popMatrix();
         }
-        poseStack.popPose();
+        poseStack.popMatrix();
     }
 
     @Override

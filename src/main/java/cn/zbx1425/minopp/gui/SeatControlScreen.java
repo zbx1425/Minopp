@@ -58,8 +58,8 @@ public class SeatControlScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         if (minecraft.level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
             startButton.active = tableEntity.game == null && tableEntity.getPlayersList().size() >= 2;
@@ -72,20 +72,20 @@ public class SeatControlScreen extends Screen {
             guiGraphics.fill(xOff + MARGIN, yOff + MARGIN, xOff + PANEL_WIDTH + MARGIN, yOff + PANEL_HEIGHT + MARGIN, 0x99000000);
             guiGraphics.fill(xOff, yOff, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0xFF313031);
             guiGraphics.fill(xOff, yOff + PANEL_HEIGHT - BTN_HEIGHT, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0x66546E7A);
-            guiGraphics.drawCenteredString(font, title, width / 2, yOff + MARGIN, 0xFFFFFFFF);
+            guiGraphics.centeredText(font, title, width / 2, yOff + MARGIN, 0xFFFFFFFF);
 
             guiGraphics.fill(width / 2 - BTN_HEIGHT / 2, yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN,
                     width / 2 + BTN_HEIGHT / 2, yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT, 0xFF00492e);
 
-            guiGraphics.drawCenteredString(font, getPlayerName(tableEntity, Direction.NORTH),
+            guiGraphics.centeredText(font, getPlayerName(tableEntity, Direction.NORTH),
                     width / 2, yOff + MARGIN + 9 + MARGIN + MARGIN, 0xFFAAAAAA);
-            guiGraphics.drawString(font, getPlayerName(tableEntity, Direction.WEST),
+            guiGraphics.text(font, getPlayerName(tableEntity, Direction.WEST),
                     width / 2 - MARGIN - BTN_HEIGHT / 2 - font.width(getPlayerName(tableEntity, Direction.WEST)),
                     yOff + MARGIN + 9 + MARGIN  + MARGIN + 9 + MARGIN + BTN_HEIGHT / 2 - 9 / 2, 0xFFAAAAAA);
-            guiGraphics.drawString(font, getPlayerName(tableEntity, Direction.EAST),
+            guiGraphics.text(font, getPlayerName(tableEntity, Direction.EAST),
                     width / 2 + MARGIN + BTN_HEIGHT / 2,
                     yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT / 2 - 9 / 2, 0xFFAAAAAA);
-            guiGraphics.drawCenteredString(font, getPlayerName(tableEntity, Direction.SOUTH),
+            guiGraphics.centeredText(font, getPlayerName(tableEntity, Direction.SOUTH),
                     width / 2, yOff + MARGIN + 9 + MARGIN + MARGIN + 9 + MARGIN + BTN_HEIGHT + MARGIN, 0xFFAAAAAA);
         }
     }

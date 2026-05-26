@@ -3,6 +3,8 @@ package cn.zbx1425.minopp.network;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.platform.ClientPlatform;
+import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -21,12 +23,12 @@ public class C2SAutoPlayerConfigPacket {
         CompoundTag config = shouldDelete ? null : packet.readNbt();
 
         server.execute(() -> {
-            if (!player.hasPermissions(2)) return; // Re-check permission on server side
+            if (!PlayerShim.hasPermissions(player, 2)) return; // Re-check permission on server side
             if (player.level().getEntity(entityId) instanceof EntityAutoPlayer autoPlayer) {
                 if (shouldDelete) {
                     autoPlayer.remove(Entity.RemovalReason.KILLED);
                 } else {
-                    autoPlayer.readConfigFromTag(config);
+                    NbtIOShim.topUpOne(autoPlayer::readConfigFromTag, config);
                 }
             }
         });
@@ -37,7 +39,7 @@ public class C2SAutoPlayerConfigPacket {
             FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
             packet.writeInt(autoPlayer.getId());
             packet.writeBoolean(false); // Not deleting
-            packet.writeNbt(autoPlayer.writeConfigToTag());
+            packet.writeNbt(NbtIOShim.pourOne(autoPlayer::writeConfigToTag));
             ClientPlatform.sendPacketToServer(ID, packet);
         }
 

@@ -6,6 +6,7 @@ import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.ClientPlatform;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -24,7 +25,7 @@ public class C2SSeatControlPacket {
     public static void handleC2S(MinecraftServer server, ServerPlayer player, FriendlyByteBuf packet) {
         BlockPos gamePos = packet.readBlockPos();
         int action = packet.readInt();
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = PlayerShim.serverLevel(player);
         server.execute(() -> {
             if (level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
                 List<CardPlayer> playersList = tableEntity.getPlayersList();
@@ -34,7 +35,7 @@ public class C2SSeatControlPacket {
 //                    return;
 //                }
                 if (tableEntity.demo) {
-                    player.displayClientMessage(Component.translatable("game.minopp.play.table_in_demo"), true);
+                    PlayerShim.sendSystemMessage(player, Component.translatable("game.minopp.play.table_in_demo"));
                     return;
                 }
                 // Start or end the game
@@ -42,7 +43,7 @@ public class C2SSeatControlPacket {
                     case 1 -> {
                         if (tableEntity.game == null) {
                             if (playersList.size() < 2) {
-                                player.displayClientMessage(Component.translatable("game.minopp.play.no_enough_player"), true);
+                                PlayerShim.sendSystemMessage(player, Component.translatable("game.minopp.play.no_enough_player"));
                                 return;
                             }
                             tableEntity.startGame(cardPlayer);

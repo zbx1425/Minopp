@@ -4,6 +4,8 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.gui.AutoPlayerScreen;
 import cn.zbx1425.minopp.platform.ServerPlatform;
+import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -32,7 +34,7 @@ public class S2CAutoPlayerScreenPacket {
     public static void sendS2C(ServerPlayer target, EntityAutoPlayer autoPlayer) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
         packet.writeInt(autoPlayer.getId());
-        packet.writeNbt(autoPlayer.writeConfigToTag());
+        packet.writeNbt(NbtIOShim.pourOne(autoPlayer::writeConfigToTag));
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
     }
 
@@ -44,12 +46,12 @@ public class S2CAutoPlayerScreenPacket {
 
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getEntity(entityId) instanceof EntityAutoPlayer autoPlayer) {
-                    autoPlayer.readConfigFromTag(config);
+                    NbtIOShim.topUpOne(autoPlayer::readConfigFromTag, config);
                     if (isYaclAvailable()) {
                         Minecraft.getInstance().setScreen(AutoPlayerScreen.create(autoPlayer, Minecraft.getInstance().screen));
                     } else {
-                        Minecraft.getInstance().player.displayClientMessage(
-                            Component.translatable("gui.minopp.bot_config.yacl_missing"), false);
+                        PlayerShim.sendSystemMessage(Minecraft.getInstance().player,
+                            Component.translatable("gui.minopp.bot_config.yacl_missing"));
                     }
                 }
             });

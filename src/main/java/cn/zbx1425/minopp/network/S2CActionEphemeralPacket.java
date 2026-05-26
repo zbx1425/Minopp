@@ -13,8 +13,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.Objects;
-
 public class S2CActionEphemeralPacket {
 
     public static final Identifier ID = Mino.id("action_ephemeral");
@@ -22,7 +20,7 @@ public class S2CActionEphemeralPacket {
     public static void sendS2C(ServerPlayer target, BlockPos gamePos, ActionMessage message) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
         packet.writeBlockPos(gamePos);
-        packet.writeNbt(NbtIOShim.fillOne(message::nbtWriteTo));
+        packet.writeNbt(NbtIOShim.pourOne(message::nbtWriteTo));
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
     }
 
@@ -30,7 +28,7 @@ public class S2CActionEphemeralPacket {
 
         public static void handleS2C(FriendlyByteBuf packet) {
             BlockPos gamePos = packet.readBlockPos();
-            ActionMessage message = NbtIOShim.pourOne(ActionMessage::new, packet.readNbt());
+            ActionMessage message = NbtIOShim.fillOne(ActionMessage::new, packet.readNbt());
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
                     tableEntity.clientMessageList.add(new Pair<>(message, System.currentTimeMillis() + 8000));

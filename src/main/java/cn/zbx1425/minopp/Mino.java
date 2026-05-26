@@ -17,6 +17,7 @@ import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import cn.zbx1425.minopp.platform.ServerPlatform;
+import cn.zbx1425.minopp.platform.multiver.WorldShim;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -104,7 +105,7 @@ public final class Mino {
     }
 
     public static void onPlayerAttackEntity(Entity targetMaybePlayer, Player srcPlayer) {
-        if (!srcPlayer.level().isClientSide) return;
+        if (!WorldShim.isClientSide(srcPlayer.level())) return;
         BlockPos gamePos = ItemHandCards.getHandCardGamePos(srcPlayer);
         if (gamePos == null) return;
         if (srcPlayer.level().getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {

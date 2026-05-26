@@ -7,7 +7,11 @@ import cn.zbx1425.minopp.game.*;
 import cn.zbx1425.minopp.gui.AutoPlayerScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CAutoPlayerScreenPacket;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
+import cn.zbx1425.minopp.platform.multiver.WorldShim;
+import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -15,6 +19,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -37,6 +42,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import net.minecraft.server.level.ServerPlayer;
+
+//? if >=26.1 {
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+//? } else {
+/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
+ *///? }
 
 import java.util.List;
 import java.util.Optional;
@@ -70,7 +82,7 @@ public class EntityAutoPlayer extends LivingEntity {
     public void tick() {
         super.tick();
 
-        if (level().isClientSide) {
+        if (WorldShim.isClientSide(level())) {
             if (!clientSkinGameProfileValidFor.equals(entityData.get(SKIN))) {
                 clientSkinGameProfileValidFor = entityData.get(SKIN);
                 try {
@@ -156,7 +168,7 @@ public class EntityAutoPlayer extends LivingEntity {
                         }
                     }
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
-                    ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, getServer());
+                    ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer());
                     tableEntity.handleActionResult(result, realPlayer, null);
                     gameEndTime = -1;
                 } else {
@@ -189,14 +201,14 @@ public class EntityAutoPlayer extends LivingEntity {
 
     @Override
     public @NotNull InteractionResult interact(Player player, InteractionHand hand) {
-        if (level().isClientSide) {
-            if (player.hasPermissions(2) && player.isShiftKeyDown()) {
+        if (WorldShim.isClientSide(level())) {
+            if (PlayerShim.hasPermissions(player, 2) && player.isShiftKeyDown()) {
                 return InteractionResult.SUCCESS;
             } else if (getActive() && !player.isShiftKeyDown()) {
                 return InteractionResult.SUCCESS;
             }
         } else {
-            if (player.hasPermissions(2) && player.isShiftKeyDown()) {
+            if (PlayerShim.hasPermissions(player, 2) && player.isShiftKeyDown()) {
                 S2CAutoPlayerScreenPacket.sendS2C((ServerPlayer) player, this);
                 return InteractionResult.SUCCESS;
             } else if (!getActive() && !player.isShiftKeyDown()) {
@@ -246,29 +258,30 @@ public class EntityAutoPlayer extends LivingEntity {
         return isRemoved() || !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
-    @Override
+    //? if <26.1 {
+    /*@Override
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
-        if (tablePos != null) compound.putLong("TablePos", tablePos.asLong());
-        if (cardPlayer != null) compound.put("CardPlayer", cardPlayer.toTag());
-        if (!entityData.get(HAND_STACK).isEmpty()) compound.put("HandStack", entityData.get(HAND_STACK).save(level().registryAccess(), new CompoundTag()));
-        writeConfigToTag(compound); // Write config values directly to maintain backward compatibility
+    *///? } else if >= 26.1 {
+    protected void addAdditionalSaveData(final ValueOutput output) {
+        super.addAdditionalSaveData(output);
+    //? }
+        if (tablePos != null) output.putLong("TablePos", tablePos.asLong());
+        if (cardPlayer != null) cardPlayer.nbtWriteTo(output.child("CardPlayer"));
+        writeConfigToTag(output);
     }
 
-    @Override
+    //? if <26.1 {
+    /*@Override
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
-        if (compound.contains("TablePos", CompoundTag.TAG_LONG)) {
-            tablePos = BlockPos.of(compound.getLong("TablePos"));
-        } else {
-            tablePos = null;
-        }
-        if (compound.contains("CardPlayer", CompoundTag.TAG_COMPOUND)) {
-            cardPlayer = new CardPlayer(compound.getCompound("CardPlayer"));
-        } else {
-            cardPlayer = null;
-        }
-        readConfigFromTag(compound); // Read config values directly from root tag
+    *///? } else if >=26.1 {
+    protected void readAdditionalSaveData(final ValueInput input) {
+        super.readAdditionalSaveData(input);
+    //? }
+        tablePos = input.getLong("TablePos").map(BlockPos::of).orElse(null);
+        cardPlayer = input.child("CardPlayer").map(CardPlayer::new).orElse(null);
+        readConfigFromTag(input);
 
         // Try fix hand stack
         if (tablePos != null && cardPlayer != null) {
@@ -327,35 +340,32 @@ public class EntityAutoPlayer extends LivingEntity {
         entityData.set(SKIN, skin);
     }
 
-    public CompoundTag writeConfigToTag() {
-        CompoundTag tag = new CompoundTag();
-        writeConfigToTag(tag);
-        return tag;
-    }
-
-    public void writeConfigToTag(CompoundTag tag) {
-        tag.putBoolean("Active", getActive());
-        tag.putBoolean("NoPush", getNoPush());
-        tag.putString("Skin", getSkin());
-        tag.put("AI", autoPlayer.toConfigNbt());
+    public void writeConfigToTag(ValueOutput output) {
+        output.putBoolean("Active", getActive());
+        output.putBoolean("NoPush", getNoPush());
+        output.putString("Skin", getSkin());
+        autoPlayer.writeConfigNbt(output.child("AI"));
 
         Component component = this.getCustomName();
         if (component != null) {
-            tag.putString("CustomName", Component.Serializer.toJson(component, registryAccess()));
+            output.putString("CustomName", ComponentSerialization.CODEC
+                .encodeStart(JsonOps.INSTANCE, component).getOrThrow().toString());
         }
     }
 
-    public void readConfigFromTag(CompoundTag tag) {
-        setActive(tag.getBoolean("Active"));
-        setNoPush(tag.getBoolean("NoPush"));
-        setSkin(tag.getString("Skin"));
-        autoPlayer.useConfigNbt(tag.getCompound("AI"));
+    public void readConfigFromTag(ValueInput input) {
+        setActive(input.getBooleanOr("Active", false));
+        setNoPush(input.getBooleanOr("NoPush", false));
+        setSkin(input.getStringOr("Skin", ""));
+        autoPlayer.useConfigNbt(input.childOrEmpty("AI"));
 
-        if (tag.contains("CustomName", Tag.TAG_STRING)) {
+        input.getString("CustomName").ifPresent(customName -> {
             try {
-                this.setCustomName(Component.Serializer.fromJson(tag.getString("CustomName"), registryAccess()));
+                this.setCustomName(ComponentSerialization.CODEC.parse(
+                    JsonOps.INSTANCE, JsonParser.parseString(input.getStringOr("CustomName", "")))
+                    .getOrThrow());
             } catch (Exception ignored) { }
-        }
+        });
     }
 
     private static class Client {

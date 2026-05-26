@@ -3,6 +3,13 @@ package cn.zbx1425.minopp.game;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 
+//? if >=26.1 {
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+//? } else {
+/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
+ *///? }
+
 import java.util.Random;
 
 public class AutoPlayer {
@@ -89,21 +96,19 @@ public class AutoPlayer {
         return mostCommonSuit;
     }
 
-    public void useConfigNbt(CompoundTag aiConfig) {
-        aiNoWin = aiConfig.getBoolean("NoWin");
-        aiNoPlayerDraw = aiConfig.getBoolean("NoPlayerDraw");
-        aiForgetChance = aiConfig.contains("ForgetChance", CompoundTag.TAG_FLOAT) ? aiConfig.getFloat("ForgetChance") : 0.2f;
-        aiNoDelay = aiConfig.getByte("NoDelay");
-        aiStartGame = aiConfig.getBoolean("StartGame");
+    public void useConfigNbt(ValueInput aiConfig) {
+        aiNoWin = aiConfig.getBooleanOr("NoWin", false);
+        aiNoPlayerDraw = aiConfig.getBooleanOr("NoPlayerDraw", false);
+        aiForgetChance = aiConfig.getFloatOr("ForgetChance", 0.2f);
+        aiNoDelay = aiConfig.getByteOr("NoDelay", (byte)0);
+        aiStartGame = aiConfig.getBooleanOr("StartGame", false);
     }
 
-    public CompoundTag toConfigNbt() {
-        CompoundTag aiConfig = new CompoundTag();
+    public void writeConfigNbt(ValueOutput aiConfig) {
         aiConfig.putBoolean("NoWin", aiNoWin);
         aiConfig.putBoolean("NoPlayerDraw", aiNoPlayerDraw);
         aiConfig.putFloat("ForgetChance", aiForgetChance);
         aiConfig.putByte("NoDelay", aiNoDelay);
         aiConfig.putBoolean("StartGame", aiStartGame);
-        return aiConfig;
     }
 }

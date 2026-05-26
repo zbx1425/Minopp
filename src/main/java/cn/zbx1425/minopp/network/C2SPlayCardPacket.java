@@ -7,6 +7,8 @@ import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.ClientPlatform;
+import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -25,13 +27,13 @@ public class C2SPlayCardPacket {
 
     public static void handleC2S(MinecraftServer server, ServerPlayer player, FriendlyByteBuf packet) {
         BlockPos gamePos = packet.readBlockPos();
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = PlayerShim.serverLevel(player);
         UUID playerUuid = packet.readUUID();
         int actionType = packet.readInt();
 
         switch (actionType) {
             case 0 -> {
-                final Card card = new Card(Objects.requireNonNull(packet.readNbt()));
+                final Card card = NbtIOShim.fillOne(Card::new, packet.readNbt());
                 final int wildSelectionOrdinal = packet.readInt();
                 final boolean shout = packet.readBoolean();
                 server.execute(() -> {
@@ -76,7 +78,7 @@ public class C2SPlayCardPacket {
             packet.writeBlockPos(gamePos);
             packet.writeUUID(player.uuid);
             packet.writeInt(0);
-            packet.writeNbt(card.toTag());
+            packet.writeNbt(NbtIOShim.pourOne(card::nbtWriteTo));
             packet.writeInt(wildSelection == null ? -1 : wildSelection.ordinal());
             packet.writeBoolean(shout);
             ClientPlatform.sendPacketToServer(ID, packet);

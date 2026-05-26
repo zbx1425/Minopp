@@ -63,7 +63,8 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         if (tableEntity.game == null) {
             renderGameInactive(guiGraphics, deltaTracker, tableEntity);
             TurnDeadMan.setOutsideGame();
-            zoomAnimationProgress = zoomAnimationTarget = 0;
+            zoomAnimationProgress = 0;
+            zoomAnimationTarget = 0;
         } else {
             TurnDeadMan.tick(tableEntity.game, deltaTracker);
             if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
@@ -175,9 +176,9 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                     int msgWidth = Math.max(font.width(cursorMessage), isShouting ? font.width(shoutMessage) : 0);
                     int msgHeight = isShouting ? font.lineHeight * 2 : font.lineHeight;
                     guiGraphics.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 3, highlight ? 0x80AAAA66 : 0x80000000);
-                    guiGraphics.drawString(font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                    guiGraphics.text(font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
                     if (isShouting) {
-                        guiGraphics.drawString(font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                        guiGraphics.text(font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
                     }
                 }
             }
@@ -190,12 +191,12 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             boolean highlight = Minecraft.getInstance().level.getGameTime() % 3L < 2L;
             int msgWidth = font.width(deadManMessage);
             int msgHeight = font.lineHeight;
-            guiGraphics.pose().pushPose();
+            guiGraphics.pose().pushMatrix();
             guiGraphics.pose().translate((float)(width / 2), (float)(height / 2 + 12), 0);
             guiGraphics.pose().scale(1.5f, 1.5f, 1);
             guiGraphics.fill(-msgWidth / 2 - 4, 0, msgWidth / 2 + 4, msgHeight + 4, highlight ? 0x80AAAA66 : 0x80000000);
-            guiGraphics.drawString(font, deadManMessage, -msgWidth / 2, 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
-            guiGraphics.pose().popPose();
+            guiGraphics.text(font, deadManMessage, -msgWidth / 2, 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+            guiGraphics.pose().popMatrix();
         }
     }
     
@@ -205,7 +206,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         int var10002 = y ;
         int var10003 = x + font.width(component) + 2;
         guiGraphics.fill(var10001, var10002, var10003, y + font.lineHeight, FastColor.ARGB32.multiply(i, color));
-        guiGraphics.drawString(font, component, x, y, color, true);
+        guiGraphics.text(font, component, x, y, color, true);
     }
 
     private static final Identifier ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
@@ -247,7 +248,9 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         }
         handCardCurrentXOff.keySet().removeIf(hash -> !handCardHashes.contains(hash));
 
-        RenderSystem.enableBlend();
+        //? if <26.1
+        //RenderSystem.enableBlend();
+
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
         int handSize = realPlayer.hand.size();
@@ -265,7 +268,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             if (i == clientHandIndex) {
                 Card card = realPlayer.hand.get(i);
                 Component cardName = card.getDisplayName();
-                guiGraphics.drawString(font, cardName, x - font.width(cardName) - 10, y + 10, 0xFFFFFFDD);
+                guiGraphics.text(font, cardName, x - font.width(cardName) - 10, y + 10, 0xFFFFFFDD);
             }
             guiGraphics.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0xFF222222);
             guiGraphics.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
@@ -286,7 +289,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
 //            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit.color);
             guiGraphics.blit(ATLAS_LOCATION, x + 5, y + 5, CARD_WIDTH - 10, CARD_HEIGHT - 10,
                     cardU + 1, cardV + 1, cardUW - 2, cardVH - 2, 256, 128);
-            guiGraphics.pose().pushPose();
+            guiGraphics.pose().pushMatrix();
             guiGraphics.pose().translate(x + 7, y + 7, 0);
             guiGraphics.pose().scale(1.5f, 1.5f, 1);
             if (card.family == Card.Family.REVERSE) {
@@ -300,16 +303,18 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                         .withStyle(Style.EMPTY.withFont(Identifier.withDefaultNamespace("include/default")));
                 // blend color with shadowAlpha
                 int colorA = (int)(0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
-                guiGraphics.drawString(font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
+                guiGraphics.text(font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
             }
 
-            guiGraphics.pose().popPose();
-            guiGraphics.pose().pushPose();
+            guiGraphics.pose().popMatrix();
+            guiGraphics.pose().pushMatrix();
             guiGraphics.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0x222222 | ((int)(0xFF * shadowAlpha) << 24));
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
         }
 
-        RenderSystem.disableBlend();
+        //? if <26.1
+        //RenderSystem.disableBlend();
+        
         return true;
     }
 
