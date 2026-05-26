@@ -6,7 +6,7 @@ import com.github.tartaricacid.touhoulittlemaid.api.task.IMaidTask;
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.item.ItemStack;
@@ -19,8 +19,8 @@ import static cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.task.FindMino
 
 public class MinoppTask implements IMaidTask {
     @Override
-    public @NotNull ResourceLocation getUid() {
-        return ResourceLocation.fromNamespaceAndPath(Mino.MOD_ID,"minopp_task");
+    public @NotNull Identifier getUid() {
+        return Identifier.fromNamespaceAndPath(Mino.MOD_ID,"minopp_task");
     }
 
     @Override

@@ -4,7 +4,7 @@ import cn.zbx1425.minopp.effect.EffectEvent;
 import cn.zbx1425.minopp.effect.SoundEffectEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
 import java.util.ArrayList;
@@ -71,12 +71,12 @@ public class ActionReport {
 
     private static final int SOUND_RANGE = 16;
 
-    public ActionReport sound(ResourceLocation sound, int timeOffset, CardPlayer target) {
+    public ActionReport sound(Identifier sound, int timeOffset, CardPlayer target) {
         effects.add(new SoundEffectEvent(timeOffset, Optional.of(target.uuid), SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE)));
         return this;
     }
 
-    public ActionReport sound(ResourceLocation sound, int timeOffset) {
+    public ActionReport sound(Identifier sound, int timeOffset) {
         effects.add(new SoundEffectEvent(timeOffset, Optional.empty(), SoundEvent.createFixedRangeEvent(sound, SOUND_RANGE)));
         return this;
     }

@@ -136,6 +136,10 @@ stonecutter {
             direction = eval(current.version, ">=1.21.11")
             replace("import net.minecraft.Util;", "import net.minecraft.util.Util;")
         }
+        string {
+            direction = eval(current.version, ">=26.1")
+            replace("GuiGraphics", "GuiGraphicsExtractor")
+        }
     }
 }
 

@@ -10,14 +10,14 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Objects;
 
 public class S2CActionEphemeralPacket {
 
-    public static final ResourceLocation ID = Mino.id("action_ephemeral");
+    public static final Identifier ID = Mino.id("action_ephemeral");
 
     public static void sendS2C(ServerPlayer target, BlockPos gamePos, ActionMessage message) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());

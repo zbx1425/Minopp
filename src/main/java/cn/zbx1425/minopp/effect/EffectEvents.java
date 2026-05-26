@@ -1,7 +1,7 @@
 package cn.zbx1425.minopp.effect;
 
 import cn.zbx1425.minopp.Mino;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Map;
 
@@ -15,7 +15,7 @@ public class EffectEvents {
     public static final EffectEvent.Type<GrantRewardEffectEvent> GRANT_REWARD = new EffectEvent.Type<>(Mino.id("grant_reward"), GrantRewardEffectEvent.STREAM_CODEC);
     public static final EffectEvent.Type<SeatActionTakenEffectEvent> SEAT_ACTION_TAKEN = new EffectEvent.Type<>(Mino.id("seat_action_taken"), SeatActionTakenEffectEvent.STREAM_CODEC);
 
-    public static final Map<ResourceLocation, EffectEvent.Type<?>> REGISTRY = Map.of(
+    public static final Map<Identifier, EffectEvent.Type<?>> REGISTRY = Map.of(
             SOUND.id(), SOUND,
             PLAYER_FIREWORK.id(), PLAYER_FIREWORK,
             PLAYER_GLOW.id(), PLAYER_GLOW,

@@ -9,12 +9,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 public class S2CAutoPlayerScreenPacket {
 
-    public static final ResourceLocation ID = Mino.id("auto_player_screen");
+    public static final Identifier ID = Mino.id("auto_player_screen");
     private static Boolean yaclAvailable = null;
 
     private static boolean isYaclAvailable() {

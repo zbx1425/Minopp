@@ -6,14 +6,14 @@ import cn.zbx1425.minopp.platform.ClientPlatform;
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 public class C2SAutoPlayerConfigPacket {
 
-    public static final ResourceLocation ID = Mino.id("auto_player_config");
+    public static final Identifier ID = Mino.id("auto_player_config");
 
     public static void handleC2S(MinecraftServer server, ServerPlayer player, FriendlyByteBuf packet) {
         int entityId = packet.readInt();

@@ -10,6 +10,8 @@ import cn.zbx1425.minopp.gui.WildSelectionScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.mixin.KeyMappingAccessor;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
+import cn.zbx1425.minopp.platform.multiver.WorldShim;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -20,7 +22,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
+//? if <26.1
+//import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -57,8 +60,9 @@ public class BlockMinoTable extends Block implements EntityBlock {
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
-        if (level.isClientSide && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
+    //~ if >=26.1 'ItemInteractionResult' -> 'InteractionResult' {
+    protected @NotNull InteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+        if (WorldShim.isClientSide(level) && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockPos corePos = getCore(blockState, blockPos);
             ItemHandCards.CardGameBindingComponent gameBinding = itemStack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
             int handIndex = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
@@ -67,13 +71,13 @@ public class BlockMinoTable extends Block implements EntityBlock {
             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                 if (tableEntity.game != null) {
                     if (gameBinding == null || !gameBinding.tablePos().equals(corePos)) {
-                        player.displayClientMessage(Component.translatable("game.minopp.play.no_player"), true);
-                        return ItemInteractionResult.FAIL;
+                        PlayerShim.sendSystemMessage(player, Component.translatable("game.minopp.play.no_player"));
+                        return InteractionResult.FAIL;
                     }
                     TurnDeadMan.pedal();
 
                     CardPlayer realPlayer = tableEntity.game.deAmputate(playerWithoutHand);
-                    if (realPlayer == null) return ItemInteractionResult.FAIL;
+                    if (realPlayer == null) return InteractionResult.FAIL;
                     if (Client.isCursorHittingPile()) {
                         C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
                     } else {
@@ -85,12 +89,13 @@ public class BlockMinoTable extends Block implements EntityBlock {
                                     null, Client.isShoutModifierHeld());
                         }
                     }
-                    return ItemInteractionResult.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 }
             }
         }
         return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
     }
+    //~ }
 
     public static class Client {
 
@@ -152,10 +157,10 @@ public class BlockMinoTable extends Block implements EntityBlock {
         if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
             CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
             if (tableEntity.demo) {
-                player.displayClientMessage(Component.translatable("game.minopp.play.table_in_demo"), true);
+                PlayerShim.sendSystemMessage(player, Component.translatable("game.minopp.play.table_in_demo"));
                 return InteractionResult.FAIL;
             }
-            if (level.isClientSide) {
+            if (WorldShim.isClientSide(level)) {
                 Client.openSeatControlScreen(corePos);
                 return InteractionResult.SUCCESS;
             }
@@ -186,7 +191,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
     @Override
     public void setPlacedBy(Level level, BlockPos blockPos, BlockState blockState, @Nullable LivingEntity livingEntity, ItemStack itemStack) {
         super.setPlacedBy(level, blockPos, blockState, livingEntity, itemStack);
-        if (!level.isClientSide) {
+        if (!WorldShim.isClientSide(level)) {
             for (int i = 1; i < 4; i++) {
                 TablePartType thisPart = TablePartType.values()[i];
                 BlockPos thisPartPos = blockPos.offset(thisPart.xOff, 0, thisPart.zOff);
@@ -210,7 +215,7 @@ public class BlockMinoTable extends Block implements EntityBlock {
 
     @Override
     public @NotNull BlockState playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
-        if (!level.isClientSide && player.isCreative()) {
+        if (!WorldShim.isClientSide(level) && player.isCreative()) {
             BlockPos firstPartPos = getCore(blockState, blockPos);
             for (int i = 0; i < 4; i++) {
                 TablePartType thisPart = TablePartType.values()[i];

@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.client.resources.SkinManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
@@ -31,13 +31,13 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
     }
 
     @Override
-    public ResourceLocation getTextureLocation(EntityAutoPlayer entity) {
+    public Identifier getTextureLocation(EntityAutoPlayer entity) {
         Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
             return skinManager.getInsecureSkin(result.get()).texture();
         }
-        return ResourceLocation.withDefaultNamespace("textures/entity/player/slim/alex.png");
+        return Identifier.withDefaultNamespace("textures/entity/player/slim/alex.png");
     }
 
     @Override

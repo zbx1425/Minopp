@@ -23,7 +23,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -42,8 +42,8 @@ public final class Mino {
     public static final String MOD_ID = "minopp";
     public static final Logger LOGGER = LoggerFactory.getLogger("Mino++");
 
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 
     public static final RegistryObject<Block> BLOCK_MINO_TABLE = new RegistryObject<>(BlockMinoTable::new);
@@ -66,7 +66,7 @@ public final class Mino {
 
     public static void init(RegistriesWrapper registries) {
         final ResourceKey<CreativeModeTab> FUNCTIONAL_BLOCKS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
-                ResourceLocation.withDefaultNamespace("functional_blocks"));
+                Identifier.withDefaultNamespace("functional_blocks"));
         registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE, FUNCTIONAL_BLOCKS);
         registries.registerBlockEntityType("mino_table", BLOCK_ENTITY_TYPE_MINO_TABLE);
         registries.registerItem("hand_cards", ITEM_HAND_CARDS);

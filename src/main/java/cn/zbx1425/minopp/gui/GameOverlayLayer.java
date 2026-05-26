@@ -13,7 +13,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -21,7 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,7 +40,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
     private final Long2FloatArrayMap handCardCurrentXOff = new Long2FloatArrayMap();
 
     @Override
-    public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+    public void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
         LocalPlayer player = Minecraft.getInstance().player;
         BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
         ClientLevel level = Minecraft.getInstance().level;
@@ -77,7 +77,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         MinoClient.handCardOverlayActive = renderHandCards(guiGraphics, deltaTracker);
     }
 
-    private void renderGameInactive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    private void renderGameInactive(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
@@ -89,7 +89,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
     }
 
-    private void renderGameActive(GuiGraphics guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    private void renderGameActive(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
@@ -199,7 +199,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         }
     }
     
-    private static void drawStringWithBackdrop(GuiGraphics guiGraphics, Font font, Component component, int x, int y, int color) {
+    private static void drawStringWithBackdrop(GuiGraphicsExtractor guiGraphics, Font font, Component component, int x, int y, int color) {
         int i = (int)(0.4 * 255.0F) << 24 & -16777216;
         int var10001 = x - 2;
         int var10002 = y ;
@@ -208,13 +208,13 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
         guiGraphics.drawString(font, component, x, y, color, true);
     }
 
-    private static final ResourceLocation ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
+    private static final Identifier ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
     /**
      * Render hand cards on the screen
      * @return whether the hand cards are rendered
      */
-    private boolean renderHandCards(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+    private boolean renderHandCards(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
         if (Minecraft.getInstance().options.hideGui) return false;
 
         Font font = Minecraft.getInstance().font;
@@ -297,7 +297,7 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
                 guiGraphics.blit(ATLAS_LOCATION, 0, 0, 228, 0, 10, 10, 256, 128);
             } else {
                 Component cardName = card.getCardFaceName().copy()
-                        .withStyle(Style.EMPTY.withFont(ResourceLocation.withDefaultNamespace("include/default")));
+                        .withStyle(Style.EMPTY.withFont(Identifier.withDefaultNamespace("include/default")));
                 // blend color with shadowAlpha
                 int colorA = (int)(0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
                 guiGraphics.drawString(font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);

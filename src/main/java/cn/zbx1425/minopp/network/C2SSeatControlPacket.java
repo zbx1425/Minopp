@@ -10,7 +10,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,7 +19,7 @@ import java.util.List;
 
 public class C2SSeatControlPacket {
 
-    public static final ResourceLocation ID = Mino.id("seat_control");
+    public static final Identifier ID = Mino.id("seat_control");
 
     public static void handleC2S(MinecraftServer server, ServerPlayer player, FriendlyByteBuf packet) {
         BlockPos gamePos = packet.readBlockPos();

@@ -4,7 +4,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 //? if fabric {
 import cn.zbx1425.minopp.fabric.MinoFabric;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
@@ -26,7 +26,7 @@ public class ClientPlatform {
         KeyBindingHelper.registerKeyBinding(keyMapping.get());
     }
 
-    public static void registerNetworkReceiver(ResourceLocation resourceLocation, Consumer<FriendlyByteBuf> consumer) {
+    public static void registerNetworkReceiver(Identifier resourceLocation, Consumer<FriendlyByteBuf> consumer) {
         MinoFabric.PACKET_REGISTRY.registerNetworkReceiverS2C(resourceLocation, consumer);
     }
 
@@ -42,7 +42,7 @@ public class ClientPlatform {
         ClientTickEvents.START_CLIENT_TICK.register(consumer::accept);
     }
 
-    public static void sendPacketToServer(ResourceLocation id, FriendlyByteBuf packet) {
+    public static void sendPacketToServer(Identifier id, FriendlyByteBuf packet) {
         MinoFabric.PACKET_REGISTRY.sendC2S(id, packet);
     }
 
@@ -56,7 +56,7 @@ public class ClientPlatform {
         KEY_MAPPINGS.add(keyMapping);
     }
 
-    public static void registerNetworkReceiver(ResourceLocation resourceLocation, Consumer<FriendlyByteBuf> consumer) {
+    public static void registerNetworkReceiver(Identifier resourceLocation, Consumer<FriendlyByteBuf> consumer) {
         MinoNeoForge.PACKET_REGISTRY.registerNetworkReceiverS2C(resourceLocation, consumer);
     }
 
@@ -68,7 +68,7 @@ public class ClientPlatform {
 //        ClientTickEvent.CLIENT_PRE.register(consumer::accept);
     }
 
-    public static void sendPacketToServer(ResourceLocation id, FriendlyByteBuf packet) {
+    public static void sendPacketToServer(Identifier id, FriendlyByteBuf packet) {
         packet.readerIndex(0);
         MinoNeoForge.PACKET_REGISTRY.sendC2S(id, packet);
     }

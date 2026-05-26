@@ -7,7 +7,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
@@ -40,11 +40,11 @@ public class ServerPlatform {
         return BlockEntityType.Builder.of(supplier::supplier, block).build(null);
     }
 
-    public static void registerPacket(ResourceLocation resourceLocation) {
+    public static void registerPacket(Identifier resourceLocation) {
         MinoFabric.PACKET_REGISTRY.registerPacket(resourceLocation);
     }
 
-    public static void registerNetworkReceiver(ResourceLocation resourceLocation, ServerPlatform.C2SPacketHandler packetCallback) {
+    public static void registerNetworkReceiver(Identifier resourceLocation, ServerPlatform.C2SPacketHandler packetCallback) {
         MinoFabric.PACKET_REGISTRY.registerNetworkReceiverC2S(resourceLocation, packetCallback);
     }
 
@@ -72,7 +72,7 @@ public class ServerPlatform {
         ServerTickEvents.START_SERVER_TICK.register(consumer::accept);
     }
 
-    public static void sendPacketToPlayer(ServerPlayer player, ResourceLocation id, FriendlyByteBuf packet) {
+    public static void sendPacketToPlayer(ServerPlayer player, Identifier id, FriendlyByteBuf packet) {
         MinoFabric.PACKET_REGISTRY.sendS2C(player, id, packet);
     }
 
@@ -89,11 +89,11 @@ public class ServerPlatform {
         return BlockEntityType.Builder.of(supplier::supplier, block).build(null);
     }
 
-    public static void registerPacket(ResourceLocation resourceLocation) {
+    public static void registerPacket(Identifier resourceLocation) {
         MinoNeoForge.PACKET_REGISTRY.registerPacket(resourceLocation);
     }
 
-    public static void registerNetworkReceiver(ResourceLocation resourceLocation, ServerPlatform.C2SPacketHandler packetCallback) {
+    public static void registerNetworkReceiver(Identifier resourceLocation, ServerPlatform.C2SPacketHandler packetCallback) {
         MinoNeoForge.PACKET_REGISTRY.registerNetworkReceiverC2S(resourceLocation, packetCallback);
     }
 
@@ -118,7 +118,7 @@ public class ServerPlatform {
 //        RegistryUtilities.registerTickEvent(consumer);
     }
 
-    public static void sendPacketToPlayer(ServerPlayer player, ResourceLocation id, FriendlyByteBuf packet) {
+    public static void sendPacketToPlayer(ServerPlayer player, Identifier id, FriendlyByteBuf packet) {
         packet.readerIndex(0);
         MinoNeoForge.PACKET_REGISTRY.sendS2C(player, id, packet);
     }
