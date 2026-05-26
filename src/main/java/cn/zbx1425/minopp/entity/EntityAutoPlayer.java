@@ -35,6 +35,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
@@ -87,9 +88,21 @@ public class EntityAutoPlayer extends LivingEntity {
                 clientSkinGameProfileValidFor = entityData.get(SKIN);
                 try {
                     UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
-                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
+                    //? if <26.1 {
+                    /*clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
+                    *///? } else {
+                    clientSkinGameProfile = ResolvableProfile.createUnresolved(skinAsUUID)
+                        .resolveProfile(Minecraft.getInstance().services().profileResolver())
+                        .thenApply(Optional::of);
+                    //? }
                 } catch (IllegalArgumentException e) {
-                    clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
+                    //? if <26.1 {
+                    /*clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
+                    *///? } else {
+                    clientSkinGameProfile = ResolvableProfile.createUnresolved(clientSkinGameProfileValidFor)
+                        .resolveProfile(Minecraft.getInstance().services().profileResolver())
+                        .thenApply(Optional::of);
+                    //? }
                 }
             }
             return;
@@ -200,7 +213,10 @@ public class EntityAutoPlayer extends LivingEntity {
     }
 
     @Override
-    public @NotNull InteractionResult interact(Player player, InteractionHand hand) {
+    //? if <26.1
+    //public @NotNull InteractionResult interact(Player player, InteractionHand hand) {
+    //? if >=26.1
+    public InteractionResult interact(final Player player, final InteractionHand hand, final Vec3 location) {
         if (WorldShim.isClientSide(level())) {
             if (PlayerShim.hasPermissions(player, 2) && player.isShiftKeyDown()) {
                 return InteractionResult.SUCCESS;
@@ -216,10 +232,14 @@ public class EntityAutoPlayer extends LivingEntity {
                 return InteractionResult.SUCCESS;
             }
         }
-        return super.interact(player, hand);
+        //? if <26.1
+        //return super.interact(player, hand);
+        //? if >=26.1
+        return super.interact(player, hand, location);
     }
 
-    @Override
+    //? if <26.1 {
+    /*@Override
     public @NotNull Iterable<ItemStack> getArmorSlots() {
         return armorItems;
     }
@@ -228,6 +248,7 @@ public class EntityAutoPlayer extends LivingEntity {
     public @NotNull Iterable<ItemStack> getHandSlots() {
         return List.of(entityData.get(HAND_STACK), ItemStack.EMPTY);
     }
+    *///? }
 
     @Override
     public @NotNull ItemStack getItemBySlot(EquipmentSlot slot) {
@@ -253,10 +274,12 @@ public class EntityAutoPlayer extends LivingEntity {
         return true;
     }
 
-    @Override
+    //? if <26.1 {
+    /*@Override
     public boolean isInvulnerableTo(DamageSource source) {
         return isRemoved() || !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
+    *///? }
 
     //? if <26.1 {
     /*@Override

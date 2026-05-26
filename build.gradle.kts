@@ -142,8 +142,8 @@ stonecutter {
             replace("renderBackground", "extractBackground")
             replace("guiGraphics.drawString", "guiGraphics.text")
             replace("guiGraphics.drawCenteredString", "guiGraphics.centeredText")
-            replace("popPose()", "popMatrix()")
-            replace("pushPose()", "pushMatrix()")
+            replace("guiGraphics.pose().popPose()", "guiGraphics.pose().popMatrix()")
+            replace("guiGraphics.pose().pushPose()", "guiGraphics.pose().pushMatrix()")
         }
     }
 }

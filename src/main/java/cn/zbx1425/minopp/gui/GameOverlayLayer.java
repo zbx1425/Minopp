@@ -192,8 +192,14 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             int msgWidth = font.width(deadManMessage);
             int msgHeight = font.lineHeight;
             guiGraphics.pose().pushMatrix();
-            guiGraphics.pose().translate((float)(width / 2), (float)(height / 2 + 12), 0);
-            guiGraphics.pose().scale(1.5f, 1.5f, 1);
+            guiGraphics.pose().translate((float)(width / 2), (float)(height / 2 + 12)
+                //? if <26.1
+                //, 0
+            );
+            guiGraphics.pose().scale(1.5f, 1.5f
+                //? if <26.1
+                //, 1
+            );
             guiGraphics.fill(-msgWidth / 2 - 4, 0, msgWidth / 2 + 4, msgHeight + 4, highlight ? 0x80AAAA66 : 0x80000000);
             guiGraphics.text(font, deadManMessage, -msgWidth / 2, 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
             guiGraphics.pose().popMatrix();
@@ -287,8 +293,11 @@ public class GameOverlayLayer implements LayeredDraw.Layer {
             float shadowAlpha = (float) Math.max(Mth.lerp(zoomAnimationProgress, 0.5, 0), 0);
 
 //            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit.color);
-            guiGraphics.blit(ATLAS_LOCATION, x + 5, y + 5, CARD_WIDTH - 10, CARD_HEIGHT - 10,
-                    cardU + 1, cardV + 1, cardUW - 2, cardVH - 2, 256, 128);
+            guiGraphics.blit(
+                ATLAS_LOCATION,
+                x + 5, y + 5, CARD_WIDTH - 10, CARD_HEIGHT - 10,
+                    cardU + 1, cardV + 1, cardUW - 2, cardVH - 2,
+                256, 128);
             guiGraphics.pose().pushMatrix();
             guiGraphics.pose().translate(x + 7, y + 7, 0);
             guiGraphics.pose().scale(1.5f, 1.5f, 1);

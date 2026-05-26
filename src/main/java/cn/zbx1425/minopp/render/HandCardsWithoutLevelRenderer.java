@@ -1,5 +1,7 @@
 package cn.zbx1425.minopp.render;
 
+//? if <26.1 {
+/*
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
@@ -26,7 +28,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Matrix4f;
 
 public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer {
-
     public static RegistryObject<HandCardsWithoutLevelRenderer> INSTANCE = new RegistryObject<>(() -> new HandCardsWithoutLevelRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels()));
 
@@ -54,8 +55,8 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.uuid.equals(gameBinding.bearerId()))
                             .findFirst().orElse(null);
                     if (realPlayer == null) return;
-                    poseStack.popMatrix();
-                    poseStack.pushMatrix();
+                    poseStack.popPose();
+                    poseStack.pushPose();
                     poseStack.translate(0, 0, 0.18);
                     for (int k = 0; k < realPlayer.hand.size(); k++) {
                         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
@@ -68,7 +69,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     if (tableEntity.game.currentPlayerIndex == tableEntity.game.players.indexOf(realPlayer)) {
                         poseStack.translate(0, 0.3, 0.3);
                         poseStack.mulPose(Axis.XP.rotationDegrees(-110f));
-                        poseStack.pushMatrix();
+                        poseStack.pushPose();
                         VertexConsumer buffer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/arrow_down.png")));
                         float v0 = ((int)(System.currentTimeMillis() / 100L) % 5) * 0.2f;
                         float v1 = v0 + 0.2f;
@@ -84,8 +85,8 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                                 .setUv(1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
                                 .addVertex(poseStack.last(), 1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
                                 .setUv(1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF);
-                        poseStack.popMatrix();
-                        poseStack.pushMatrix();
+                        poseStack.popPose();
+                        poseStack.pushPose();
                         poseStack.mulPose(Axis.YP.rotationDegrees(-45));
                         poseStack.scale(0.2f, 0.2f, 1);
                         buffer
@@ -97,28 +98,30 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                                 .setUv(1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF)
                                 .addVertex(poseStack.last(), 1, 1, 0).setNormal(poseStack.last(), 0, -1, 0)
                                 .setUv(1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFFFFFFFF);
-                        poseStack.popMatrix();
+                        poseStack.popPose();
                     }
 
-                    poseStack.popMatrix();
-                    poseStack.pushMatrix();
+                    poseStack.popPose();
+                    poseStack.pushPose();
                 }
             }
             case GUI -> {
-                poseStack.popMatrix();
+                poseStack.popPose();
                 poseStack.mulPose(Axis.ZP.rotationDegrees(15f));
                 ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
                 itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, LightTexture.FULL_BRIGHT, packedOverlay,
                         itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));
-                poseStack.pushMatrix();
+                poseStack.pushPose();
             }
             default -> {
-                poseStack.popMatrix();
+                poseStack.popPose();
                 ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
                 itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), itemDisplayContext, true, poseStack, multiBufferSource, packedLight, packedOverlay,
                         itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0));
-                poseStack.pushMatrix();
+                poseStack.pushPose();
             }
         }
     }
 }
+
+*///? }

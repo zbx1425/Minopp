@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.client.resources.SkinManager;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
@@ -32,23 +33,37 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
 
     @Override
     public Identifier getTextureLocation(EntityAutoPlayer entity) {
-        Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        //? if <26.1 {
+        /*Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
             return skinManager.getInsecureSkin(result.get()).texture();
         }
+        *///? } else {
+        Optional<Identifier> skinId = entity.clientSkinGameProfile.thenCompose(gameProfileBang ->
+            Minecraft.getInstance().getSkinManager().get(gameProfileBang.orElseThrow()))
+                .getNow(Optional.empty()).map(it -> it.body().texturePath());
+        if (skinId.isPresent()) return skinId.get();
+        //? }
         return Identifier.withDefaultNamespace("textures/entity/player/slim/alex.png");
     }
 
     @Override
     public void render(EntityAutoPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        //? if <26.1 {
+        /*Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
             model = skinManager.getInsecureSkin(result.get()).model() == PlayerSkin.Model.SLIM ? slimModel : wideModel;
         } else {
             model = slimModel;
         }
+        *///? } else {
+            model = entity.clientSkinGameProfile.thenCompose(gameProfileBang ->
+                    Minecraft.getInstance().getSkinManager().get(gameProfileBang.orElseThrow()))
+                .getNow(Optional.empty()).map(it -> it.model() == PlayerModelType.SLIM)
+                .orElse(true) ? slimModel : wideModel;
+        //? }
 
         PlayerModel<EntityAutoPlayer> playerModel = this.getModel();
         playerModel.setAllVisible(true);
