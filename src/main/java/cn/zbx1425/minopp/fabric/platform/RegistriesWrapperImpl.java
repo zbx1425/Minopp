@@ -39,6 +39,8 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
             new Item.Properties()
                 //? if >=1.21.2
                 .setId(ResourceKey.create(Registries.ITEM, Mino.id(id)))
+                //? if >=1.21.2
+                .useBlockDescriptionPrefix()
         );
         Registry.register(BuiltInRegistries.ITEM, Mino.id(id), blockItem);
         //? if <26.1

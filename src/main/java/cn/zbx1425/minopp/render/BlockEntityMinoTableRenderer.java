@@ -90,13 +90,20 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         poseStack.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
         Random deckRandom = new Random(1);
         for (int ci = 0; ci < Math.ceil(blockEntity.game.deck.size() / 5f); ci++) {
-            poseStack.translate(deckRandom.nextFloat() * 0.1 - 0.05, deckRandom.nextFloat() * 0.1 - 0.05, 1 / 16f);
+            poseStack.pushPose();
+            poseStack.translate((ci % 3 - 1) * 0.02, 0, ci / 16f);
+            if (ci == Math.ceil(blockEntity.game.deck.size() / 5f) - 1) {
+                float topCardThicknessRatio =( ((blockEntity.game.deck.size() - 1) % 5) + 1) * (1 / 5f);
+                poseStack.translate(0, 0, -(0.5f - topCardThicknessRatio / 2) / 16f);
+                poseStack.scale(1, 1, topCardThicknessRatio);
+            }
             //? if <26.1 {
             /*itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
                     poseStack, multiBufferSource, packedLight, packedOverlay, model);
             *///? } else if >=26.1 {
-            state.cardItemModel.submit(poseStack, sink, state.lightCoords, OverlayTexture.NO_OVERLAY, -1);
+            state.cardItemModel.submit(poseStack, sink, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
             //? }
+            poseStack.popPose();
         }
         poseStack.popPose();
 
@@ -188,14 +195,14 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
 
                 FormattedCharSequence cardText = component.getVisualOrderText();
                 sink.submitText(matrices, h, 0, cardText, false, Font.DisplayMode.SEE_THROUGH, LightCoordsUtil.FULL_BRIGHT,
-                    553648127, k, -1);
+                    553648127, k, 0);
                 sink.submitText(matrices, h, 0, cardText, false, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT,
-                    -1, 0, -1);
+                    -1, 0, 0);
                 matrices.mulPose(Axis.YP.rotation((float)Math.PI));
                 sink.submitText(matrices, h, 0, cardText, false, Font.DisplayMode.SEE_THROUGH, LightCoordsUtil.FULL_BRIGHT,
-                    553648127, k, -1);
+                    553648127, k, 0);
                 sink.submitText(matrices, h, 0, cardText, false, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT,
-                    -1, 0, -1);
+                    -1, 0, 0);
                 //? }
             }
             matrices.popPose();
@@ -214,9 +221,9 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         return true;
     }
 
-    private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
+    private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_NO_BEWLR.get()));
     private static final RegistryObject<ItemStack> HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER = new RegistryObject<>(() -> {
-        ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get());
+        ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS_NO_BEWLR.get());
         stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
         return stack;
     });

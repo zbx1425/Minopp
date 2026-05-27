@@ -7,6 +7,7 @@ import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemCoupon;
 import cn.zbx1425.minopp.item.ItemHandCards;
+import cn.zbx1425.minopp.item.ItemHandCardsNoBewlr;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
 import cn.zbx1425.minopp.network.C2SSeatControlPacket;
 import cn.zbx1425.minopp.network.C2SAutoPlayerConfigPacket;
@@ -27,8 +28,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,13 +63,13 @@ public final class Mino {
                 .build(ResourceKey.create(Registries.ENTITY_TYPE, id("mino_auto_player")))
     );
 
-    public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(ItemHandCards::new);
+    public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS_NO_BEWLR = new RegistryObject<>(ItemHandCardsNoBewlr::new);
 
     public static void init(RegistriesWrapper registries) {
         registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE);
         registries.registerBlockEntityType("mino_table", BLOCK_ENTITY_TYPE_MINO_TABLE);
         registries.registerItem("hand_cards", ITEM_HAND_CARDS);
-        registries.registerItem("hand_cards_model_placeholder", ITEM_HAND_CARDS_MODEL_PLACEHOLDER);
+        registries.registerItem("hand_cards_nobewlr", ITEM_HAND_CARDS_NO_BEWLR);
         registries.registerDataComponentType("card_game_binding", DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
         registries.registerDataComponentType("client_hand_index", DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX);
         registries.registerItem("coupon", ITEM_COUPON);

@@ -9,15 +9,18 @@ import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.SkinManager;
 import net.minecraft.core.ClientAsset;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
@@ -65,6 +68,9 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         }
         return Identifier.withDefaultNamespace("textures/entity/player/slim/alex.png");
         *///? } else {
+        // Note that this function won't get actually called on 26.1, due to a special check that forces
+        // vanilla AvatarRenderer on AvatarRenderState in EntityRenderDispatcher.
+        // But the vanilla impl will yield the right result basing on what we've filled into AvatarRenderState.
         return state.skin.body().texturePath();
         //? }
     }
@@ -88,6 +94,9 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         playerModel.rightArmPose = !handStack.isEmpty() ? HumanoidModel.ArmPose.ITEM : HumanoidModel.ArmPose.EMPTY;
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         *///? } else {
+        // Note that this function won't get actually called on 26.1, due to a special check that forces
+        // vanilla AvatarRenderer on AvatarRenderState in EntityRenderDispatcher.
+        // But the vanilla impl will yield the right result basing on what we've filled into AvatarRenderState.
         model = state.skin.model() == PlayerModelType.SLIM ? slimModel : wideModel;
         super.submit(state, poseStack, submitNodeCollector, camera);
         //? }
@@ -104,16 +113,14 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
     @Override
     public void extractRenderState(EntityAutoPlayer entity, AvatarRenderState state, float partialTicks) {
         super.extractRenderState(entity, state, partialTicks);
+        HumanoidMobRenderer.extractHumanoidRenderState(entity, state, partialTicks, this.itemModelResolver);
         state.skin = entity.clientSkinGameProfile.thenCompose(gameProfile ->
                 gameProfile.map(gameProfileBang ->
                     Minecraft.getInstance().getSkinManager().get(gameProfileBang)
                 ).orElse(CompletableFuture.completedFuture(Optional.empty()))
             )
             .getNow(Optional.empty())
-            .orElseGet(() -> PlayerSkin.insecure(
-                new ClientAsset.Texture.ResourceTexture(Identifier.withDefaultNamespace("textures/entity/player/slim/alex.png")),
-                null, null, PlayerModelType.SLIM
-            ));
+            .orElseGet(() -> DefaultPlayerSkin.get(Util.NIL_UUID));
         ItemStack handStack = entity.getMainHandItem();
         state.rightArmPose = !handStack.isEmpty() ? HumanoidModel.ArmPose.ITEM : HumanoidModel.ArmPose.EMPTY;
         state.id = entity.getId();
