@@ -90,7 +90,7 @@
   "subtitles.minopp.mino_shout_invalid": "Mino: 喊叫无效",
   "subtitles.minopp.doubt_success": "Mino: 怀疑成功",
 
-  "key.categories.minopp": "Mino++",
+  "key.category.minopp.common": "Mino++",
   "key.minopp.shout_modifier": "出牌同时喊出 Mino",
 
   "gui.minopp.bot_config.title": "MinoBot 机器人偏好设置",

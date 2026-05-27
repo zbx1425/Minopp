@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -42,13 +43,6 @@ import java.util.Random;
 //public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEntityMinoTable> {
 //? if >=26.1
 public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEntityMinoTable, BlockEntityMinoTableRenderer.MinoTableRenderState> {
-
-    private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
-    private static final RegistryObject<ItemStack> HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER = new RegistryObject<>(() -> {
-        ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get());
-        stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
-        return stack;
-    });
 
 //? if <26.1 {
     /*private ItemRenderer itemRenderer;
@@ -83,7 +77,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             /*LevelRenderer.renderLineBox(poseStack, multiBufferSource.getBuffer(RenderType.lines()),
                     BlockMinoTable.Client.getPileAabb(blockEntity), 1, 1, 0, 1f);
         *///? } else {
-             // TODO
+              
         //? }
         }
 
@@ -97,8 +91,12 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         Random deckRandom = new Random(1);
         for (int ci = 0; ci < Math.ceil(blockEntity.game.deck.size() / 5f); ci++) {
             poseStack.translate(deckRandom.nextFloat() * 0.1 - 0.05, deckRandom.nextFloat() * 0.1 - 0.05, 1 / 16f);
-            itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
+            //? if <26.1 {
+            /*itemRenderer.render(HAND_CARDS_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
                     poseStack, multiBufferSource, packedLight, packedOverlay, model);
+            *///? } else if >=26.1 {
+            state.cardItemModel.submit(poseStack, sink, state.lightCoords, OverlayTexture.NO_OVERLAY, -1);
+            //? }
         }
         poseStack.popPose();
 
@@ -216,6 +214,13 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         return true;
     }
 
+    private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
+    private static final RegistryObject<ItemStack> HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER = new RegistryObject<>(() -> {
+        ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get());
+        stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        return stack;
+    });
+
     //? if >=26.1 {
 
     @Override
@@ -228,11 +233,19 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                                    @NonNull Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
         state.blockEntity = blockEntity;
+
+        itemRenderer.updateForTopItem(
+            state.cardItemModel, HAND_CARDS_MODEL_PLACEHOLDER.get(),
+            ItemDisplayContext.FIXED, blockEntity.getLevel(), null, 0
+        );
     }
 
     public static class MinoTableRenderState extends BlockEntityRenderState {
 
-        public BlockEntityMinoTable blockEntity; // TODO Extract for real
+        // TODO Do the extraction
+        public BlockEntityMinoTable blockEntity;
+
+        public ItemStackRenderState cardItemModel = new ItemStackRenderState();
     }
 //? }
 }

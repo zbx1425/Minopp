@@ -90,7 +90,7 @@
   "subtitles.minopp.mino_shout_invalid": "Mino：叫びが無効と認定されました。",
   "subtitles.minopp.doubt_success": "Mino：疑いが成功しました。",
 
-  "key.categories.minopp": "Mino++",
+  "key.category.minopp.common": "Mino++",
   "key.minopp.shout_modifier": "プレイ中に「Mino！」と叫ぶ",
 
   "gui.minopp.bot_config.title": "MinoBotの設定",

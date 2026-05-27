@@ -9,7 +9,10 @@ import net.minecraft.resources.Identifier;
 import cn.zbx1425.minopp.fabric.MinoFabric;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+//? if <26.1
+//import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+// if >=26.1
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 //? } else if neoforge {
 /*import cn.zbx1425.minopp.neoforge.MinoNeoForge;
 *///? }
@@ -23,7 +26,10 @@ public class ClientPlatform {
     //? if fabric {
 
     public static void registerKeyBinding(RegistryObject<KeyMapping> keyMapping) {
-        KeyBindingHelper.registerKeyBinding(keyMapping.get());
+        //? if <26.1
+        //KeyBindingHelper.registerKeyBinding(keyMapping.get());
+        //? if >=26.1
+        KeyMappingHelper.registerKeyMapping(keyMapping.get());
     }
 
     public static void registerNetworkReceiver(Identifier resourceLocation, Consumer<FriendlyByteBuf> consumer) {

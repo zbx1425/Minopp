@@ -15,7 +15,10 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 /*import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
-*///? }
+*///? } else {
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+//? }
 
 public final class MinoFabricClient implements ClientModInitializer {
 
@@ -27,6 +30,8 @@ public final class MinoFabricClient implements ClientModInitializer {
 
         //? if <26.1
         //HudRenderCallback.EVENT.register(GameOverlayLayer.INSTANCE::render);
+        //? if >=26.1
+        HudElementRegistry.attachElementAfter(VanillaHudElements.SCOREBOARD, Mino.id("hand_card_overlay"), GameOverlayLayer.INSTANCE::render);
 
         //? if <26.1
         //BuiltinItemRendererRegistry.INSTANCE.register(Mino.ITEM_HAND_CARDS.get(), HandCardsWithoutLevelRenderer.INSTANCE.get()::renderByItem);

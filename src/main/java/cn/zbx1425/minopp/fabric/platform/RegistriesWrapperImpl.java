@@ -5,7 +5,10 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+//? if <26.1
+//import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+//? if >=26.1
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -32,13 +35,20 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
         Registry.register(BuiltInRegistries.BLOCK, Mino.id(id), block.get());
         final BlockItem blockItem = new BlockItem(block.get(), new Item.Properties());
         Registry.register(BuiltInRegistries.ITEM, Mino.id(id), blockItem);
-        ItemGroupEvents.modifyEntriesEvent(tab).register(consumer -> consumer.accept(blockItem));
+        //? if <26.1
+        //ItemGroupEvents.modifyEntriesEvent(tab).register(consumer -> consumer.accept(blockItem));
+        //? if >=26.1
+        CreativeModeTabEvents.modifyOutputEvent(tab).register(consumer -> consumer.accept(blockItem));
     }
 
     @Override
     public void registerItem(String id, RegistryObject<GroupedItem> item) {
         Registry.register(BuiltInRegistries.ITEM, Mino.id(id), item.get());
-        ItemGroupEvents.modifyEntriesEvent(item.get().tabSupplier.get()).register(consumer -> consumer.accept(item.get()));
+        if (item.get().tabSupplier == null) return;
+        //? if <26.1
+        //ItemGroupEvents.modifyEntriesEvent(item.get().tabSupplier.get()).register(consumer -> consumer.accept(item.get()));
+        //? if >=26.1
+        CreativeModeTabEvents.modifyOutputEvent(item.get().tabSupplier.get()).register(consumer -> consumer.accept(item.get()));
     }
 
     @Override

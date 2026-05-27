@@ -90,7 +90,7 @@
   "subtitles.minopp.mino_shout_invalid": "Mino shout proven invalid",
   "subtitles.minopp.doubt_success": "Mino doubt proven successful",
 
-  "key.categories.minopp": "Mino++",
+  "key.category.minopp.common": "Mino++",
   "key.minopp.shout_modifier": "Shout Mino while Playing",
 
   "gui.minopp.bot_config.title": "MinoBot Preferences",

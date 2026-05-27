@@ -5,51 +5,75 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.resources.SkinManager;
+import net.minecraft.core.ClientAsset;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 
+//? if <26.1 {
+/*import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.resources.PlayerSkin;
+*///? } else {
+import net.minecraft.client.model.player.PlayerModel;
+//? }
+
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPlayer, PlayerModel<EntityAutoPlayer>> {
+//? if <26.1
+//public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPlayer, PlayerModel<EntityAutoPlayer>> {
+//? if >=26.1
+public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPlayer, AvatarRenderState, PlayerModel> {
 
-    private PlayerModel<EntityAutoPlayer> slimModel;
-    private PlayerModel<EntityAutoPlayer> wideModel;
+//~ if >=26.1 'PlayerModel<EntityAutoPlayer>' -> 'PlayerModel' {
+
+    private PlayerModel slimModel;
+    private PlayerModel wideModel;
 
     public EntityAutoPlayerRenderer(EntityRendererProvider.Context context) {
-        super(context, new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER_SLIM), true), 0.5f);
+        super(context, new PlayerModel(context.bakeLayer(ModelLayers.PLAYER_SLIM), true), 0.5f);
         slimModel = model;
-        wideModel = new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER), false);
-        this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
+        wideModel = new PlayerModel(context.bakeLayer(ModelLayers.PLAYER), false);
+        //? if <26.1
+        //this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
+        //? if >=26.1
+        this.addLayer(new PlayerItemInHandLayer<>(this));
     }
 
     @Override
-    public Identifier getTextureLocation(EntityAutoPlayer entity) {
+    //? if <26.1
+    //public Identifier getTextureLocation(EntityAutoPlayer entity) {
+    //? if >=26.1
+    public Identifier getTextureLocation(AvatarRenderState state) {
         //? if <26.1 {
         /*Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
             return skinManager.getInsecureSkin(result.get()).texture();
         }
-        *///? } else {
-        Optional<Identifier> skinId = entity.clientSkinGameProfile.thenCompose(gameProfileBang ->
-            Minecraft.getInstance().getSkinManager().get(gameProfileBang.orElseThrow()))
-                .getNow(Optional.empty()).map(it -> it.body().texturePath());
-        if (skinId.isPresent()) return skinId.get();
-        //? }
         return Identifier.withDefaultNamespace("textures/entity/player/slim/alex.png");
+        *///? } else {
+        return state.skin.body().texturePath();
+        //? }
     }
 
     @Override
-    public void render(EntityAutoPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    //? if <26.1
+    //public void render(EntityAutoPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    // if >=26.1
+    public void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
         //? if <26.1 {
         /*Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
@@ -58,17 +82,41 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         } else {
             model = slimModel;
         }
-        *///? } else {
-            model = entity.clientSkinGameProfile.thenCompose(gameProfileBang ->
-                    Minecraft.getInstance().getSkinManager().get(gameProfileBang.orElseThrow()))
-                .getNow(Optional.empty()).map(it -> it.model() == PlayerModelType.SLIM)
-                .orElse(true) ? slimModel : wideModel;
-        //? }
-
-        PlayerModel<EntityAutoPlayer> playerModel = this.getModel();
+        PlayerModel playerModel = this.getModel();
         playerModel.setAllVisible(true);
         ItemStack handStack = entity.getMainHandItem();
         playerModel.rightArmPose = !handStack.isEmpty() ? HumanoidModel.ArmPose.ITEM : HumanoidModel.ArmPose.EMPTY;
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        *///? } else {
+        model = state.skin.model() == PlayerModelType.SLIM ? slimModel : wideModel;
+        super.submit(state, poseStack, submitNodeCollector, camera);
+        //? }
     }
+
+    //? if >=26.1 {
+
+
+    @Override
+    public AvatarRenderState createRenderState() {
+        return new AvatarRenderState();
+    }
+
+    @Override
+    public void extractRenderState(EntityAutoPlayer entity, AvatarRenderState state, float partialTicks) {
+        super.extractRenderState(entity, state, partialTicks);
+        state.skin = entity.clientSkinGameProfile.thenCompose(gameProfileBang ->
+                Minecraft.getInstance().getSkinManager().get(gameProfileBang.orElseThrow()))
+            .getNow(Optional.empty())
+            .orElseGet(() -> PlayerSkin.insecure(
+                new ClientAsset.Texture.ResourceTexture(Identifier.withDefaultNamespace("textures/entity/player/slim/alex.png")),
+                null, null, PlayerModelType.SLIM
+            ));
+        ItemStack handStack = entity.getMainHandItem();
+        state.rightArmPose = !handStack.isEmpty() ? HumanoidModel.ArmPose.ITEM : HumanoidModel.ArmPose.EMPTY;
+        state.id = entity.getId();
+    }
+
+    //? }
 }
+
+//~ }

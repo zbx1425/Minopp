@@ -15,8 +15,18 @@ public class MinoClient {
 
     public static final EffectQueue SOUND_QUEUE = new EffectQueue();
 
+    //? if >=26.1 {
+    public static final RegistryObject<KeyMapping.Category> KEY_MAPPING_CATEGORY = new RegistryObject<>(() ->
+        KeyMapping.Category.register(Mino.id("common")));
+    //? }
+
     public static final RegistryObject<KeyMapping> KEY_SHOUT_MODIFIER = new RegistryObject<>(() ->
-            new KeyMapping("key.minopp.shout_modifier",GLFW.GLFW_KEY_LEFT_CONTROL, "key.categories.minopp"));
+            new KeyMapping("key.minopp.shout_modifier",GLFW.GLFW_KEY_LEFT_CONTROL,
+                //? if <26.1
+                //"key.categories.minopp"
+                //? if >=26.1
+                KEY_MAPPING_CATEGORY.get()
+            ));
 
     // For interfacing with platform codes
     public static double globalFovModifier = 1;
