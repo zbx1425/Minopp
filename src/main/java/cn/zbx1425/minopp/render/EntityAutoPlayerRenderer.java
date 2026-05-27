@@ -104,8 +104,11 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
     @Override
     public void extractRenderState(EntityAutoPlayer entity, AvatarRenderState state, float partialTicks) {
         super.extractRenderState(entity, state, partialTicks);
-        state.skin = entity.clientSkinGameProfile.thenCompose(gameProfileBang ->
-                Minecraft.getInstance().getSkinManager().get(gameProfileBang.orElseThrow()))
+        state.skin = entity.clientSkinGameProfile.thenCompose(gameProfile ->
+                gameProfile.map(gameProfileBang ->
+                    Minecraft.getInstance().getSkinManager().get(gameProfileBang)
+                ).orElse(CompletableFuture.completedFuture(Optional.empty()))
+            )
             .getNow(Optional.empty())
             .orElseGet(() -> PlayerSkin.insecure(
                 new ClientAsset.Texture.ResourceTexture(Identifier.withDefaultNamespace("textures/entity/player/slim/alex.png")),

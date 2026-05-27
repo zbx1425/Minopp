@@ -4,12 +4,15 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.gui.TurnDeadMan;
 import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -40,7 +43,7 @@ import java.util.function.Consumer;
 public class ItemHandCards extends GroupedItem {
     
     public ItemHandCards() {
-        super(() -> null, p -> p.stacksTo(1));
+        super(p -> p.stacksTo(1), Mino.id("hand_cards"), () -> null);
     }
 
     @Override
@@ -96,7 +99,7 @@ public class ItemHandCards extends GroupedItem {
         //~ if >=26.1 'tooltipComponents.add(' -> 'builder.accept(' {
         if (binding != null) {
             builder.accept(Component.literal("Table: " + binding.tablePos().toShortString()));
-            if (binding.bearerId().equals(PlayerShim.getGameProfileId(Minecraft.getInstance().player))) {
+            if (!binding.bearerId().equals(PlayerShim.getGameProfileId(Minecraft.getInstance().player))) {
                 builder.accept(Component.literal("NOT YOUR CARD!").withStyle(ChatFormatting.RED));
             }
         }
@@ -120,5 +123,35 @@ public class ItemHandCards extends GroupedItem {
                 UUIDUtil.STREAM_CODEC, CardGameBindingComponent::bearerId,
                 CardGameBindingComponent::new
         );
+    }
+
+    public static class Client {
+
+        public static boolean handleScrollWheel(int direction) {
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player == null) return false;
+            ItemStack holding = player.getMainHandItem();
+            if (holding.is(Mino.ITEM_HAND_CARDS.get())) {
+                BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
+                if (handCardGamePos != null) {
+                    if (player.level().getBlockEntity(handCardGamePos) instanceof BlockEntityMinoTable tableEntity) {
+                        if (tableEntity.game == null) return false;
+
+                        CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
+                        CardPlayer realPlayer = tableEntity.game.players.stream()
+                            .filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
+                        if (realPlayer == null) return false;
+
+                        int handIndex = holding.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
+                        holding.set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(),
+                            Mth.clamp(handIndex - direction, 0, realPlayer.hand.size() - 1));
+
+                        TurnDeadMan.pedal();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 }

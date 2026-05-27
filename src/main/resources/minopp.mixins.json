@@ -5,7 +5,8 @@
   "minVersion": "0.8",
   "client": [
     "InventoryMixin",
-    "KeyMappingAccessor"
+    "KeyMappingAccessor",
+    "MouseHandlerMixin"
   ],
   "mixins": [
   ],

@@ -13,10 +13,7 @@ import cn.zbx1425.minopp.network.C2SAutoPlayerConfigPacket;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import cn.zbx1425.minopp.network.S2CAutoPlayerScreenPacket;
-import cn.zbx1425.minopp.platform.GroupedItem;
-import cn.zbx1425.minopp.platform.RegistriesWrapper;
-import cn.zbx1425.minopp.platform.RegistryObject;
-import cn.zbx1425.minopp.platform.ServerPlatform;
+import cn.zbx1425.minopp.platform.*;
 import cn.zbx1425.minopp.platform.multiver.WorldShim;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
@@ -47,7 +44,7 @@ public final class Mino {
         return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 
-    public static final RegistryObject<Block> BLOCK_MINO_TABLE = new RegistryObject<>(BlockMinoTable::new);
+    public static final RegistryObject<GroupedBlock> BLOCK_MINO_TABLE = new RegistryObject<>(BlockMinoTable::new);
     public static final RegistryObject<BlockEntityType<BlockEntityMinoTable>> BLOCK_ENTITY_TYPE_MINO_TABLE = new RegistryObject<>(() ->
             ServerPlatform.createBlockEntityType(BlockEntityMinoTable::new, BLOCK_MINO_TABLE.get()));
 
@@ -70,9 +67,7 @@ public final class Mino {
     public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(ItemHandCards::new);
 
     public static void init(RegistriesWrapper registries) {
-        final ResourceKey<CreativeModeTab> FUNCTIONAL_BLOCKS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
-                Identifier.withDefaultNamespace("functional_blocks"));
-        registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE, FUNCTIONAL_BLOCKS);
+        registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE);
         registries.registerBlockEntityType("mino_table", BLOCK_ENTITY_TYPE_MINO_TABLE);
         registries.registerItem("hand_cards", ITEM_HAND_CARDS);
         registries.registerItem("hand_cards_model_placeholder", ITEM_HAND_CARDS_MODEL_PLACEHOLDER);

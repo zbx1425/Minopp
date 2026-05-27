@@ -84,7 +84,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                 entry.getValue().nbtWriteTo(playerOutput.child(entry.getKey().getSerializedName()));
             }
         }
-        if (game != null) game.nbtWriteTo(playerOutput.child("game"));
+        if (game != null) game.nbtWriteTo(output.child("game"));
         state.nbtWriteTo(output.child("state"));
         if (!award.isEmpty()) {
             output.store("award", ItemStack.CODEC, award);
@@ -327,7 +327,7 @@ public class BlockEntityMinoTable extends BlockEntity {
     public void sync() {
         setChanged();
         BlockState blockState = level.getBlockState(getBlockPos());
-        level.sendBlockUpdated(getBlockPos(), blockState, blockState, 2);
+         level.sendBlockUpdated(getBlockPos(), blockState, blockState, 2);
     }
 
     @Override

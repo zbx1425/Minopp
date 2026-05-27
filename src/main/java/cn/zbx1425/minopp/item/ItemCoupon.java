@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.item;
 
+import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import net.minecraft.ChatFormatting;
@@ -15,7 +16,7 @@ import java.util.function.Consumer;
 public class ItemCoupon extends GroupedItem {
 
     public ItemCoupon() {
-        super(() -> null, p -> p);
+        super(p -> p, Mino.id("coupon"), () -> null);
     }
 
     @Override

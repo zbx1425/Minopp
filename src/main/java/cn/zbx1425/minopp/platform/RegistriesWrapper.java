@@ -16,7 +16,7 @@ public interface RegistriesWrapper {
 
     void registerItem(String id, RegistryObject<GroupedItem> item);
 
-    void registerBlockAndItem(String id, RegistryObject<Block> block, ResourceKey<CreativeModeTab> tab);
+    void registerBlockAndItem(String id, RegistryObject<GroupedBlock> block);
 
     void registerBlockEntityType(String id, RegistryObject<? extends BlockEntityType<? extends BlockEntity>> blockEntityType);
 

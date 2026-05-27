@@ -10,6 +10,7 @@ import cn.zbx1425.minopp.gui.WildSelectionScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.mixin.KeyMappingAccessor;
 import cn.zbx1425.minopp.network.C2SPlayCardPacket;
+import cn.zbx1425.minopp.platform.GroupedBlock;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import cn.zbx1425.minopp.platform.multiver.WorldShim;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -17,7 +18,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
@@ -28,6 +32,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.*;
@@ -48,14 +53,20 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BlockMinoTable extends Block implements EntityBlock {
+public class BlockMinoTable extends GroupedBlock implements EntityBlock {
 
     public static final EnumProperty<TablePartType> PART = EnumProperty.create("part", TablePartType.class);
 
+    private static final ResourceKey<CreativeModeTab> FUNCTIONAL_BLOCKS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
+        Identifier.withDefaultNamespace("functional_blocks"));
+
     public BlockMinoTable() {
-        super(BlockBehaviour.Properties.of()
+        super(p -> p
                 .strength(2.0F)
-                .noOcclusion());
+                .noOcclusion(),
+            Mino.id("mino_table"),
+            () -> FUNCTIONAL_BLOCKS
+        );
     }
 
     @Override
