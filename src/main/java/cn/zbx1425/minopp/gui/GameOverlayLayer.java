@@ -25,6 +25,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.neoforged.neoforge.client.gui.GuiLayer;
+import org.jspecify.annotations.NonNull;
 
 //? if <26.1 {
 /*import net.minecraft.client.gui.LayeredDraw;
@@ -40,7 +42,7 @@ import java.util.Random;
 //? if <26.1
 //public class GameOverlayLayer implements LayeredDraw.Layer {
 //? if >=26.1
-public class GameOverlayLayer {
+public class GameOverlayLayer implements GuiLayer {
 
     // Some animation related stuff
     private double zoomAnimationProgress = 0;
@@ -49,7 +51,7 @@ public class GameOverlayLayer {
 
     //? if <26.1
     //@Override
-    public void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
+    public void render(@NonNull GuiGraphicsExtractor guiGraphics, @NonNull DeltaTracker deltaTracker) {
         LocalPlayer player = Minecraft.getInstance().player;
         BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
         ClientLevel level = Minecraft.getInstance().level;

@@ -5,6 +5,7 @@ import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.platform.RegistryObject;
+import cn.zbx1425.minopp.platform.multiver.RenderShim;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -77,7 +78,10 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             /*LevelRenderer.renderLineBox(poseStack, multiBufferSource.getBuffer(RenderType.lines()),
                     BlockMinoTable.Client.getPileAabb(blockEntity), 1, 1, 0, 1f);
         *///? } else {
-              
+              sink.submitCustomGeometry(poseStack, RenderTypes.lines(), (pose, buffer) -> {
+                  RenderShim.renderLineBox(pose, buffer,
+                      BlockMinoTable.Client.getPileAabb(blockEntity), 1, 1, 0, 1f);
+              });
         //? }
         }
 

@@ -10,10 +10,8 @@ import cn.zbx1425.minopp.platform.ClientPlatform;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
-import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.*;
@@ -21,6 +19,16 @@ import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.client.settings.IKeyConflictContext;
+
+//? if >=1.21.2
+import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
+
+//? if <26.1 {
+/^import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+^///? } else if >=26.1 {
+import cn.zbx1425.minopp.render.HandCardsSpecialRenderer;
+//? }
 
 public class ClientProxy {
 
@@ -41,19 +49,38 @@ public class ClientProxy {
 
         @SubscribeEvent
         public static void onRegisterClientExtension(RegisterClientExtensionsEvent event) {
-            event.registerItem(new IClientItemExtensions() {
+            //? if <26.1 {
+            /^event.registerItem(new IClientItemExtensions() {
                 @Override
                 public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                     return HandCardsWithoutLevelRenderer.INSTANCE.get();
                 }
             }, Mino.ITEM_HAND_CARDS.get());
+            ^///? }
         }
+
+        //? if >=26.1 {
+        @SubscribeEvent
+        public static void registerSpecialRenderers(RegisterSpecialModelRendererEvent event) {
+            event.register(
+                Mino.id("hand_cards_bewlr"),
+                HandCardsSpecialRenderer.Unbaked.MAP_CODEC
+            );
+        }
+        //? }
 
         @SubscribeEvent
         public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerBlockEntityRenderer(Mino.BLOCK_ENTITY_TYPE_MINO_TABLE.get(), BlockEntityMinoTableRenderer::new);
             event.registerEntityRenderer(Mino.ENTITY_AUTO_PLAYER.get(), EntityAutoPlayerRenderer::new);
         }
+
+        //? if >= 1.21.2 {
+        @SubscribeEvent
+        private static void onRegisterClientPayloadHandlers(RegisterClientPayloadHandlersEvent event) {
+            MinoNeoForge.PACKET_REGISTRY.commitClient(event);
+        }
+        //? }
     }
 
     public static class ForgeEventBusListener {

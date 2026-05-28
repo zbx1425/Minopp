@@ -2,6 +2,7 @@ package cn.zbx1425.minopp.neoforge.platform;
 //? if neoforge {
 
 /*import cn.zbx1425.minopp.Mino;
+import cn.zbx1425.minopp.platform.GroupedBlock;
 import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
@@ -44,11 +45,11 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
     }
 
     @Override
-    public void registerBlockAndItem(String id, RegistryObject<Block> block, ResourceKey<CreativeModeTab> tab) {
+    public void registerBlockAndItem(String id, RegistryObject<GroupedBlock> block) {
         BLOCKS.register(id, block::get);
         ITEMS.register(id, () -> {
             final BlockItem blockItem = new BlockItem(block.get(), new Item.Properties());
-            registerCreativeModeTab(tab, blockItem);
+            registerCreativeModeTab(block.get().tabSupplier.get(), blockItem);
             return blockItem;
         });
     }

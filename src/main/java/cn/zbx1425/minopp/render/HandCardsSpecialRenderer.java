@@ -1,6 +1,6 @@
 package cn.zbx1425.minopp.render;
 
-//? if >=26.1
+//? if >=26.1 {
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;

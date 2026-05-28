@@ -42,7 +42,8 @@ public final class MinoNeoForge {
         PoiRegistry.POI_TYPES.register(eventBus);
         MemoryTypeRegister.MEMORY_MODULE_TYPES.register(eventBus);
 
-        if (FMLEnvironment.dist.isClient()) {
+        //~ if >=26.1 'dist' -> 'getDist()'
+        if (FMLEnvironment.getDist().isClient()) {
             MinoClient.init();
             eventBus.register(ClientProxy.ModEventBusListener.class);
             NeoForge.EVENT_BUS.register(ClientProxy.ForgeEventBusListener.class);
@@ -54,7 +55,7 @@ public final class MinoNeoForge {
         @SubscribeEvent
         public static void registerPayloadHandlers(final RegisterPayloadHandlersEvent event) {
             PayloadRegistrar registrar = event.registrar("1");
-            MinoNeoForge.PACKET_REGISTRY.commit(registrar);
+            MinoNeoForge.PACKET_REGISTRY.commitCommon(registrar);
         }
 
         @SubscribeEvent
