@@ -25,7 +25,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.neoforged.neoforge.client.gui.GuiLayer;
 import org.jspecify.annotations.NonNull;
 
 //? if <26.1 {
@@ -35,14 +34,19 @@ import net.minecraft.util.FastColor;
 
 //? }
 
+//? if neoforge
+//import net.neoforged.neoforge.client.gui.GuiLayer;
+
 import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Random;
 
 //? if <26.1
 //public class GameOverlayLayer implements LayeredDraw.Layer {
-//? if >=26.1
-public class GameOverlayLayer implements GuiLayer {
+//? if >=26.1 && neoforge
+//public class GameOverlayLayer implements GuiLayer {
+//? if >=26.1 && !neoforge
+public class GameOverlayLayer {
 
     // Some animation related stuff
     private double zoomAnimationProgress = 0;

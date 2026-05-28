@@ -24,6 +24,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +49,13 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
     public void registerBlockAndItem(String id, RegistryObject<GroupedBlock> block) {
         BLOCKS.register(id, block::get);
         ITEMS.register(id, () -> {
-            final BlockItem blockItem = new BlockItem(block.get(), new Item.Properties());
+            final BlockItem blockItem = new BlockItem(block.get(),
+                new Item.Properties()
+                //? if >=1.21.2
+                .setId(ResourceKey.create(Registries.ITEM, Mino.id(id)))
+                //? if >=1.21.2
+                .useBlockDescriptionPrefix()
+            );
             registerCreativeModeTab(block.get().tabSupplier.get(), blockItem);
             return blockItem;
         });
