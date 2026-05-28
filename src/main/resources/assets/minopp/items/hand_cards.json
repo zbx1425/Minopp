@@ -10,6 +10,26 @@
 
     "cases": [
       {
+        "when": "thirdperson_lefthand",
+        "model": {
+          "type": "minecraft:special",
+          "base": "minopp:item/hand_cards_nobewlr",
+          "model": {
+            "type": "minopp:hand_cards_bewlr"
+          }
+        }
+      },
+      {
+        "when": "thirdperson_righthand",
+        "model": {
+          "type": "minecraft:special",
+          "base": "minopp:item/hand_cards_nobewlr",
+          "model": {
+            "type": "minopp:hand_cards_bewlr"
+          }
+        }
+      },
+      {
         "when": "firstperson_lefthand",
         "model": {
           "type": "minecraft:empty"

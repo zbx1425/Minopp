@@ -6,6 +6,7 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
+import cn.zbx1425.minopp.render.HandCardsSpecialRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -18,6 +19,7 @@ import cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer;
 *///? } else {
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.renderer.special.SpecialModelRenderers;
 //? }
 
 public final class MinoFabricClient implements ClientModInitializer {
@@ -40,6 +42,9 @@ public final class MinoFabricClient implements ClientModInitializer {
         EntityRendererRegistry.register(Mino.ENTITY_AUTO_PLAYER.get(), EntityAutoPlayerRenderer::new);
 
         ClientTickEvents.START_CLIENT_TICK.register(event -> MinoClient.tick());
+
+        //? if >=26.1
+        SpecialModelRenderers.ID_MAPPER.put(Mino.id("hand_cards_bewlr"), HandCardsSpecialRenderer.Unbaked.MAP_CODEC);
     }
 }
 
