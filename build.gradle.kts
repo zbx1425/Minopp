@@ -75,10 +75,6 @@ modstitch {
         prop("deps.fabricLoader", required = true) { fabricLoaderVersion = it }
 
         configureLoom {
-            runConfigs.all {
-                ideConfigGenerated(false)
-            }
-
             mixin.useLegacyMixinAp = false
         }
     }
@@ -89,6 +85,13 @@ modstitch {
         prop("deps.forge") { forgeVersion = it }
 
         configureNeoForge {
+            runs {
+                register("client") {
+                    client()
+                    sourceSet = sourceSets.main.get()
+                    gameDirectory = layout.projectDirectory.dir("../../run")
+                }
+            }
 
             mods {
                 register("main") {
