@@ -1,6 +1,8 @@
 plugins {
     id("dev.kikugie.stonecutter")
     id("dev.isxander.modstitch.base") version "0.8.5"
+
+    `maven-publish`
 }
 
 val mcVersion = property("mcVersion")!!.toString()
@@ -40,6 +42,7 @@ modstitch {
     metadata {
         modId = "minopp"
         modName = "Minopp"
+        modDescription = "Recreation of a classical card game in Minecraft"
         modVersion = if (System.getenv().containsKey("GITHUB_ACTIONS")) {
             "$versionWithoutMC+$snapshotVer"
         } else {
@@ -215,3 +218,43 @@ fun <T> prop(property: String, required: Boolean = false, ifNull: () -> String? 
         .let { if (required && it == null) error("Property $property is required") else it }
         ?.let(block)
 }
+
+publishing {
+    publications {
+        register<MavenPublication>("mod") {
+            from(components["java"])
+
+            groupId = "cn.zbx1425"
+            artifactId = "minopp"
+            version = modstitch.metadata.modVersion.get()
+
+            pom {
+                name = modstitch.metadata.modName
+                description = modstitch.metadata.modDescription
+                url = "https://github.com/zbx1425/minopp"
+                licenses {
+                    license {
+                        name = "MIT"
+                        url = "https://github.com/zbx1425/Minopp/blob/master/LICENSE.txt"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "zbx1425"
+                        name = "Zbx1425"
+                        email = "support@zbx1425.cn"
+                    }
+                }
+                scm {
+                    url = "https://github.com/zbx1425/minopp"
+                    connection = "scm:git:git//github.com/zbx1425/minopp.git"
+                    developerConnection = "scm:git:ssh://git@github.com/zbx1425/minopp.git"
+                }
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
