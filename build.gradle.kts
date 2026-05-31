@@ -24,11 +24,6 @@ val loader = when {
     else -> error("Unknown loader")
 }
 
-val snapshotVer = "SNAPSHOT"
-if (System.getenv().containsKey("GITHUB_ACTIONS")) {
-    version = "$version+$snapshotVer"
-}
-
 modstitch {
     minecraftVersion = mcVersion
 
@@ -43,11 +38,7 @@ modstitch {
         modId = "minopp"
         modName = "Minopp"
         modDescription = "Recreation of a classical card game in Minecraft"
-        modVersion = if (System.getenv().containsKey("GITHUB_ACTIONS")) {
-            "$versionWithoutMC+$snapshotVer"
-        } else {
-            "$versionWithoutMC+${stonecutter.current.project}"
-        }
+        modVersion = "$versionWithoutMC+${stonecutter.current.project}"
         modGroup = "cn.zbx1425"
         modLicense = "MIT"
         modAuthor = "Zbx1425, MalayP"
@@ -148,8 +139,6 @@ stonecutter {
             replace("renderBackground", "extractBackground")
             replace("guiGraphics.drawString", "guiGraphics.text")
             replace("guiGraphics.drawCenteredString", "guiGraphics.centeredText")
-            replace("guiGraphics.pose().popPose()", "guiGraphics.pose().popMatrix()")
-            replace("guiGraphics.pose().pushPose()", "guiGraphics.pose().pushMatrix()")
         }
     }
 }
