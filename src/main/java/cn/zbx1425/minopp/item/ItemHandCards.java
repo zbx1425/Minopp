@@ -11,7 +11,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
@@ -128,7 +127,7 @@ public class ItemHandCards extends GroupedItem {
     public static class Client {
 
         public static boolean handleScrollWheel(int direction) {
-            LocalPlayer player = Minecraft.getInstance().player;
+            Player player = Minecraft.getInstance().player;
             if (player == null) return false;
             ItemStack holding = player.getMainHandItem();
             if (holding.is(Mino.ITEM_HAND_CARDS.get())) {
