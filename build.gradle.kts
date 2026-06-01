@@ -85,6 +85,11 @@ modstitch {
                     sourceSet = sourceSets.main.get()
                     gameDirectory = layout.projectDirectory.dir("../../run")
                 }
+                register("server") {
+                    server()
+                    sourceSet = sourceSets.main.get()
+                    gameDirectory = layout.projectDirectory.dir("../../run")
+                }
             }
 
             mods {

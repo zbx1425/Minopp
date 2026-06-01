@@ -98,7 +98,7 @@ public class ItemHandCards extends GroupedItem {
         //~ if >=26.1 'tooltipComponents.add(' -> 'builder.accept(' {
         if (binding != null) {
             builder.accept(Component.literal("Table: " + binding.tablePos().toShortString()));
-            if (!binding.bearerId().equals(PlayerShim.getGameProfileId(Minecraft.getInstance().player))) {
+            if (!Client.isClientPlayerOwnerOfHandCard(binding)) { // TODO this doesn't seem good, some mod might try to call it from server
                 builder.accept(Component.literal("NOT YOUR CARD!").withStyle(ChatFormatting.RED));
             }
         }
@@ -151,6 +151,10 @@ public class ItemHandCards extends GroupedItem {
                 }
             }
             return false;
+        }
+
+        public static boolean isClientPlayerOwnerOfHandCard(CardGameBindingComponent binding) {
+            return binding.bearerId().equals(PlayerShim.getGameProfileId(Minecraft.getInstance().player));
         }
     }
 }
