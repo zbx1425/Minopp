@@ -28,7 +28,7 @@ public class C2SAutoPlayerConfigPacket {
                 if (shouldDelete) {
                     autoPlayer.remove(Entity.RemovalReason.KILLED);
                 } else {
-                    NbtIOShim.topUpOne(autoPlayer::readConfigFromTag, config);
+                    autoPlayer.applyConfig(NbtIOShim.decode(EntityAutoPlayer.Config.CODEC, config));
                 }
             }
         });
@@ -39,7 +39,7 @@ public class C2SAutoPlayerConfigPacket {
             FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
             packet.writeInt(autoPlayer.getId());
             packet.writeBoolean(false); // Not deleting
-            packet.writeNbt(NbtIOShim.pourOne(autoPlayer::writeConfigToTag));
+            packet.writeNbt(NbtIOShim.encode(EntityAutoPlayer.Config.CODEC, autoPlayer.getConfig()));
             ClientPlatform.sendPacketToServer(ID, packet);
         }
 

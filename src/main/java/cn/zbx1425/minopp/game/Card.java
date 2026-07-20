@@ -1,19 +1,14 @@
 package cn.zbx1425.minopp.game;
 
-import net.minecraft.nbt.CompoundTag;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.storage.ValueInput;
 import org.jetbrains.annotations.NotNull;
-
-//? if >=26.1 {
-import net.minecraft.world.level.storage.ValueOutput;
-//? } else {
-/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
- *///? }
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class Card implements Comparable<Card> {
 
@@ -35,9 +30,14 @@ public class Card implements Comparable<Card> {
         this.equivCard = equivCard;
     }
 
-    public static List<Card> createDeck() {
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private Card(Family family, Suit suit, int number, Optional<Card> equivCard) {
+        this(family, suit, number, equivCard.orElse(null));
+    }
+
+    public static ArrayList<Card> createDeck() {
         // Create a deck of UNO cards.
-        List<Card> deck = new ArrayList<>();
+        ArrayList<Card> deck = new ArrayList<>();
         // Numbers
         for (Suit suit : Suit.values()) {
             if (suit == Suit.WILD) continue;
@@ -149,19 +149,15 @@ public class Card implements Comparable<Card> {
         DRAW
     }
 
-    public Card(ValueInput input) {
-        this(
-            input.getString("family").map(Family::valueOf).orElse(Family.DRAW),
-            input.getString("suit").map(Suit::valueOf).orElse(Suit.BLUE),
-            input.getIntOr("number", 0),
-            input.child("actualCard").map(Card::new).orElse(null)
-        );
-    }
-
-    public void nbtWriteTo(ValueOutput output) {
-        output.putString("family", family.name());
-        output.putString("suit", suit.name());
-        output.putInt("number", number);
-        if (equivCard != null) equivCard.nbtWriteTo(output.child("actualCard"));
-    }
+    public static final Codec<Card> CODEC = Codec.recursive("Card", self ->
+        RecordCodecBuilder.create(instance -> instance.group(
+            Codec.STRING.xmap(Family::valueOf, Family::name)
+                .optionalFieldOf("family", Family.DRAW).forGetter(c -> c.family),
+            Codec.STRING.xmap(Suit::valueOf, Suit::name)
+                .optionalFieldOf("suit", Suit.BLUE).forGetter(c -> c.suit),
+            Codec.INT.optionalFieldOf("number", 0).forGetter(c -> c.number),
+            self.optionalFieldOf("actualCard").forGetter(c -> Optional.ofNullable(c.equivCard))
+        ).apply(instance, (family, suit, number, equivCard) ->
+            new Card(family, suit, number, equivCard.orElse(null))))
+    );
 }

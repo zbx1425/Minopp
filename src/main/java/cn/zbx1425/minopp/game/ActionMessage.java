@@ -1,36 +1,26 @@
 package cn.zbx1425.minopp.game;
 
-import cn.zbx1425.minopp.platform.DummyLookupProvider;
 import com.google.gson.JsonParser;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.nbt.CompoundTag;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.chat.Component;
-
-//? if >=26.1 {
 import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-//? } else {
-/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
- *///? }
 
 
 public record ActionMessage(Type type, Component message) {
 
-    public ActionMessage(ValueInput input) {
-        this(
-            input.getString("type").map(Type::valueOf).orElse(Type.STATE),
-            // This is ugly but we did it in the first place, so for backward compatibility...
-            ComponentSerialization.CODEC.parse(JsonOps.INSTANCE,
-                JsonParser.parseString(input.getStringOr("message", ""))).getOrThrow()
-        );
-    }
+    private static final Codec<Component> JSON_STRING_COMPONENT_CODEC = Codec.STRING.xmap(
+        s -> ComponentSerialization.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(s)).getOrThrow(),
+        c -> ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, c).getOrThrow().toString()
+    );
 
-    public void nbtWriteTo(ValueOutput output) {
-        output.putString("type", type.name());
-        output.putString("message", ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, message)
-            .getOrThrow().toString());
-    }
+    public static final Codec<ActionMessage> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        Codec.STRING.xmap(Type::valueOf, Type::name)
+            .optionalFieldOf("type", Type.STATE).forGetter(ActionMessage::type),
+        // This is ugly but we did it in the first place, so for backward compatibility...
+        JSON_STRING_COMPONENT_CODEC.fieldOf("message").forGetter(ActionMessage::message)
+    ).apply(instance, ActionMessage::new));
 
     public enum Type {
         STATE,

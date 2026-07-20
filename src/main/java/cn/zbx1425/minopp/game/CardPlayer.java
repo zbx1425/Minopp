@@ -1,31 +1,24 @@
 package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Player;
-
-//? if >=26.1 {
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-//? } else {
-/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
-*///? }
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 public class CardPlayer {
 
     public UUID uuid;
     public String name;
 
-    public List<Card> hand = new ArrayList<>();
+    public ArrayList<Card> hand = new ArrayList<>();
 
     public boolean hasShoutedMino = false;
 
@@ -39,21 +32,20 @@ public class CardPlayer {
         this.name = name;
     }
 
-    public CardPlayer(ValueInput input) {
-        this.uuid = input.read("uuid", UUIDUtil.CODEC).orElse(Util.NIL_UUID);
-        this.name = input.getStringOr("name", "");
-        this.hand = input.childrenListOrEmpty("hand").stream().map(Card::new)
-            .collect(Collectors.toCollection(ArrayList::new));
-        this.hasShoutedMino = input.getBooleanOr("hasShoutedMino", false);
+    private CardPlayer(UUID uuid, String name, ArrayList<Card> hand, boolean hasShoutedMino) {
+        this.uuid = uuid;
+        this.name = name;
+        this.hand = hand;
+        this.hasShoutedMino = hasShoutedMino;
     }
 
-    public void nbtWriteTo(ValueOutput output) {
-        output.store("uuid", UUIDUtil.CODEC, uuid);
-        output.putString("name", name);
-        var handTag = output.childrenList("hand");
-        for (Card card : hand) card.nbtWriteTo(handTag.addChild());
-        output.putBoolean("hasShoutedMino", hasShoutedMino);
-    }
+    public static final Codec<CardPlayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        UUIDUtil.CODEC.optionalFieldOf("uuid", Util.NIL_UUID).forGetter(p -> p.uuid),
+        Codec.STRING.optionalFieldOf("name", "").forGetter(p -> p.name),
+        Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
+            .optionalFieldOf("hand", new ArrayList<>()).forGetter(p -> p.hand),
+        Codec.BOOL.optionalFieldOf("hasShoutedMino", false).forGetter(p -> p.hasShoutedMino)
+    ).apply(instance, CardPlayer::new));
 
     @Override
     public boolean equals(Object o) {

@@ -1,37 +1,41 @@
 package cn.zbx1425.minopp.game;
 
-import net.minecraft.nbt.CompoundTag;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.server.MinecraftServer;
-
-//? if >=26.1 {
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-//? } else {
-/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
- *///? }
 
 import java.util.Random;
 
 public class AutoPlayer {
 
-    // Better Abstraction?
+    public boolean noWin;
+    public boolean noPlayerDraw;
+    public float forgetChance;
+    public byte noDelay;
+    public boolean startGame;
 
-    public boolean aiNoWin = false;
-    public boolean aiNoPlayerDraw = false;
-    public float aiForgetChance = 0.2f;
-    public byte aiNoDelay = 0;
-    public boolean aiStartGame = false;
+    public AutoPlayer() {
+        this(false, false, 0.2f, (byte) 0, false);
+    }
+
+    public AutoPlayer(boolean noWin, boolean noPlayerDraw, float forgetChance, byte noDelay, boolean startGame) {
+        this.noWin = noWin;
+        this.noPlayerDraw = noPlayerDraw;
+        this.forgetChance = forgetChance;
+        this.noDelay = noDelay;
+        this.startGame = startGame;
+    }
 
     public ActionReport playAtGame(CardGame game, CardPlayer realPlayer, MinecraftServer server) {
         Card topCard = game.topCard;
-        boolean forgetsMino = new Random().nextFloat() < aiForgetChance;
+        boolean forgetsMino = new Random().nextFloat() < forgetChance;
         boolean shoutsMino = !forgetsMino && realPlayer.hand.size() <= 2;
 
         // If the next player is a human player, we should not play Draw cards
         CardPlayer nextPlayer = game.players.get((game.currentPlayerIndex + (game.isAntiClockwise ? -1 : 1) + game.players.size()) % game.players.size());
-        boolean canPlayDrawCard = !aiNoPlayerDraw || server.getPlayerList().getPlayer(nextPlayer.uuid) == null;
+        boolean canPlayDrawCard = !noPlayerDraw || server.getPlayerList().getPlayer(nextPlayer.uuid) == null;
 
-        if (aiNoWin) {
+        if (noWin) {
             if (realPlayer.hand.size() <= 1) {
                 return game.playNoCard(realPlayer);
             }
@@ -96,19 +100,11 @@ public class AutoPlayer {
         return mostCommonSuit;
     }
 
-    public void useConfigNbt(ValueInput aiConfig) {
-        aiNoWin = aiConfig.getBooleanOr("NoWin", false);
-        aiNoPlayerDraw = aiConfig.getBooleanOr("NoPlayerDraw", false);
-        aiForgetChance = aiConfig.getFloatOr("ForgetChance", 0.2f);
-        aiNoDelay = aiConfig.getByteOr("NoDelay", (byte)0);
-        aiStartGame = aiConfig.getBooleanOr("StartGame", false);
-    }
-
-    public void writeConfigNbt(ValueOutput aiConfig) {
-        aiConfig.putBoolean("NoWin", aiNoWin);
-        aiConfig.putBoolean("NoPlayerDraw", aiNoPlayerDraw);
-        aiConfig.putFloat("ForgetChance", aiForgetChance);
-        aiConfig.putByte("NoDelay", aiNoDelay);
-        aiConfig.putBoolean("StartGame", aiStartGame);
-    }
+    public static final Codec<AutoPlayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        Codec.BOOL.optionalFieldOf("NoWin", false).forGetter(a -> a.noWin),
+        Codec.BOOL.optionalFieldOf("NoPlayerDraw", false).forGetter(a -> a.noPlayerDraw),
+        Codec.FLOAT.optionalFieldOf("ForgetChance", 0.2f).forGetter(a -> a.forgetChance),
+        Codec.BYTE.optionalFieldOf("NoDelay", (byte) 0).forGetter(a -> a.noDelay),
+        Codec.BOOL.optionalFieldOf("StartGame", false).forGetter(a -> a.startGame)
+    ).apply(instance, AutoPlayer::new));
 }

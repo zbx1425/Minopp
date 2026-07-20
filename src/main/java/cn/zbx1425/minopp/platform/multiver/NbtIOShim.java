@@ -1,46 +1,33 @@
 package cn.zbx1425.minopp.platform.multiver;
 
-import cn.zbx1425.minopp.platform.DummyLookupProvider;
+import com.mojang.serialization.Codec;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.ProblemReporter;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.resources.RegistryOps;
+import org.jetbrains.annotations.Nullable;
 
 public class NbtIOShim {
 
-    public static CompoundTag pourOne(Consumer<ValueOutput> writer) {
-        TagValueOutput output = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING);
-        writer.accept(output);
-        return output.buildResult();
+    public static <T> CompoundTag encode(Codec<T> codec, T value) {
+        return (CompoundTag) codec.encodeStart(NbtOps.INSTANCE, value).getOrThrow();
     }
 
-    public static CompoundTag pourOne(Consumer<ValueOutput> writer, HolderLookup.Provider registries) {
-        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
-        writer.accept(output);
-        return output.buildResult();
+    public static <T> CompoundTag encode(Codec<T> codec, T value, HolderLookup.Provider provider) {
+        return (CompoundTag) codec.encodeStart(RegistryOps.create(NbtOps.INSTANCE, provider), value).getOrThrow();
     }
 
-    public static <T> T fillOne(Function<ValueInput, T> reader, CompoundTag tag) {
+    public static <T> T decode(Codec<T> codec, CompoundTag tag) {
+        return codec.parse(NbtOps.INSTANCE, tag).getOrThrow();
+    }
+
+    public static <T> T decode(Codec<T> codec, CompoundTag tag, HolderLookup.Provider provider) {
+        return codec.parse(RegistryOps.create(NbtOps.INSTANCE, provider), tag).getOrThrow();
+    }
+
+    @Nullable
+    public static <T> T decodeNullable(Codec<T> codec, @Nullable CompoundTag tag) {
         if (tag == null) return null;
-        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, new DummyLookupProvider(), tag);
-        return reader.apply(input);
-    }
-
-    public static void topUpOne(Consumer<ValueInput> reader, CompoundTag tag) {
-        if (tag == null) return;
-        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, new DummyLookupProvider(), tag);
-        reader.accept(input);
-    }
-
-    public static <T> T fillOne(Function<ValueInput, T> reader, HolderLookup.Provider registries, CompoundTag tag) {
-        if (tag == null) return null;
-        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, registries, tag);
-        return reader.apply(input);
+        return codec.parse(NbtOps.INSTANCE, tag).result().orElse(null);
     }
 }

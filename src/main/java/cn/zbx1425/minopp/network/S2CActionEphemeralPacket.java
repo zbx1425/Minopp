@@ -20,7 +20,7 @@ public class S2CActionEphemeralPacket {
     public static void sendS2C(ServerPlayer target, BlockPos gamePos, ActionMessage message) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
         packet.writeBlockPos(gamePos);
-        packet.writeNbt(NbtIOShim.pourOne(message::nbtWriteTo));
+        packet.writeNbt(NbtIOShim.encode(ActionMessage.CODEC, message));
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
     }
 
@@ -28,7 +28,7 @@ public class S2CActionEphemeralPacket {
 
         public static void handleS2C(FriendlyByteBuf packet) {
             BlockPos gamePos = packet.readBlockPos();
-            ActionMessage message = NbtIOShim.fillOne(ActionMessage::new, packet.readNbt());
+            ActionMessage message = NbtIOShim.decode(ActionMessage.CODEC, packet.readNbt());
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
                     tableEntity.clientMessageList.add(new Pair<>(message, System.currentTimeMillis() + 8000));

@@ -4,25 +4,18 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.effect.GrantRewardEffectEvent;
 import cn.zbx1425.minopp.effect.PlayerFireworkEffectEvent;
 import cn.zbx1425.minopp.effect.PlayerGlowEffectEvent;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.component.FireworkExplosion;
 
-//? if >=26.1 {
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-//? } else {
-/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
- *///? }
-
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 public class CardGame {
 
-    public List<CardPlayer> players;
+    public ArrayList<CardPlayer> players;
     public int currentPlayerIndex;
 
     public int drawCount;
@@ -31,12 +24,25 @@ public class CardGame {
 
     public boolean isAntiClockwise;
 
-    public List<Card> deck = new ArrayList<>();
-    public List<Card> discardDeck = new ArrayList<>();
+    public ArrayList<Card> deck = new ArrayList<>();
+    public ArrayList<Card> discardDeck = new ArrayList<>();
     public Card topCard;
 
-    public CardGame(List<CardPlayer> players) {
+    public CardGame(ArrayList<CardPlayer> players) {
         this.players = players;
+    }
+
+    private CardGame(int currentPlayerIndex, int drawCount, boolean isSkipping, PlayerActionPhase currentPlayerPhase,
+                     boolean isAntiClockwise, ArrayList<Card> deck, ArrayList<Card> discardDeck, Card topCard, ArrayList<CardPlayer> players) {
+        this.players = players;
+        this.currentPlayerIndex = currentPlayerIndex;
+        this.drawCount = drawCount;
+        this.isSkipping = isSkipping;
+        this.currentPlayerPhase = currentPlayerPhase;
+        this.isAntiClockwise = isAntiClockwise;
+        this.deck = deck;
+        this.discardDeck = discardDeck;
+        this.topCard = topCard;
     }
 
     public ActionReport initiate(CardPlayer cardPlayer, int initialCardCount) {
@@ -253,33 +259,19 @@ public class CardGame {
         DISCARD_DRAWN,
     }
 
-    public CardGame(ValueInput input) {
-        currentPlayerIndex = input.getIntOr("currentPlayer", 0);
-        drawCount = input.getIntOr("drawCount", 0);
-        isSkipping = input.getBooleanOr("isSkipping", false);
-        currentPlayerPhase = input.getString("currentPlayerPhase").map(PlayerActionPhase::valueOf).orElse(PlayerActionPhase.DISCARD_HAND);
-        isAntiClockwise = input.getBooleanOr("isAntiClockwise", false);
-        deck = input.childrenListOrEmpty("deck").stream().map(Card::new)
-            .collect(Collectors.toCollection(ArrayList::new));
-        discardDeck = input.childrenListOrEmpty("discardDeck").stream().map(Card::new)
-            .collect(Collectors.toCollection(ArrayList::new));
-        topCard = new Card(input.childOrEmpty("topCard"));
-        players = input.childrenListOrEmpty("players").stream().map(CardPlayer::new)
-            .collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    public void nbtWriteTo(ValueOutput output) {
-        output.putInt("currentPlayer", currentPlayerIndex);
-        output.putInt("drawCount", drawCount);
-        output.putBoolean("isSkipping", isSkipping);
-        output.putString("currentPlayerPhase", currentPlayerPhase.name());
-        output.putBoolean("isAntiClockwise", isAntiClockwise);
-        var deckOutput = output.childrenList("deck");
-        for (Card card : deck) card.nbtWriteTo(deckOutput.addChild());
-        var discardDeckOutput = output.childrenList("discardDeck");
-        for (Card card : discardDeck) card.nbtWriteTo(discardDeckOutput.addChild());
-        topCard.nbtWriteTo(output.child("topCard"));
-        var playersOutput = output.childrenList("players");
-        for (CardPlayer player : players) player.nbtWriteTo(playersOutput.addChild());
-    }
+    public static final Codec<CardGame> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        Codec.INT.optionalFieldOf("currentPlayer", 0).forGetter(g -> g.currentPlayerIndex),
+        Codec.INT.optionalFieldOf("drawCount", 0).forGetter(g -> g.drawCount),
+        Codec.BOOL.optionalFieldOf("isSkipping", false).forGetter(g -> g.isSkipping),
+        Codec.STRING.xmap(PlayerActionPhase::valueOf, PlayerActionPhase::name)
+            .optionalFieldOf("currentPlayerPhase", PlayerActionPhase.DISCARD_HAND).forGetter(g -> g.currentPlayerPhase),
+        Codec.BOOL.optionalFieldOf("isAntiClockwise", false).forGetter(g -> g.isAntiClockwise),
+        Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
+            .optionalFieldOf("deck", new ArrayList<>()).forGetter(g -> g.deck),
+        Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
+            .optionalFieldOf("discardDeck", new ArrayList<>()).forGetter(g -> g.discardDeck),
+        Card.CODEC.fieldOf("topCard").forGetter(g -> g.topCard),
+        CardPlayer.CODEC.listOf().xmap(ArrayList::new, Function.identity())
+            .optionalFieldOf("players", new ArrayList<>()).forGetter(g -> g.players)
+    ).apply(instance, CardGame::new));
 }

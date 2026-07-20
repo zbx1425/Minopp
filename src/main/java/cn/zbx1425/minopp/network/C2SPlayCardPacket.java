@@ -33,7 +33,7 @@ public class C2SPlayCardPacket {
 
         switch (actionType) {
             case 0 -> {
-                final Card card = NbtIOShim.fillOne(Card::new, packet.readNbt());
+                final Card card = NbtIOShim.decode(Card.CODEC, packet.readNbt());
                 final int wildSelectionOrdinal = packet.readInt();
                 final boolean shout = packet.readBoolean();
                 server.execute(() -> {
@@ -78,7 +78,7 @@ public class C2SPlayCardPacket {
             packet.writeBlockPos(gamePos);
             packet.writeUUID(player.uuid);
             packet.writeInt(0);
-            packet.writeNbt(NbtIOShim.pourOne(card::nbtWriteTo));
+            packet.writeNbt(NbtIOShim.encode(Card.CODEC, card));
             packet.writeInt(wildSelection == null ? -1 : wildSelection.ordinal());
             packet.writeBoolean(shout);
             ClientPlatform.sendPacketToServer(ID, packet);

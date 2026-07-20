@@ -14,11 +14,13 @@ import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -44,9 +46,7 @@ import org.jetbrains.annotations.Nullable;
 //? if >=26.1 {
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-//? } else {
-/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
- *///? }
+//? }
 
 import java.util.*;
 
@@ -69,45 +69,21 @@ public class BlockEntityMinoTable extends BlockEntity {
         }
     }
 
-    @Override
-    //? if <26.1 {
-    /*protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
-        super.saveAdditional(compoundTag, provider);
-        ValueOutput output = new ValueOutput(compoundTag);
-    *///? } else if >=26.1 {
-    protected void saveAdditional(final ValueOutput output) {
-        super.saveAdditional(output);
-    //? }
-        ValueOutput playerOutput = output.child("players");
-        for (Map.Entry<Direction, CardPlayer> entry : players.entrySet()) {
-            if (entry.getValue() != null) {
-                entry.getValue().nbtWriteTo(playerOutput.child(entry.getKey().getSerializedName()));
-            }
+    private MinoTableState getSerializableState() {
+        Map<String, CardPlayer> map = new HashMap<>();
+        for (Map.Entry<Direction, CardPlayer> e : players.entrySet()) {
+            if (e.getValue() != null) map.put(e.getKey().getSerializedName(), e.getValue());
         }
-        if (game != null) game.nbtWriteTo(output.child("game"));
-        state.nbtWriteTo(output.child("state"));
-        if (!award.isEmpty()) {
-            output.store("award", ItemStack.CODEC, award);
-        }
-        output.putBoolean("demo", demo);
+        return new MinoTableState(map, game, state, award, demo);
     }
 
-    @Override
-    //? if <26.1 {
-    /*protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
-        super.loadAdditional(compoundTag, provider);
-    *///? } else if >= 26.1 {
-    protected void loadAdditional(final ValueInput input) {
-        super.loadAdditional(input);
-    //? }
-        ValueInput playersTag = input.childOrEmpty("players");
-        for (Direction direction : PLAYER_ORDER) {
-            players.put(direction,
-                playersTag.child(direction.getSerializedName()).map(CardPlayer::new).orElse(null));
+    private void applyLoadedState(MinoTableState loaded) {
+        for (Direction d : PLAYER_ORDER) {
+            players.put(d, loaded.players().get(d.getSerializedName()));
         }
         CardGame previousGame = game;
-        game = input.child("game").map(CardGame::new).orElse(null);
-        ActionMessage newState = new ActionMessage(input.childOrEmpty("state"));
+        game = loaded.game();
+        ActionMessage newState = loaded.state();
         if (!newState.equals(state)) {
             if (previousGame == null && game != null) {
                 clientMessageList.clear();
@@ -117,13 +93,39 @@ public class BlockEntityMinoTable extends BlockEntity {
             state = newState;
             clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
         }
-        award = input.read("award", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
-        demo = input.getBooleanOr("demo", false);
+        award = loaded.award();
+        demo = loaded.demo();
     }
 
-    public List<CardPlayer> getPlayersList() {
+    @Override
+    //? if <26.1 {
+    /*protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
+        tag.merge(NbtIOShim.encode(MinoTableState.CODEC, getSerializableState(), provider));
+    *///? } else if >=26.1 {
+    @SuppressWarnings("deprecation")
+    protected void saveAdditional(final ValueOutput output) {
+        super.saveAdditional(output);
+        output.store(MinoTableState.MAP_CODEC, getSerializableState());
+    //? }
+    }
+
+    @Override
+    //? if <26.1 {
+    /*protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
+        applyLoadedState(NbtIOShim.decode(MinoTableState.CODEC, tag, provider));
+    *///? } else if >= 26.1 {
+    @SuppressWarnings("deprecation")
+    protected void loadAdditional(final ValueInput input) {
+        super.loadAdditional(input);
+        input.read(MinoTableState.MAP_CODEC).ifPresent(this::applyLoadedState);
+    //? }
+    }
+
+    public ArrayList<CardPlayer> getPlayersList() {
         // Return a list of players in the order of NORTH, EAST, SOUTH, WEST, without null elements
-        List<CardPlayer> playersList = new ArrayList<>();
+        ArrayList<CardPlayer> playersList = new ArrayList<>();
         for (Direction direction : PLAYER_ORDER) {
             if (players.get(direction) != null) {
                 playersList.add(players.get(direction));
@@ -332,11 +334,31 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     @Override
     public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider provider) {
-        return NbtIOShim.pourOne(this::saveAdditional);
+        return saveWithoutMetadata(provider);
     }
 
     @Nullable @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    public record MinoTableState(
+        Map<String, CardPlayer> players,
+        @Nullable CardGame game,
+        ActionMessage state,
+        ItemStack award,
+        boolean demo
+    ) {
+        public static final MapCodec<MinoTableState> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.unboundedMap(Codec.STRING, CardPlayer.CODEC)
+                .optionalFieldOf("players", Map.of()).forGetter(MinoTableState::players),
+            CardGame.CODEC.optionalFieldOf("game").forGetter(s -> Optional.ofNullable(s.game)),
+            ActionMessage.CODEC.optionalFieldOf("state", ActionMessage.NO_GAME).forGetter(MinoTableState::state),
+            ItemStack.OPTIONAL_CODEC.optionalFieldOf("award", ItemStack.EMPTY).forGetter(MinoTableState::award),
+            Codec.BOOL.optionalFieldOf("demo", false).forGetter(MinoTableState::demo)
+        ).apply(instance, (players, game, state, award, demo) ->
+            new MinoTableState(players, game.orElse(null), state, award, demo)));
+
+        public static final Codec<MinoTableState> CODEC = MAP_CODEC.codec();
     }
 }

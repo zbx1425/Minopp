@@ -3,21 +3,27 @@ package cn.zbx1425.minopp.entity;
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
-import cn.zbx1425.minopp.game.*;
+import cn.zbx1425.minopp.game.AutoPlayer;
+import cn.zbx1425.minopp.game.CardGame;
+import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.gui.AutoPlayerScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CAutoPlayerScreenPacket;
+import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import cn.zbx1425.minopp.platform.multiver.WorldShim;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -47,9 +53,7 @@ import net.minecraft.server.level.ServerPlayer;
 //? if >=26.1 {
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-//? } else {
-/*import cn.zbx1425.minopp.platform.multiver.ValueOutput;
- *///? }
+//? }
 
 import java.util.List;
 import java.util.Optional;
@@ -74,7 +78,7 @@ public class EntityAutoPlayer extends LivingEntity {
     private long thinkingFinishTime = 0;
     private long gameEndTime = 0;
 
-    public final AutoPlayer autoPlayer = new AutoPlayer();
+    public AutoPlayer autoPlayer = new AutoPlayer();
 
     public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
     public String clientSkinGameProfileValidFor = "";
@@ -114,7 +118,7 @@ public class EntityAutoPlayer extends LivingEntity {
             heal(10);
             return;
         }
-        if (autoPlayer.aiNoDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
+        if (autoPlayer.noDelay < 2 && level().getGameTime() - lastTickGameTime < 10) {
             return;
         }
         lastTickGameTime = level().getGameTime();
@@ -161,7 +165,7 @@ public class EntityAutoPlayer extends LivingEntity {
             if (tableEntity.game != null) {
                 heal(10);
                 if (tableEntity.game.players.get(tableEntity.game.currentPlayerIndex).equals(cardPlayer)) {
-                    if (autoPlayer.aiNoDelay > 0) {
+                    if (autoPlayer.noDelay > 0) {
                         isThinking = false;
                     } else {
                         if (!isThinking) {
@@ -193,7 +197,7 @@ public class EntityAutoPlayer extends LivingEntity {
                 } else if (level().getGameTime() - gameEndTime <= 20 * 3) {
                     if (onGround()) jumpFromGround();
                 } else {
-                    if (autoPlayer.aiStartGame && tableEntity.getPlayersList().size() >= 2) {
+                    if (autoPlayer.startGame && tableEntity.getPlayersList().size() >= 2) {
                         tableEntity.startGame(cardPlayer);
                     }
                 }
@@ -285,26 +289,34 @@ public class EntityAutoPlayer extends LivingEntity {
     /*@Override
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
+        if (tablePos != null) compound.putLong("TablePos", tablePos.asLong());
+        if (cardPlayer != null) compound.put("CardPlayer", NbtIOShim.encode(CardPlayer.CODEC, cardPlayer));
+        compound.merge(NbtIOShim.encode(Config.CODEC, getConfig()));
     *///? } else if >= 26.1 {
+    @SuppressWarnings("deprecation")
     protected void addAdditionalSaveData(final ValueOutput output) {
         super.addAdditionalSaveData(output);
-    //? }
         if (tablePos != null) output.putLong("TablePos", tablePos.asLong());
-        if (cardPlayer != null) cardPlayer.nbtWriteTo(output.child("CardPlayer"));
-        writeConfigToTag(output);
+        output.storeNullable("CardPlayer", CardPlayer.CODEC, cardPlayer);
+        output.store(Config.MAP_CODEC, getConfig());
+    //? }
     }
 
     //? if <26.1 {
     /*@Override
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
+        tablePos = compound.contains("TablePos") ? BlockPos.of(compound.getLong("TablePos")) : null;
+        cardPlayer = compound.contains("CardPlayer") ? NbtIOShim.decodeNullable(CardPlayer.CODEC, compound.getCompound("CardPlayer")) : null;
+        applyConfig(NbtIOShim.decode(Config.CODEC, compound));
     *///? } else if >=26.1 {
+    @SuppressWarnings("deprecation")
     protected void readAdditionalSaveData(final ValueInput input) {
         super.readAdditionalSaveData(input);
-    //? }
         tablePos = input.getLong("TablePos").map(BlockPos::of).orElse(null);
-        cardPlayer = input.child("CardPlayer").map(CardPlayer::new).orElse(null);
-        readConfigFromTag(input);
+        cardPlayer = input.read("CardPlayer", CardPlayer.CODEC).orElse(null);
+        input.read(Config.MAP_CODEC).ifPresent(this::applyConfig);
+    //? }
 
         // Try fix hand stack
         if (tablePos != null && cardPlayer != null) {
@@ -363,33 +375,43 @@ public class EntityAutoPlayer extends LivingEntity {
         entityData.set(SKIN, skin);
     }
 
-    public void writeConfigToTag(ValueOutput output) {
-        output.putBoolean("Active", getActive());
-        output.putBoolean("NoPush", getNoPush());
-        output.putString("Skin", getSkin());
-        autoPlayer.writeConfigNbt(output.child("AI"));
-
-        Component component = this.getCustomName();
-        if (component != null) {
-            output.putString("CustomName", ComponentSerialization.CODEC
-                .encodeStart(JsonOps.INSTANCE, component).getOrThrow().toString());
-        }
+    public Config getConfig() {
+        return new Config(
+            getActive(), getNoPush(), getSkin(),
+            autoPlayer,
+            Optional.ofNullable(this.getCustomName())
+        );
     }
 
-    public void readConfigFromTag(ValueInput input) {
-        setActive(input.getBooleanOr("Active", false));
-        setNoPush(input.getBooleanOr("NoPush", false));
-        setSkin(input.getStringOr("Skin", ""));
-        autoPlayer.useConfigNbt(input.childOrEmpty("AI"));
-
-        input.getString("CustomName").ifPresent(customName -> {
-            try {
-                this.setCustomName(ComponentSerialization.CODEC.parse(
-                    JsonOps.INSTANCE, JsonParser.parseString(input.getStringOr("CustomName", "")))
-                    .getOrThrow());
-            } catch (Exception ignored) { }
-        });
+    public void applyConfig(Config config) {
+        setActive(config.active());
+        setNoPush(config.noPush());
+        setSkin(config.skin());
+        this.autoPlayer = config.aiConfig();
+        config.customName().ifPresent(this::setCustomName);
     }
+
+    public record Config(
+        boolean active, boolean noPush, String skin,
+        AutoPlayer aiConfig,
+        Optional<Component> customName
+    ) {
+        private static final Codec<Component> JSON_STRING_COMPONENT_CODEC = Codec.STRING.xmap(
+            s -> ComponentSerialization.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(s)).getOrThrow(),
+            c -> ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, c).getOrThrow().toString()
+        );
+
+        public static final MapCodec<Config> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.BOOL.optionalFieldOf("Active", false).forGetter(Config::active),
+            Codec.BOOL.optionalFieldOf("NoPush", false).forGetter(Config::noPush),
+            Codec.STRING.optionalFieldOf("Skin", "").forGetter(Config::skin),
+            AutoPlayer.CODEC.optionalFieldOf("AI", new AutoPlayer()).forGetter(Config::aiConfig),
+            JSON_STRING_COMPONENT_CODEC.optionalFieldOf("CustomName").forGetter(Config::customName)
+        ).apply(instance, Config::new));
+
+        public static final Codec<Config> CODEC = MAP_CODEC.codec();
+    }
+
 
     private static class Client {
 

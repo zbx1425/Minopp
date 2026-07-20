@@ -34,7 +34,7 @@ public class S2CAutoPlayerScreenPacket {
     public static void sendS2C(ServerPlayer target, EntityAutoPlayer autoPlayer) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
         packet.writeInt(autoPlayer.getId());
-        packet.writeNbt(NbtIOShim.pourOne(autoPlayer::writeConfigToTag));
+        packet.writeNbt(NbtIOShim.encode(EntityAutoPlayer.Config.CODEC, autoPlayer.getConfig()));
         ServerPlatform.sendPacketToPlayer(target, ID, packet);
     }
 
@@ -46,7 +46,7 @@ public class S2CAutoPlayerScreenPacket {
 
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getEntity(entityId) instanceof EntityAutoPlayer autoPlayer) {
-                    NbtIOShim.topUpOne(autoPlayer::readConfigFromTag, config);
+                    autoPlayer.applyConfig(NbtIOShim.decode(EntityAutoPlayer.Config.CODEC, config));
                     if (isYaclAvailable()) {
                         Minecraft.getInstance().setScreen(AutoPlayerScreen.create(autoPlayer, Minecraft.getInstance().screen));
                     } else {
