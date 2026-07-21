@@ -125,6 +125,13 @@ public class Card implements Comparable<Card> {
         return Integer.compare(hashCode(), o.hashCode());
     }
 
+    @Override
+    public String toString() {
+        String base = suit.name() + "_" + family.name() + (family == Family.NUMBER ? "_" + number : "");
+        if (equivCard != null) base += "(equiv=" + equivCard.suit.name() + "_" + equivCard.family.name() + ")";
+        return base;
+    }
+
     public enum Suit {
 
         RED(0xFFBE0C00),

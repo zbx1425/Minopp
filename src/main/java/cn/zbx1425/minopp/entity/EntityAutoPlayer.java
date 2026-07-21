@@ -186,6 +186,18 @@ public class EntityAutoPlayer extends LivingEntity {
                     }
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
                     ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules);
+                    if (result.isFail) {
+                        for (var msg : result.messages) {
+                            Mino.LOGGER.warn("AutoPlayer Failed! {}: {}", realPlayer.name, msg.message().getString());
+                        }
+                        autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules, true);
+                        try {
+                            var gameJson = CardGame.CODEC.encodeStart(JsonOps.INSTANCE, tableEntity.game);
+                            Mino.LOGGER.warn("Game state: {}", gameJson.getOrThrow());
+                        } catch (Exception e) {
+                            Mino.LOGGER.warn("Failed to encode game state", e);
+                        }
+                    }
                     tableEntity.handleActionResult(result, realPlayer, null);
                     gameEndTime = -1;
                 } else {
@@ -387,7 +399,7 @@ public class EntityAutoPlayer extends LivingEntity {
         setActive(config.active());
         setNoPush(config.noPush());
         setSkin(config.skin());
-        this.autoPlayer = config.aiConfig();
+        this.autoPlayer = config.aiConfig().copy();
         config.customName().ifPresent(this::setCustomName);
     }
 
