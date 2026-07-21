@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -45,7 +46,7 @@ public class CardPlayer {
         UUIDUtil.CODEC.optionalFieldOf("uuid", Util.NIL_UUID).forGetter(p -> p.uuid),
         Codec.STRING.optionalFieldOf("name", "").forGetter(p -> p.name),
         Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
-            .optionalFieldOf("hand", new ArrayList<>()).forGetter(p -> p.hand),
+            .optionalFieldOf("hand").xmap(opt -> opt.orElseGet(ArrayList::new), Optional::of).forGetter(p -> p.hand),
         Codec.BOOL.optionalFieldOf("hasShoutedMino", false).forGetter(p -> p.hasShoutedMino),
         Codec.INT.optionalFieldOf("swapGeneration", 0).forGetter(p -> p.swapGeneration)
     ).apply(instance, CardPlayer::new));

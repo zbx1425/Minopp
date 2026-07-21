@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SwapSelectionScreen extends Screen {
@@ -25,90 +26,90 @@ public class SwapSelectionScreen extends Screen {
         this.self = self;
         this.handCard = handCard;
         this.shout = shout;
-        this.allPlayers = allPlayers;
+        this.allPlayers = new ArrayList<>(allPlayers);
     }
 
-    int BTN_SIZE = 20;
-    int ROW_HEIGHT = 24;
-    int MARGIN = 8;
-    int NAME_WIDTH = 80;
-    int CARD_BLOCK_WIDTH = 8;
-    int CARD_BLOCK_HEIGHT = 12;
-    int CARD_BLOCK_GAP = 1;
+    static final int BTN_SIZE = 20;
+    static final int ROW_HEIGHT = 24;
+    static final int MARGIN = 8;
+    static final int CARD_BLOCK_W = 10;
+    static final int CARD_BLOCK_H = 15;
+    static final int CARD_BLOCK_GAP = 1;
+    static final int NAME_COL_WIDTH = 80;
 
-    int PANEL_WIDTH = 300;
+    int PANEL_WIDTH = 280;
+    int PANEL_HEIGHT;
 
     @Override
     protected void init() {
         super.init();
         clearWidgets();
 
-        int panelHeight = MARGIN + 9 + MARGIN + ROW_HEIGHT * allPlayers.size() + MARGIN;
-        int xOff = (width - PANEL_WIDTH) / 2;
-        int yOff = (height - panelHeight) / 2;
+        PANEL_HEIGHT = MARGIN + 9 + MARGIN + ROW_HEIGHT * allPlayers.size() + MARGIN + BTN_SIZE + MARGIN;
 
-        int y = yOff + MARGIN + 9 + MARGIN;
-        for (CardPlayer player : allPlayers) {
-            boolean isSelf = player.equals(self);
-            int btnX = xOff + MARGIN;
-            int btnY = y + (ROW_HEIGHT - BTN_SIZE) / 2;
-            Button btn = Button.builder(Component.empty(), e -> {
-                C2SPlayCardPacket.Client.sendPlayCardC2S(gamePos, self, handCard, null, shout, player.uuid);
+        int xOff = (width - PANEL_WIDTH) / 2;
+        int yOff = (height - PANEL_HEIGHT) / 2;
+
+        int rowY = yOff + MARGIN + 9 + MARGIN;
+        for (CardPlayer target : allPlayers) {
+            int finalRowY = rowY;
+            Button btn = addRenderableWidget(Button.builder(Component.literal(" "), e -> {
+                C2SPlayCardPacket.Client.sendPlayCardC2S(gamePos, self, handCard, null, shout, target.uuid);
                 onClose();
-            }).pos(btnX, btnY).size(BTN_SIZE, BTN_SIZE).build();
-            btn.active = !isSelf;
-            addRenderableWidget(btn);
-            y += ROW_HEIGHT;
+            }).pos(xOff + MARGIN, finalRowY).size(BTN_SIZE, BTN_SIZE).build());
+            if (target.equals(self)) {
+                btn.active = false;
+            }
+            rowY += ROW_HEIGHT;
         }
+
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), e -> {
+            onClose();
+        }).pos(xOff + PANEL_WIDTH - MARGIN - 60, yOff + PANEL_HEIGHT - MARGIN - BTN_SIZE).size(60, BTN_SIZE).build());
     }
 
     @Override
     public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
 
-        int panelHeight = MARGIN + 9 + MARGIN + ROW_HEIGHT * allPlayers.size() + MARGIN;
         int xOff = (width - PANEL_WIDTH) / 2;
-        int yOff = (height - panelHeight) / 2;
-
-        guiGraphics.fill(xOff + MARGIN, yOff + MARGIN, xOff + PANEL_WIDTH + MARGIN, yOff + panelHeight + MARGIN, 0x66000000);
-        guiGraphics.fill(xOff, yOff, xOff + PANEL_WIDTH, yOff + panelHeight, 0xFF313031);
+        int yOff = (height - PANEL_HEIGHT) / 2;
+        guiGraphics.fill(xOff + MARGIN, yOff + MARGIN, xOff + PANEL_WIDTH + MARGIN, yOff + PANEL_HEIGHT + MARGIN, 0x66000000);
+        guiGraphics.fill(xOff, yOff, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0xFF313031);
+        guiGraphics.fill(xOff, yOff + PANEL_HEIGHT - MARGIN - BTN_SIZE / 2, xOff + PANEL_WIDTH, yOff + PANEL_HEIGHT, 0x66546E7A);
         guiGraphics.centeredText(font, title, width / 2, yOff + MARGIN, 0xFFFFFFFF);
 
-        int y = yOff + MARGIN + 9 + MARGIN;
-        int cardAreaX = xOff + MARGIN + BTN_SIZE + MARGIN + NAME_WIDTH + MARGIN;
-        int cardAreaMaxWidth = PANEL_WIDTH - MARGIN - BTN_SIZE - MARGIN - NAME_WIDTH - MARGIN - MARGIN;
+        int cardAreaRight = xOff + PANEL_WIDTH - MARGIN;
+        int cardAreaMaxWidth = cardAreaRight - (xOff + MARGIN + BTN_SIZE + MARGIN + NAME_COL_WIDTH);
 
-        for (CardPlayer player : allPlayers) {
-            int nameY = y + (ROW_HEIGHT - 9) / 2;
+        int rowY = yOff + MARGIN + 9 + MARGIN;
+        for (CardPlayer target : allPlayers) {
             int nameX = xOff + MARGIN + BTN_SIZE + MARGIN;
-            boolean isSelf = player.equals(self);
-            int nameColor = isSelf ? 0xFFFFFF00 : 0xFFFFFFFF;
-            guiGraphics.text(font, Component.literal(player.name), nameX, nameY, nameColor);
+            int nameColor = target.equals(self) ? 0xFF888888 : 0xFFDDDDDD;
+            guiGraphics.text(font, Component.literal(target.name), nameX, rowY + (BTN_SIZE - 9) / 2, nameColor);
 
-            int handSize = player.hand.size();
-            int totalBlockWidth = handSize * (CARD_BLOCK_WIDTH + CARD_BLOCK_GAP) - CARD_BLOCK_GAP;
-            int renderedCount;
-            boolean overflow = false;
-            if (totalBlockWidth > cardAreaMaxWidth - 20) {
-                int maxWidth = cardAreaMaxWidth - 50;
-                renderedCount = Math.max(1, (maxWidth + CARD_BLOCK_GAP) / (CARD_BLOCK_WIDTH + CARD_BLOCK_GAP));
-                overflow = true;
-            } else {
-                renderedCount = handSize;
+            int cardBlockX = nameX + NAME_COL_WIDTH;
+            int handSize = target.hand.size();
+            int maxVisibleWidth = cardAreaMaxWidth - 20;
+            int maxVisible = Math.max(1, maxVisibleWidth / (CARD_BLOCK_W + CARD_BLOCK_GAP));
+
+            int visibleCount = Math.min(handSize, maxVisible);
+            boolean overflow = handSize > visibleCount;
+
+            for (int i = 0; i < visibleCount; i++) {
+                int bx = cardBlockX + i * (CARD_BLOCK_W + CARD_BLOCK_GAP);
+                guiGraphics.fill(bx, rowY + (BTN_SIZE - CARD_BLOCK_H) / 2,
+                    bx + CARD_BLOCK_W, rowY + (BTN_SIZE - CARD_BLOCK_H) / 2 + CARD_BLOCK_H, 0xFF546E7A);
             }
 
-            int blockY = y + (ROW_HEIGHT - CARD_BLOCK_HEIGHT) / 2;
-            for (int i = 0; i < renderedCount; i++) {
-                int blockX = cardAreaX + i * (CARD_BLOCK_WIDTH + CARD_BLOCK_GAP);
-                guiGraphics.fill(blockX, blockY, blockX + CARD_BLOCK_WIDTH, blockY + CARD_BLOCK_HEIGHT, 0xFFAAAAAA);
-            }
             if (overflow) {
-                int remaining = handSize - renderedCount;
-                int textX = cardAreaX + renderedCount * (CARD_BLOCK_WIDTH + CARD_BLOCK_GAP) + 4;
-                guiGraphics.text(font, Component.literal("+" + remaining), textX, nameY, 0xFFCCCCCC);
+                int remaining = handSize - visibleCount;
+                String overflowText = "+" + remaining;
+                int textX = cardBlockX + visibleCount * (CARD_BLOCK_W + CARD_BLOCK_GAP) + 2;
+                guiGraphics.text(font, Component.literal(overflowText), textX, rowY + (BTN_SIZE - 9) / 2, 0xFFAAAA00);
             }
 
-            y += ROW_HEIGHT;
+            rowY += ROW_HEIGHT;
         }
     }
 

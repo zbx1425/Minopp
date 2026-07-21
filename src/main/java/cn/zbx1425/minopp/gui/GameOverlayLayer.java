@@ -306,7 +306,7 @@ public class GameOverlayLayer {
                 float pulse = (float)(Math.sin(System.currentTimeMillis() * 0.006) + 1) / 2f;
                 int r = (int)(0xFF * (1 - pulse) + 0xCC * pulse);
                 int borderColor = 0xFF000000 | (r << 16);
-                g.fill(x - 1, y - 1, x + CARD_WIDTH + 1, y + CARD_HEIGHT + 1, borderColor);
+                g.fill(x - 3, y - 3, x + CARD_WIDTH + 3, y + CARD_HEIGHT + 3, borderColor);
             }
             g.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0xFF222222);
             g.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);

@@ -365,13 +365,13 @@ public class CardGame {
             .optionalFieldOf("currentPlayerPhase", PlayerActionPhase.DISCARD_HAND).forGetter(g -> g.currentPlayerPhase),
         Codec.BOOL.optionalFieldOf("isAntiClockwise", false).forGetter(g -> g.isAntiClockwise),
         Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
-            .optionalFieldOf("deck", new ArrayList<>()).forGetter(g -> g.deck),
+            .optionalFieldOf("deck").xmap(opt -> opt.orElseGet(ArrayList::new), Optional::of).forGetter(g -> g.deck),
         Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
-            .optionalFieldOf("discardDeck", new ArrayList<>()).forGetter(g -> g.discardDeck),
+            .optionalFieldOf("discardDeck").xmap(opt -> opt.orElseGet(ArrayList::new), Optional::of).forGetter(g -> g.discardDeck),
         Card.CODEC.fieldOf("topCard").forGetter(g -> g.topCard),
         Card.CODEC.optionalFieldOf("lastDrawnCard").forGetter(g -> Optional.ofNullable(g.lastDrawnCard)),
         CardPlayer.CODEC.listOf().xmap(ArrayList::new, Function.identity())
-            .optionalFieldOf("players", new ArrayList<>()).forGetter(g -> g.players)
+            .optionalFieldOf("players").xmap(opt -> opt.orElseGet(ArrayList::new), Optional::of).forGetter(g -> g.players)
     ).apply(instance, (ci, dc, sk, ph, ac, dk, dd, tc, ldc, pl) ->
         new CardGame(ci, dc, sk, ph, ac, dk, dd, tc, ldc.orElse(null), pl)));
 }
