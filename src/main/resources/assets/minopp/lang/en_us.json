@@ -89,6 +89,7 @@
   "subtitles.minopp.mino_shout": "Mino!",
   "subtitles.minopp.mino_shout_invalid": "Mino shout proven invalid",
   "subtitles.minopp.doubt_success": "Mino doubt proven successful",
+  "subtitles.minopp.hand_swap": "Mino: Hands swapped",
 
   "key.category.minopp.common": "Mino++",
   "key.minopp.shout_modifier": "Shout Mino while Playing",
@@ -115,6 +116,40 @@
   "gui.minopp.bot_config.no_delay.2": "Instant",
   "gui.minopp.bot_config.start_game": "Proposes Starting the Game",
   "gui.minopp.bot_config.start_game.summary": "If the bot should automatically propose starting the game when enough players are seated.",
+  "gui.minopp.bot_config.seven_zero_strategy": "7/0 Rule Strategy",
+  "gui.minopp.bot_config.seven_zero_strategy.summary": "How the bot handles 7 and 0 cards when the corresponding rules are enabled.",
+  "gui.minopp.bot_config.seven_zero_strategy.0": "Smart",
+  "gui.minopp.bot_config.seven_zero_strategy.1": "Random",
+  "gui.minopp.bot_config.seven_zero_strategy.2": "Prefer",
+  "gui.minopp.bot_config.seven_zero_strategy.3": "Never",
   "gui.minopp.bot_config.remove": "Dismantle",
-  "gui.minopp.bot_config.yacl_missing": "YetAnotherConfigLib is required to show the configuration screen. Please install it and then try again."
+  "gui.minopp.bot_config.yacl_missing": "YetAnotherConfigLib is required to show the configuration screen. Please install it and then try again.",
+
+  "gui.minopp.seats.rules": "§eRules",
+
+  "gui.minopp.table_rules.title": "Table Rules",
+  "gui.minopp.table_rules.category.rules": "Game Rules",
+  "gui.minopp.table_rules.stacking": "Stacking",
+  "gui.minopp.table_rules.stacking.desc": "Allow responding to +2 with another +2 (or +4 with +4), passing the cumulative draw penalty to the next player.",
+  "gui.minopp.table_rules.jump_in": "Jump-In",
+  "gui.minopp.table_rules.jump_in.desc": "Allow playing an identical card (same color and number) out of turn.",
+  "gui.minopp.table_rules.seven_rule": "Seven Rule",
+  "gui.minopp.table_rules.seven_rule.desc": "Playing a 7 lets you swap hands with another player of your choice.",
+  "gui.minopp.table_rules.zero_rule": "Zero Rule",
+  "gui.minopp.table_rules.zero_rule.desc": "Playing a 0 rotates all hands in the direction of play.",
+  "gui.minopp.table_rules.draw_until_match": "Draw Until Match",
+  "gui.minopp.table_rules.draw_until_match.desc": "Instead of drawing one card, keep drawing until a playable card is found.",
+  "gui.minopp.table_rules.force_play": "Force Play",
+  "gui.minopp.table_rules.force_play.desc": "If you draw a playable card, you must play it immediately.",
+  "gui.minopp.table_rules.wd4_free": "Wild Draw Four Free Use",
+  "gui.minopp.table_rules.wd4_free.desc": "Wild Draw Four can be played at any time, without the restriction of having no matching color cards.",
+
+  "gui.minopp.swap_selection.title": "Select a player to swap hands with",
+
+  "game.minopp.play.swap_hands": "%1$s swapped hands with %2$s!",
+  "game.minopp.play.rotate_hands": "All hands rotated (%s)!",
+  "game.minopp.play.must_draw_now": "You must draw cards now.",
+  "game.minopp.play.force_play": "You must play the drawn card.",
+  "game.minopp.play.force_play_only_drawn": "You can only play the card you just drew.",
+  "gui.minopp.play.force_play_hint": "You must play the drawn %s."
 }

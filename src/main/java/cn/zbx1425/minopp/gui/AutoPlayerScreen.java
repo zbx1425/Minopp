@@ -1,6 +1,7 @@
 package cn.zbx1425.minopp.gui;
 
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
+import cn.zbx1425.minopp.game.AutoPlayer;
 import cn.zbx1425.minopp.network.C2SAutoPlayerConfigPacket;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
@@ -101,6 +102,15 @@ public class AutoPlayerScreen {
                         .description(OptionDescription.of(Component.translatable("gui.minopp.bot_config.start_game.summary")))
                         .binding(false, () -> target.autoPlayer.startGame, value -> target.autoPlayer.startGame = value)
                         .controller(opt -> BooleanControllerBuilder.create(opt).yesNoFormatter())
+                        .build()
+                )
+                .option(Option.<Integer>createBuilder()
+                        .name(Component.translatable("gui.minopp.bot_config.seven_zero_strategy"))
+                        .description(OptionDescription.of(Component.translatable("gui.minopp.bot_config.seven_zero_strategy.summary")))
+                        .binding(0, () -> target.autoPlayer.sevenZeroStrategy.ordinal(),
+                                value -> target.autoPlayer.sevenZeroStrategy = AutoPlayer.SevenZeroStrategy.fromOrdinal(value))
+                        .controller(opt -> IntegerSliderControllerBuilder.create(opt).range(0, 3).step(1).formatValue(i ->
+                                Component.translatable("gui.minopp.bot_config.seven_zero_strategy." + i)))
                         .build()
                 )
                 .build();

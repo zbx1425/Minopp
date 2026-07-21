@@ -185,7 +185,7 @@ public class EntityAutoPlayer extends LivingEntity {
                         }
                     }
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
-                    ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer());
+                    ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules);
                     tableEntity.handleActionResult(result, realPlayer, null);
                     gameEndTime = -1;
                 } else {

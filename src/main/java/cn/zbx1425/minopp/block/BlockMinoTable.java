@@ -5,6 +5,7 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.game.Card;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.gui.SeatControlScreen;
+import cn.zbx1425.minopp.gui.SwapSelectionScreen;
 import cn.zbx1425.minopp.gui.TurnDeadMan;
 import cn.zbx1425.minopp.gui.WildSelectionScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
@@ -92,11 +93,36 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
                         C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
                     } else {
                         Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
+                        boolean shout = Client.isShoutModifierHeld();
                         if (selectedCard.suit == Card.Suit.WILD) {
-                            Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, Client.isShoutModifierHeld());
+                            // Client-side pre-check for WD4
+                            if (selectedCard.family == Card.Family.DRAW && !tableEntity.rules.wildDrawFourFreeUse()) {
+                                boolean hasOtherPlayable = false;
+                                for (Card other : realPlayer.hand) {
+                                    if (other.equals(selectedCard)) continue;
+                                    if (other.canPlayOn(tableEntity.game.topCard)) { hasOtherPlayable = true; break; }
+                                }
+                                if (hasOtherPlayable) {
+                                    C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, Card.Suit.RED, shout);
+                                } else {
+                                    Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, shout);
+                                }
+                            } else {
+                                Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, shout);
+                            }
+                        } else if (tableEntity.rules.sevenRuleEnabled()
+                                && selectedCard.family == Card.Family.NUMBER && selectedCard.number == 7) {
+                            // Client-side pre-check for 7 rule
+                            boolean canPlay = selectedCard.canPlayOn(tableEntity.game.topCard)
+                                    && (tableEntity.rules.stackingEnabled() || tableEntity.game.drawCount == 0);
+                            if (canPlay) {
+                                Client.openSwapSelectionScreen(corePos, playerWithoutHand, selectedCard, shout, tableEntity.game.players);
+                            } else {
+                                C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, null, shout);
+                            }
                         } else {
                             C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard,
-                                    null, Client.isShoutModifierHeld());
+                                    null, shout);
                         }
                     }
                     return InteractionResult.SUCCESS;
@@ -111,6 +137,10 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
 
         public static void openWildSelectionScreen(BlockPos corePos, CardPlayer player, Card selectedCard, boolean shout) {
             Minecraft.getInstance().setScreen(new WildSelectionScreen(corePos, player, selectedCard, shout));
+        }
+
+        public static void openSwapSelectionScreen(BlockPos corePos, CardPlayer player, Card selectedCard, boolean shout, java.util.List<CardPlayer> allPlayers) {
+            Minecraft.getInstance().setScreen(new SwapSelectionScreen(corePos, player, selectedCard, shout, allPlayers));
         }
 
         public static void openSeatControlScreen(BlockPos corePos) {

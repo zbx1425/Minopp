@@ -21,6 +21,7 @@ public class CardPlayer {
     public ArrayList<Card> hand = new ArrayList<>();
 
     public boolean hasShoutedMino = false;
+    public int swapGeneration = 0;
 
     public CardPlayer(Player mcPlayer) {
         this.uuid = PlayerShim.getGameProfileId(mcPlayer);
@@ -32,11 +33,12 @@ public class CardPlayer {
         this.name = name;
     }
 
-    private CardPlayer(UUID uuid, String name, ArrayList<Card> hand, boolean hasShoutedMino) {
+    private CardPlayer(UUID uuid, String name, ArrayList<Card> hand, boolean hasShoutedMino, int swapGeneration) {
         this.uuid = uuid;
         this.name = name;
         this.hand = hand;
         this.hasShoutedMino = hasShoutedMino;
+        this.swapGeneration = swapGeneration;
     }
 
     public static final Codec<CardPlayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -44,7 +46,8 @@ public class CardPlayer {
         Codec.STRING.optionalFieldOf("name", "").forGetter(p -> p.name),
         Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
             .optionalFieldOf("hand", new ArrayList<>()).forGetter(p -> p.hand),
-        Codec.BOOL.optionalFieldOf("hasShoutedMino", false).forGetter(p -> p.hasShoutedMino)
+        Codec.BOOL.optionalFieldOf("hasShoutedMino", false).forGetter(p -> p.hasShoutedMino),
+        Codec.INT.optionalFieldOf("swapGeneration", 0).forGetter(p -> p.swapGeneration)
     ).apply(instance, CardPlayer::new));
 
     @Override

@@ -27,5 +27,8 @@
   ], "subtitle": "subtitles.minopp.mino_shout_invalid" },
   "game.doubt_success": { "sounds": [
     "block/bell/bell_use01", "block/bell/bell_use02"
-  ], "subtitle": "subtitles.minopp.doubt_success" }
+  ], "subtitle": "subtitles.minopp.doubt_success" },
+  "game.hand_swap": { "sounds": [
+    "item/book/put1", "item/book/put2", "item/book/put3"
+  ], "subtitle": "subtitles.minopp.hand_swap" }
 }

@@ -89,6 +89,7 @@
   "subtitles.minopp.mino_shout": "Mino!",
   "subtitles.minopp.mino_shout_invalid": "Mino: 喊叫无效",
   "subtitles.minopp.doubt_success": "Mino: 怀疑成功",
+  "subtitles.minopp.hand_swap": "Mino: 手牌交换",
 
   "key.category.minopp.common": "Mino++",
   "key.minopp.shout_modifier": "出牌同时喊出 Mino",
@@ -115,6 +116,40 @@
   "gui.minopp.bot_config.no_delay.2": "最快",
   "gui.minopp.bot_config.start_game": "自动开始游戏",
   "gui.minopp.bot_config.start_game.summary": "启用时，机器人在入座人数满足条件时自动提议开始游戏。",
+  "gui.minopp.bot_config.seven_zero_strategy": "7/0 规则策略",
+  "gui.minopp.bot_config.seven_zero_strategy.summary": "当 7/0 规则启用时，机器人如何处理 7 和 0 牌。",
+  "gui.minopp.bot_config.seven_zero_strategy.0": "智能",
+  "gui.minopp.bot_config.seven_zero_strategy.1": "随机",
+  "gui.minopp.bot_config.seven_zero_strategy.2": "偏好",
+  "gui.minopp.bot_config.seven_zero_strategy.3": "从不",
   "gui.minopp.bot_config.remove": "拆除",
-  "gui.minopp.bot_config.yacl_missing": "需要安装 YetAnotherConfigLib 模组才能显示配置界面，请安装后再重新打开。"
+  "gui.minopp.bot_config.yacl_missing": "需要安装 YetAnotherConfigLib 模组才能显示配置界面，请安装后再重新打开。",
+
+  "gui.minopp.seats.rules": "§e规则",
+
+  "gui.minopp.table_rules.title": "桌面规则",
+  "gui.minopp.table_rules.category.rules": "游戏规则",
+  "gui.minopp.table_rules.stacking": "叠加",
+  "gui.minopp.table_rules.stacking.desc": "允许用 +2 回应 +2（或 +4 回应 +4），将累积的抽牌惩罚传递给下家。",
+  "gui.minopp.table_rules.jump_in": "插入",
+  "gui.minopp.table_rules.jump_in.desc": "允许在非自己回合时打出完全相同的牌（相同颜色和数字）。",
+  "gui.minopp.table_rules.seven_rule": "7 规则",
+  "gui.minopp.table_rules.seven_rule.desc": "打出 7 时，可以选择一名玩家与其交换手牌。",
+  "gui.minopp.table_rules.zero_rule": "0 规则",
+  "gui.minopp.table_rules.zero_rule.desc": "打出 0 时，所有玩家的手牌按照出牌方向轮转。",
+  "gui.minopp.table_rules.draw_until_match": "摸到能出为止",
+  "gui.minopp.table_rules.draw_until_match.desc": "当需要摸牌时，持续摸牌直到摸到可以打出的牌。",
+  "gui.minopp.table_rules.force_play": "强制出牌",
+  "gui.minopp.table_rules.force_play.desc": "如果摸到的牌可以打出，则必须立即打出。",
+  "gui.minopp.table_rules.wd4_free": "万能 +4 自由使用",
+  "gui.minopp.table_rules.wd4_free.desc": "万能 +4 可以在任何时候使用，无需满足手中没有匹配颜色牌的限制。",
+
+  "gui.minopp.swap_selection.title": "选择要交换手牌的玩家",
+
+  "game.minopp.play.swap_hands": "%1$s 和 %2$s 交换了手牌！",
+  "game.minopp.play.rotate_hands": "所有人的手牌发生了轮转（%s）！",
+  "game.minopp.play.must_draw_now": "你现在必须抽牌。",
+  "game.minopp.play.force_play": "你必须出刚抽到的牌。",
+  "game.minopp.play.force_play_only_drawn": "你只能出刚抽到的牌。",
+  "gui.minopp.play.force_play_hint": "必须出刚抽到的 %s。"
 }

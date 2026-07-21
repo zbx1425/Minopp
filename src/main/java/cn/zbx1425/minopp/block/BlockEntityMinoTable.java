@@ -8,6 +8,7 @@ import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.game.TableRuleConfig;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
@@ -60,6 +61,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     public ItemStack award = ItemStack.EMPTY;
     public boolean demo = false;
+    public TableRuleConfig rules = TableRuleConfig.DEFAULT;
 
     public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     public BlockEntityMinoTable(BlockPos blockPos, BlockState blockState) {
@@ -74,7 +76,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (Map.Entry<Direction, CardPlayer> e : players.entrySet()) {
             if (e.getValue() != null) map.put(e.getKey().getSerializedName(), e.getValue());
         }
-        return new MinoTableState(map, game, state, award, demo);
+        return new MinoTableState(map, game, state, award, demo, rules);
     }
 
     private void applyLoadedState(MinoTableState loaded) {
@@ -88,13 +90,24 @@ public class BlockEntityMinoTable extends BlockEntity {
             if (previousGame == null && game != null) {
                 clientMessageList.clear();
             } else {
-                clientMessageList.add(new Pair<>(state, System.currentTimeMillis() + 16000));
+                String stateStr = state.message().getString();
+                if (stateStr.contains("\n")) {
+                    String[] lines = stateStr.split("\n");
+                    long expiry = System.currentTimeMillis() + 16000;
+                    for (int i = lines.length - 1; i >= 0; i--) {
+                        clientMessageList.add(new Pair<>(
+                                new ActionMessage(state.type(), Component.literal(lines[i])), expiry));
+                    }
+                } else {
+                    clientMessageList.add(new Pair<>(state, System.currentTimeMillis() + 16000));
+                }
             }
             state = newState;
             clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
         }
         award = loaded.award();
         demo = loaded.demo();
+        rules = loaded.rules();
     }
 
     @Override
@@ -347,7 +360,8 @@ public class BlockEntityMinoTable extends BlockEntity {
         @Nullable CardGame game,
         ActionMessage state,
         ItemStack award,
-        boolean demo
+        boolean demo,
+        TableRuleConfig rules
     ) {
         public static final MapCodec<MinoTableState> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.unboundedMap(Codec.STRING, CardPlayer.CODEC)
@@ -355,9 +369,10 @@ public class BlockEntityMinoTable extends BlockEntity {
             CardGame.CODEC.optionalFieldOf("game").forGetter(s -> Optional.ofNullable(s.game)),
             ActionMessage.CODEC.optionalFieldOf("state", ActionMessage.NO_GAME).forGetter(MinoTableState::state),
             ItemStack.OPTIONAL_CODEC.optionalFieldOf("award", ItemStack.EMPTY).forGetter(MinoTableState::award),
-            Codec.BOOL.optionalFieldOf("demo", false).forGetter(MinoTableState::demo)
-        ).apply(instance, (players, game, state, award, demo) ->
-            new MinoTableState(players, game.orElse(null), state, award, demo)));
+            Codec.BOOL.optionalFieldOf("demo", false).forGetter(MinoTableState::demo),
+            TableRuleConfig.CODEC.optionalFieldOf("rules", TableRuleConfig.DEFAULT).forGetter(MinoTableState::rules)
+        ).apply(instance, (players, game, state, award, demo, rules) ->
+            new MinoTableState(players, game.orElse(null), state, award, demo, rules)));
 
         public static final Codec<MinoTableState> CODEC = MAP_CODEC.codec();
     }

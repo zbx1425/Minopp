@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.effect.EffectEvent;
 import cn.zbx1425.minopp.effect.SoundEffectEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
@@ -91,14 +92,29 @@ public class ActionReport {
                 initiator.name, game.topCard.getDisplayName()));
     }
 
+    public ActionReport playedWithExtra(Component extra) {
+        MutableComponent msg = Component.translatable("game.minopp.play.played",
+                initiator.name, game.topCard.getDisplayName());
+        return state(msg.append("\n").append(extra));
+    }
+
     public ActionReport cut() {
         return state(Component.translatable("game.minopp.play.cut",
                 initiator.name, game.topCard.getDisplayName()));
     }
 
+    public ActionReport cutWithExtra(Component extra) {
+        MutableComponent msg = Component.translatable("game.minopp.play.cut",
+                initiator.name, game.topCard.getDisplayName());
+        return state(msg.append("\n").append(extra));
+    }
+
     public ActionReport drew(int drawCount) {
+        Component countComp = drawCount > 1
+                ? Component.literal(String.valueOf(drawCount)).withStyle(Style.EMPTY.withColor(0xFF4444))
+                : Component.literal(String.valueOf(drawCount));
         return state(Component.translatable("game.minopp.play.drew",
-                initiator.name, drawCount));
+                initiator.name, countComp));
     }
 
     public ActionReport playedNoCard(boolean drawn) {

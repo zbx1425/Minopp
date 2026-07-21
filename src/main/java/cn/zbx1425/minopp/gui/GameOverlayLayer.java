@@ -37,9 +37,7 @@ import net.minecraft.util.FastColor;
 //? if neoforge
 //import net.neoforged.neoforge.client.gui.GuiLayer;
 
-import java.util.ListIterator;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 
 //? if <26.1
 //public class GameOverlayLayer implements LayeredDraw.Layer {
@@ -52,6 +50,13 @@ public class GameOverlayLayer {
     private double zoomAnimationProgress = 0;
     private double zoomAnimationTarget = 0;
     private final Long2FloatArrayMap handCardCurrentXOff = new Long2FloatArrayMap();
+
+    // Newly drawn card highlight tracking
+    private final Set<Long> newlyDrawnCardHashes = new HashSet<>();
+    private final Map<UUID, Integer> lastSwapGeneration = new HashMap<>();
+    private CardGame.PlayerActionPhase lastPhase = null;
+    private int lastCurrentPlayerIndex = -1;
+    private LongArrayList lastHandCardHashes = new LongArrayList();
 
     //? if <26.1
     //@Override
@@ -132,6 +137,12 @@ public class GameOverlayLayer {
         if (currentPlayer.equals(cardPlayer)) {
             drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
                     (System.currentTimeMillis() % 400 < 200) ? 0xFFFFFFFF : 0xFFFFFF00);
+            if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN
+                    && tableEntity.rules.forcePlay() && tableEntity.game.lastDrawnCard != null) {
+                y += font.lineHeight;
+                drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.force_play_hint",
+                        tableEntity.game.lastDrawnCard.getDisplayName()), x, y, 0xFFFFAA00);
+            }
         } else {
             drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.turn_other", currentPlayer.name), x, y, 0xFFAAAAAA);
         }
@@ -151,8 +162,10 @@ public class GameOverlayLayer {
         drawStringWithBackdrop(g, font, topCardInfo, x, y, 0xFFFFFFDD);
         y += font.lineHeight * 2;
 
-        for (String part : tableEntity.state.message().getString().split("\n")) {
-            drawStringWithBackdrop(g, font, Component.literal(part), x, y, 0xFFFFFFFF);
+        String[] stateLines = tableEntity.state.message().getString().split("\n");
+        for (int i = 0; i < stateLines.length; i++) {
+            int lineColor = (i == 0) ? 0xFFFFFFFF : 0xFFFFAA00;
+            drawStringWithBackdrop(g, font, Component.literal(stateLines[i]), x, y, lineColor);
             y += font.lineHeight;
         }
         for (ListIterator<Pair<ActionMessage, Long>> it = tableEntity.clientMessageList.listIterator(tableEntity.clientMessageList.size()); it.hasPrevious(); ) {
@@ -255,12 +268,15 @@ public class GameOverlayLayer {
         LongArrayList handCardHashes = new LongArrayList();
         for (Card card : realPlayer.hand) {
             if (!handCardHashes.isEmpty() && card.hashCode() == (handCardHashes.getLast() & 0xFFFFFFFFL)) {
-                // Tell duplicate identical cards apart; the list's already sorted
                 handCardHashes.add(handCardHashes.getLast() + 0x100000000L);
             } else {
                 handCardHashes.add(card.hashCode());
             }
         }
+
+        // Track newly drawn cards (after hash computation)
+        updateDrawnCardTracking(tableEntity, realPlayer, handCardHashes);
+
         handCardCurrentXOff.keySet().removeIf(hash -> !handCardHashes.contains(hash));
 
         //? if <26.1
@@ -284,6 +300,13 @@ public class GameOverlayLayer {
                 Card card = realPlayer.hand.get(i);
                 Component cardName = card.getDisplayName();
                 g.text(font, cardName, x - font.width(cardName) - 10, y + 10, 0xFFFFFFDD);
+            }
+            boolean isNewlyDrawn = newlyDrawnCardHashes.contains(handCardHashes.getLong(i));
+            if (isNewlyDrawn) {
+                float pulse = (float)(Math.sin(System.currentTimeMillis() * 0.006) + 1) / 2f;
+                int r = (int)(0xFF * (1 - pulse) + 0xCC * pulse);
+                int borderColor = 0xFF000000 | (r << 16);
+                g.fill(x - 1, y - 1, x + CARD_WIDTH + 1, y + CARD_HEIGHT + 1, borderColor);
             }
             g.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0xFF222222);
             g.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
@@ -334,6 +357,68 @@ public class GameOverlayLayer {
         //RenderSystem.disableBlend();
         
         return true;
+    }
+
+    private void updateDrawnCardTracking(BlockEntityMinoTable tableEntity, CardPlayer realPlayer, LongArrayList currentHashes) {
+        CardGame game = tableEntity.game;
+        if (game == null) {
+            newlyDrawnCardHashes.clear();
+            lastPhase = null;
+            lastCurrentPlayerIndex = -1;
+            lastHandCardHashes.clear();
+            return;
+        }
+
+        // Check swapGeneration change → clear highlights, snapshot current state
+        Integer prevGen = lastSwapGeneration.get(realPlayer.uuid);
+        if (prevGen != null && prevGen != realPlayer.swapGeneration) {
+            newlyDrawnCardHashes.clear();
+            lastHandCardHashes = new LongArrayList(currentHashes);
+            lastSwapGeneration.put(realPlayer.uuid, realPlayer.swapGeneration);
+            lastPhase = game.currentPlayerPhase;
+            lastCurrentPlayerIndex = game.currentPlayerIndex;
+            return;
+        }
+        lastSwapGeneration.put(realPlayer.uuid, realPlayer.swapGeneration);
+
+        // Turn/player change → clear highlights
+        if (game.currentPlayerIndex != lastCurrentPlayerIndex) {
+            newlyDrawnCardHashes.clear();
+            lastHandCardHashes = new LongArrayList(currentHashes);
+            lastPhase = game.currentPlayerPhase;
+            lastCurrentPlayerIndex = game.currentPlayerIndex;
+            return;
+        }
+
+        CardPlayer currentPlayer = game.players.get(game.currentPlayerIndex);
+        boolean isOurTurn = currentPlayer.equals(realPlayer);
+
+        // Detect phase transition DISCARD_HAND → DISCARD_DRAWN (we just drew)
+        if (isOurTurn && lastPhase == CardGame.PlayerActionPhase.DISCARD_HAND
+                && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN) {
+            // Sorted merge diff to find newly added hashes
+            newlyDrawnCardHashes.clear();
+            int i = 0, j = 0;
+            while (i < currentHashes.size() && j < lastHandCardHashes.size()) {
+                long curr = currentHashes.getLong(i);
+                long prev = lastHandCardHashes.getLong(j);
+                if (curr == prev) {
+                    i++; j++;
+                } else if (curr < prev) {
+                    newlyDrawnCardHashes.add(curr);
+                    i++;
+                } else {
+                    j++;
+                }
+            }
+            while (i < currentHashes.size()) {
+                newlyDrawnCardHashes.add(currentHashes.getLong(i++));
+            }
+        }
+
+        lastHandCardHashes = new LongArrayList(currentHashes);
+        lastPhase = game.currentPlayerPhase;
+        lastCurrentPlayerIndex = game.currentPlayerIndex;
     }
 
     private void performZoomAnimation(DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {

@@ -7,6 +7,7 @@ import cn.zbx1425.minopp.network.C2SSeatControlPacket;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -29,7 +30,7 @@ public class SeatControlScreen extends Screen {
             + MARGIN + BTN_HEIGHT + MARGIN;
     int PANEL_WIDTH = 260;
 
-    private Button stopButton, startButton, leaveButton;
+    private Button stopButton, startButton, leaveButton, rulesButton;
 
     @Override
     protected void init() {
@@ -55,6 +56,13 @@ public class SeatControlScreen extends Screen {
         }).pos(xOff + PANEL_WIDTH - MARGIN - BTN_WIDTH, yOff + PANEL_HEIGHT - BTN_HEIGHT - MARGIN - BTN_HEIGHT).size(BTN_WIDTH, BTN_HEIGHT).build();
         leaveButton.active = false;
         addRenderableWidget(leaveButton);
+        rulesButton = Button.builder(Component.translatable("gui.minopp.seats.rules"), e -> {
+            if (minecraft.level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
+                Minecraft.getInstance().setScreen(TableRuleConfigScreen.create(tableEntity, this));
+            }
+        }).pos(xOff + PANEL_WIDTH - MARGIN - BTN_WIDTH, yOff + PANEL_HEIGHT - BTN_HEIGHT - MARGIN).size(BTN_WIDTH, BTN_HEIGHT).build();
+        rulesButton.active = false;
+        addRenderableWidget(rulesButton);
     }
 
     @Override
@@ -66,6 +74,7 @@ public class SeatControlScreen extends Screen {
             stopButton.active = tableEntity.game != null;
             CardPlayer cardPlayer = ItemHandCards.getCardPlayer(minecraft.player);
             leaveButton.active = tableEntity.game == null && tableEntity.getPlayersList().contains(cardPlayer);
+            rulesButton.active = tableEntity.game == null;
 
             int xOff = (width - PANEL_WIDTH) / 2;
             int yOff = (height - PANEL_HEIGHT) / 2;
