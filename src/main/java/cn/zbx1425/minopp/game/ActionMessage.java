@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 
 
+@Deprecated
 public record ActionMessage(Type type, Component message) {
 
     private static final Codec<Component> JSON_STRING_COMPONENT_CODEC = Codec.STRING.xmap(

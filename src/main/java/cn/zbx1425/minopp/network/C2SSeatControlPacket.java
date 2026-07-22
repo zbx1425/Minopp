@@ -2,7 +2,6 @@ package cn.zbx1425.minopp.network;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
-import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.ClientPlatform;

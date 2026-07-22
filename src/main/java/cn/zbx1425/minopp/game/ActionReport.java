@@ -2,9 +2,10 @@ package cn.zbx1425.minopp.game;
 
 import cn.zbx1425.minopp.game.effect.EffectEvent;
 import cn.zbx1425.minopp.game.effect.SoundEffectEvent;
+import cn.zbx1425.minopp.game.shard.ActionReportShard;
+import cn.zbx1425.minopp.game.shard.RejectionShard;
+import cn.zbx1425.minopp.game.shard.SystemShard;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
@@ -17,12 +18,10 @@ public class ActionReport {
     private CardGame game;
     private CardPlayer initiator;
 
-    public ActionMessage state;
-    public List<ActionMessage> messages = new ArrayList<>();
+    public List<ActionReportShard> shards = new ArrayList<>();
     public List<EffectEvent> effects = new ArrayList<>();
 
     public boolean shouldDestroyGame = false;
-    public boolean isFail = false;
 
     private ActionReport(CardGame game, CardPlayer player) {
         this.initiator = player;
@@ -45,26 +44,19 @@ public class ActionReport {
         return builder(null, null);
     }
 
-    public ActionReport state(Component message) {
-        this.state = new ActionMessage(ActionMessage.Type.STATE, message);
+    public ActionReport shard(ActionReportShard shard) {
+        this.shards.add(shard);
         return this;
     }
 
-    public ActionReport fail(Component message) {
-        this.isFail = true;
-        this.messages.add(new ActionMessage(ActionMessage.Type.FAIL, message));
-        return this;
-    }
-
-    public ActionReport messageAll(Component message) {
-        this.messages.add(new ActionMessage(ActionMessage.Type.MESSAGE_ALL, message));
-        return this;
+    public boolean isFail() {
+        return shards.stream().anyMatch(s ->
+                s.shardType().lifecycle() == ActionReportShard.Lifecycle.REJECTION);
     }
 
     public ActionReport combineWith(ActionReport other) {
         if (other == null) return this;
-        if (this.state == null) this.state = other.state;
-        this.messages.addAll(other.messages);
+        this.shards.addAll(other.shards);
         this.shouldDestroyGame |= other.shouldDestroyGame;
         this.effects.addAll(other.effects);
         return this;
@@ -87,68 +79,6 @@ public class ActionReport {
         return this;
     }
 
-    public ActionReport played() {
-        return state(Component.translatable("game.minopp.play.played",
-                initiator.name, game.topCard.getDisplayName()));
-    }
-
-    public ActionReport playedWithExtra(Component extra) {
-        MutableComponent msg = Component.translatable("game.minopp.play.played",
-                initiator.name, game.topCard.getDisplayName());
-        return state(msg.append("\n").append(extra));
-    }
-
-    public ActionReport cut() {
-        return state(Component.translatable("game.minopp.play.cut",
-                initiator.name, game.topCard.getDisplayName()));
-    }
-
-    public ActionReport cutWithExtra(Component extra) {
-        MutableComponent msg = Component.translatable("game.minopp.play.cut",
-                initiator.name, game.topCard.getDisplayName());
-        return state(msg.append("\n").append(extra));
-    }
-
-    public ActionReport drew(int drawCount) {
-        Component countComp = drawCount > 1
-                ? Component.literal(String.valueOf(drawCount)).withStyle(Style.EMPTY.withColor(0xFF4444))
-                : Component.literal(String.valueOf(drawCount));
-        return state(Component.translatable("game.minopp.play.drew",
-                initiator.name, countComp));
-    }
-
-    public ActionReport playedNoCard(boolean drawn) {
-        if (drawn) {
-            return state(Component.translatable("game.minopp.play.played_no_drawn_card", initiator.name));
-        } else {
-            return state(Component.translatable("game.minopp.play.played_no_card", initiator.name));
-        }
-    }
-
-    public ActionReport gameDestroyed() {
-        return state(Component.translatable("game.minopp.play.game_destroyed", initiator.name));
-    }
-
-    public ActionReport gameStarted() {
-        return state(Component.translatable("game.minopp.play.game_started", initiator.name));
-    }
-
-    public ActionReport gameWon() {
-        shouldDestroyGame = true;
-        MutableComponent result = Component.translatable("game.minopp.play.game_won", initiator.name);
-        for (CardPlayer player : game.players) {
-            if (!player.equals(initiator)) {
-                result = result.append("\n")
-                        .append(Component.translatable("game.minopp.play.game_nearly_won", player.name, player.hand.size()));
-            }
-        }
-        return state(result);
-    }
-
-    public ActionReport panic(Component message) {
-        shouldDestroyGame = true;
-        return state(message);
-    }
-
-    public static final ActionReport NO_GAME = ActionReport.builder().state(Component.translatable("game.minopp.play.no_game"));
+    public static final ActionReport NO_GAME = ActionReport.builder()
+            .shard(new SystemShard(Component.translatable("game.minopp.play.no_game")));
 }

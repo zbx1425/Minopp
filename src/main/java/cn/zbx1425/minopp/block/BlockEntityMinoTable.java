@@ -4,11 +4,13 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.effect.EffectEvent;
 import cn.zbx1425.minopp.game.effect.EffectEvents;
 import cn.zbx1425.minopp.game.effect.SeatActionTakenEffectEvent;
-import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.game.TableRuleConfig;
+import cn.zbx1425.minopp.game.shard.ActionReportShard;
+import cn.zbx1425.minopp.game.shard.ActionReportShards;
+import cn.zbx1425.minopp.game.shard.SystemShard;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
@@ -49,14 +51,16 @@ import net.minecraft.world.level.storage.ValueOutput;
 //? }
 
 import java.util.*;
+import java.util.function.Function;
 
 public class BlockEntityMinoTable extends BlockEntity {
 
     public Map<Direction, CardPlayer> players = new HashMap<>();
     public CardGame game = null;
-    public ActionMessage state = ActionMessage.NO_GAME;
+    public List<ActionReportShard> stateShards = new ArrayList<>(List.of(
+            new SystemShard(Component.translatable("game.minopp.play.no_game"))));
 
-    public List<Pair<ActionMessage, Long>> clientMessageList = new ArrayList<>();
+    public List<Pair<ActionReportShard, Long>> clientEphemeralShards = new ArrayList<>();
 
     public ItemStack award = ItemStack.EMPTY;
     public boolean demo = false;
@@ -75,7 +79,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (Map.Entry<Direction, CardPlayer> e : players.entrySet()) {
             if (e.getValue() != null) map.put(e.getKey().getSerializedName(), e.getValue());
         }
-        return new MinoTableState(map, game, state, award, demo, rules);
+        return new MinoTableState(map, game, stateShards, award, demo, rules);
     }
 
     private void applyLoadedState(MinoTableState loaded) {
@@ -84,25 +88,21 @@ public class BlockEntityMinoTable extends BlockEntity {
         }
         CardGame previousGame = game;
         game = loaded.game();
-        ActionMessage newState = loaded.state();
-        if (!newState.equals(state)) {
+        List<ActionReportShard> newStateShards = loaded.stateShards();
+        if (!newStateShards.equals(stateShards)) {
             if (previousGame == null && game != null) {
-                clientMessageList.clear();
+                clientEphemeralShards.clear();
             } else {
-                String stateStr = state.message().getString();
-                if (stateStr.contains("\n")) {
-                    String[] lines = stateStr.split("\n");
-                    long expiry = System.currentTimeMillis() + 16000;
-                    for (int i = lines.length - 1; i >= 0; i--) {
-                        clientMessageList.add(new Pair<>(
-                                new ActionMessage(state.type(), Component.literal(lines[i])), expiry));
+                long expiry = System.currentTimeMillis() + 16000;
+                for (ActionReportShard oldShard : stateShards) {
+                    if (oldShard.shardType().transitionBehavior() == ActionReportShard.TransitionBehavior.NOTEWORTHY) {
+                        clientEphemeralShards.add(new Pair<>(oldShard, expiry));
                     }
-                } else {
-                    clientMessageList.add(new Pair<>(state, System.currentTimeMillis() + 16000));
                 }
             }
-            state = newState;
-            clientMessageList.removeIf(entry -> entry.getFirst().type() == ActionMessage.Type.FAIL);
+            stateShards = new ArrayList<>(newStateShards);
+            clientEphemeralShards.removeIf(entry ->
+                    entry.getFirst().shardType().lifecycle() == ActionReportShard.Lifecycle.REJECTION);
         }
         award = loaded.award();
         demo = loaded.demo();
@@ -136,7 +136,6 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     public ArrayList<CardPlayer> getPlayersList() {
-        // Return a list of players in the order of NORTH, EAST, SOUTH, WEST, without null elements
         ArrayList<CardPlayer> playersList = new ArrayList<>();
         for (Direction direction : PLAYER_ORDER) {
             if (players.get(direction) != null) {
@@ -178,14 +177,12 @@ public class BlockEntityMinoTable extends BlockEntity {
         List<CardPlayer> playerList = getPlayersList();
         if (playerList.size() < 2) return;
 
-        // Give hand card items to players
         AABB searchArea = AABB.ofSize(Vec3.atLowerCornerWithOffset(getBlockPos(), 1, 1, 1), PLAYER_RANGE, PLAYER_RANGE, PLAYER_RANGE);
         for (CardPlayer cardPlayer : playerList) {
             boolean playerFound = false;
             for (Entity entity : level.getEntities(null, searchArea)) {
                 if (entity instanceof Player mcPlayer) {
                     if (cardPlayer.uuid.equals(PlayerShim.getGameProfileId(mcPlayer))) {
-                        // We've found the player, give them a card item
                         ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                         ItemHandCards.CardGameBindingComponent newBinding =
                                 new ItemHandCards.CardGameBindingComponent(getBlockPos(), cardPlayer.uuid);
@@ -194,15 +191,12 @@ public class BlockEntityMinoTable extends BlockEntity {
                         if (Inventory.isHotbarSlot(mcPlayer.getInventory().getSelectedSlot())
                             //~ if >=26.1 '.getSelected()' -> '.getSelectedItem()'
                             && mcPlayer.getInventory().getSelectedItem().isEmpty()) {
-                            // If the player has an empty hand slot, put the card there
                             //~ if >=26.1 '.selected' -> '.getSelectedSlot()'
                             mcPlayer.getInventory().setItem(mcPlayer.getInventory().getSelectedSlot(), handCard);
                             playerFound = true;
                         } else {
-                            // Main hand is occupied, try to put the card in the inventory
                             boolean addSuccessful = mcPlayer.getInventory().add(handCard);
                             if (!addSuccessful) {
-                                // Inventory is full, drop the card
                                 ItemEntity itemEntity = mcPlayer.drop(handCard, false);
                                 if (itemEntity != null) {
                                     itemEntity.setNoPickUpDelay();
@@ -215,16 +209,15 @@ public class BlockEntityMinoTable extends BlockEntity {
                     }
                 } else {
                     if (cardPlayer.uuid.equals(entity.getUUID())) {
-                        // We've found an auto player, hopefully bound to this table
                         playerFound = true;
                     }
                 }
                 if (playerFound) break;
             }
             if (!playerFound) {
-                // No player found or no hand card item given, destroy the game
                 destroyGame(initiator);
-                state = ActionReport.builder(initiator).panic(Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name)).state;
+                stateShards = new ArrayList<>(List.of(new SystemShard(
+                        Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name))));
                 return;
             }
         }
@@ -234,7 +227,13 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hasShoutedMino = false;
         } });
         game = new CardGame(getPlayersList());
-        state = game.initiate(initiator, 7).state;
+        ActionReport initReport = game.initiate(initiator, 7);
+        stateShards = new ArrayList<>();
+        for (ActionReportShard shard : initReport.shards) {
+            if (shard.shardType().lifecycle() == ActionReportShard.Lifecycle.STATE) {
+                stateShards.add(shard);
+            }
+        }
         sendSeatActionTakenToAll();
         sync();
     }
@@ -243,20 +242,17 @@ public class BlockEntityMinoTable extends BlockEntity {
         if (game != null) sendSeatActionTakenToAll();
         game = null;
 
-        // Remove hand card items from players
         for (Player mcPlayer : level.players()) {
             for (int i = 0; i < mcPlayer.getInventory().getContainerSize(); i++) {
                 ItemStack invItem =  mcPlayer.getInventory().getItem(i);
                 if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
                 ItemHandCards.CardGameBindingComponent gameBinding = invItem.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
                 if (gameBinding != null && gameBinding.tablePos().equals(getBlockPos())) {
-                    // This is the one bound to this table, remove
                     mcPlayer.getInventory().setItem(i, ItemStack.EMPTY);
                 }
             }
         }
 
-        // Remove hand card from other entities eg. AutoPlayer, TLM
         for (CardPlayer cardPlayer : players.values()) {
             if (cardPlayer == null) continue;
             Entity entity = ((ServerLevel)level).getEntity(cardPlayer.uuid);
@@ -274,55 +270,72 @@ public class BlockEntityMinoTable extends BlockEntity {
             p.hand.clear();
             p.hasShoutedMino = false;
         } });
-        state = ActionReport.builder(initiator).gameDestroyed().state;
+        stateShards = new ArrayList<>(List.of(new SystemShard(
+                Component.translatable("game.minopp.play.game_destroyed", initiator.name))));
         sync();
     }
 
     public void resetSeats(CardPlayer initiator) {
         sendSeatActionTakenToAll();
         players.replaceAll((d, v) -> null);
-        state = ActionReport.builder(initiator).panic(Component.translatable("game.minopp.play.seats_reset", initiator.name)).state;
+        stateShards = new ArrayList<>(List.of(new SystemShard(
+                Component.translatable("game.minopp.play.seats_reset", initiator.name))));
         sync();
     }
 
     public void handleActionResult(ActionReport result, CardPlayer cardPlayer, ServerPlayer player) {
-        if (result != null) {
-            if (result.shouldDestroyGame) {
-                destroyGame(cardPlayer);
+        if (result == null) return;
+
+        List<ActionReportShard> newState = new ArrayList<>();
+        List<ActionReportShard> rejections = new ArrayList<>();
+        List<ActionReportShard> oob = new ArrayList<>();
+        for (ActionReportShard shard : result.shards) {
+            switch (shard.shardType().lifecycle()) {
+                case STATE -> newState.add(shard);
+                case REJECTION -> rejections.add(shard);
+                case OUT_OF_BAND -> oob.add(shard);
             }
-            if (result.state != null) state = result.state;
-            for (ActionMessage message : result.messages) {
-                switch (message.type()) {
-                    case FAIL -> {
-                        if (player != null) S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), message);
-                    }
-                    case MESSAGE_ALL -> sendMessageToAll(message);
-                }
-            }
-            if (!result.effects.isEmpty()) {
-                MinecraftServer server = ((ServerLevel)level).getServer();
-                BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
-                for (EffectEvent effect : result.effects) {
-                    effect.summonServer((ServerLevel) level, tableCenterPos, this);
-                }
-                for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
-                    if (serverPlayer.level().dimension() == level.dimension()) {
-                        if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= EffectEvents.EFFECT_RADIUS * EffectEvents.EFFECT_RADIUS) {
-                            boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(PlayerShim.getGameProfileId(serverPlayer)));
-                            S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
-                        }
-                    }
-                }
-            }
-            sync();
         }
+
+        if (!newState.isEmpty()) {
+            stateShards = newState;
+        }
+
+        if (!rejections.isEmpty() && player != null) {
+            S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), rejections);
+        }
+
+        if (!oob.isEmpty()) {
+            sendShardsToAll(oob);
+        }
+
+        if (result.shouldDestroyGame) {
+            destroyGame(cardPlayer);
+        }
+
+        if (!result.effects.isEmpty()) {
+            MinecraftServer server = ((ServerLevel)level).getServer();
+            BlockPos tableCenterPos = getBlockPos().offset(1, 0, 1);
+            for (EffectEvent effect : result.effects) {
+                effect.summonServer((ServerLevel) level, tableCenterPos, this);
+            }
+            for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
+                if (serverPlayer.level().dimension() == level.dimension()) {
+                    if (serverPlayer.position().distanceToSqr(Vec3.atCenterOf(tableCenterPos)) <= EffectEvents.EFFECT_RADIUS * EffectEvents.EFFECT_RADIUS) {
+                        boolean playerPartOfGame = getPlayersList().stream().anyMatch(p -> p.uuid.equals(PlayerShim.getGameProfileId(serverPlayer)));
+                        S2CEffectListPacket.sendS2C(serverPlayer, result.effects, tableCenterPos, playerPartOfGame);
+                    }
+                }
+            }
+        }
+        sync();
     }
 
-    private void sendMessageToAll(ActionMessage message) {
-        for (CardPlayer player : getPlayersList()) {
-            Player mcPlayer = level.getPlayerByUUID(player.uuid);
+    private void sendShardsToAll(List<ActionReportShard> shards) {
+        for (CardPlayer cardPlayer : getPlayersList()) {
+            Player mcPlayer = level.getPlayerByUUID(cardPlayer.uuid);
             if (mcPlayer != null) {
-                S2CActionEphemeralPacket.sendS2C((ServerPlayer) mcPlayer, getBlockPos(), message);
+                S2CActionEphemeralPacket.sendS2C((ServerPlayer) mcPlayer, getBlockPos(), shards);
             }
         }
     }
@@ -354,10 +367,13 @@ public class BlockEntityMinoTable extends BlockEntity {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    private static final List<ActionReportShard> DEFAULT_STATE_SHARDS = List.of(
+            new SystemShard(Component.translatable("game.minopp.play.no_game")));
+
     public record MinoTableState(
         Map<String, CardPlayer> players,
         @Nullable CardGame game,
-        ActionMessage state,
+        List<ActionReportShard> stateShards,
         ItemStack award,
         boolean demo,
         TableRuleConfig rules
@@ -366,12 +382,13 @@ public class BlockEntityMinoTable extends BlockEntity {
             Codec.unboundedMap(Codec.STRING, CardPlayer.CODEC)
                 .optionalFieldOf("players", Map.of()).forGetter(MinoTableState::players),
             CardGame.CODEC.optionalFieldOf("game").forGetter(s -> Optional.ofNullable(s.game)),
-            ActionMessage.CODEC.optionalFieldOf("state", ActionMessage.NO_GAME).forGetter(MinoTableState::state),
+            ActionReportShards.DISPATCH_CODEC.listOf()
+                .optionalFieldOf("stateShards", DEFAULT_STATE_SHARDS).forGetter(MinoTableState::stateShards),
             ItemStack.OPTIONAL_CODEC.optionalFieldOf("award", ItemStack.EMPTY).forGetter(MinoTableState::award),
             Codec.BOOL.optionalFieldOf("demo", false).forGetter(MinoTableState::demo),
             TableRuleConfig.CODEC.optionalFieldOf("rules", TableRuleConfig.DEFAULT).forGetter(MinoTableState::rules)
-        ).apply(instance, (players, game, state, award, demo, rules) ->
-            new MinoTableState(players, game.orElse(null), state, award, demo, rules)));
+        ).apply(instance, (players, game, stateShards, award, demo, rules) ->
+            new MinoTableState(players, game.orElse(null), stateShards, award, demo, rules)));
 
         public static final Codec<MinoTableState> CODEC = MAP_CODEC.codec();
     }

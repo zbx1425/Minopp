@@ -4,11 +4,10 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.effect.GrantRewardEffectEvent;
 import cn.zbx1425.minopp.game.effect.PlayerFireworkEffectEvent;
 import cn.zbx1425.minopp.game.effect.PlayerGlowEffectEvent;
+import cn.zbx1425.minopp.game.shard.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
 
 import java.util.*;
 import java.util.function.Function;
@@ -69,64 +68,70 @@ public class CardGame {
             tobeTopCard = deck.removeLast();
         }
         topCard = tobeTopCard;
-        return ActionReport.builder(this, cardPlayer)
-                .sound(Mino.id("game.play"), 0)
-                .sound(Mino.id("game.turn_notice"), 500, players.get(currentPlayerIndex))
-                .gameStarted();
+        ActionReport report = ActionReport.builder(this, cardPlayer);
+        report.sound(Mino.id("game.play"), 0);
+        report.sound(Mino.id("game.turn_notice"), 500, players.get(currentPlayerIndex));
+        report.shard(new SystemShard(Component.translatable("game.minopp.play.game_started", cardPlayer.name)));
+        return report;
     }
 
     public ActionReport playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection, boolean shout,
                                   TableRuleConfig rules, UUID swapTarget) {
         ActionReport report = ActionReport.builder(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
-        if (!cardPlayer.hand.contains(card)) return report.fail(Component.translatable("game.minopp.play.not_your_card"));
+        if (playerIndex == -1) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.no_player")));
+        if (!cardPlayer.hand.contains(card)) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.not_your_card")));
 
-        // Stacking OFF: if drawCount > 0, player must draw, cannot play any card
         if (!rules.stackingEnabled() && drawCount > 0) {
-            return report.fail(Component.translatable("game.minopp.play.must_draw_now"));
+            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.must_draw_now")));
         }
 
         boolean isCut = false;
-        // Cut / Jump-In
         if (rules.jumpInEnabled() && topCard.equals(card) && playerIndex != currentPlayerIndex && topCard.suit != Card.Suit.WILD) {
             isCut = true;
         } else {
-            if (playerIndex != currentPlayerIndex) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
+            if (playerIndex != currentPlayerIndex) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.not_your_turn")));
         }
 
-        if (!card.canPlayOn(topCard)) return report.fail(Component.translatable("game.minopp.play.invalid_card"));
-        // Force Play restriction: in DISCARD_DRAWN phase, only lastDrawnCard can be played
+        if (!card.canPlayOn(topCard)) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.invalid_card")));
         if (rules.forcePlay() && currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN
                 && lastDrawnCard != null && !card.equals(lastDrawnCard)) {
-            return report.fail(Component.translatable("game.minopp.play.force_play_only_drawn"));
+            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.force_play_only_drawn")));
         }
-        // WD4 restriction: only if wildDrawFourFreeUse is OFF
         if (!rules.wildDrawFourFreeUse() && card.suit == Card.Suit.WILD && card.family == Card.Family.DRAW) {
             for (Card otherCard : cardPlayer.hand) {
                 if (otherCard.equals(card)) continue;
                 if (otherCard.canPlayOn(topCard)) {
-                    return report.fail(Component.translatable("game.minopp.play.rule_forbid"));
+                    return report.shard(new RejectionShard(Component.translatable("game.minopp.play.rule_forbid")));
                 }
             }
         }
         if (isCut) currentPlayerIndex = playerIndex;
         doDiscardCard(cardPlayer, card, report);
+
+        if (card.suit == Card.Suit.WILD) {
+            topCard = topCard.withEquivSuit(wildSelection);
+        }
+
+        report.shard(new PlayShard(cardPlayer.uuid, topCard, isCut));
+
         if (cardPlayer.hand.isEmpty()) {
             report.sound(Mino.id("game.win"), 0);
-
             report.effect(new PlayerGlowEffectEvent(cardPlayer.uuid, 6 * 20));
             report.effect(new GrantRewardEffectEvent(cardPlayer.uuid));
             for (int i = 0; i < 5; i++) {
                 report.effect(new PlayerFireworkEffectEvent(i * 1000 + 500, cardPlayer.uuid, PlayerFireworkEffectEvent.WIN_EXPLOSION));
             }
 
-            return report.gameWon();
+            Map<UUID, Integer> otherHandSizes = new LinkedHashMap<>();
+            for (CardPlayer p : players) {
+                if (!p.equals(cardPlayer)) otherHandSizes.put(p.uuid, p.hand.size());
+            }
+            report.shard(new GameWonShard(cardPlayer.uuid, otherHandSizes));
+            report.shouldDestroyGame = true;
+            return report;
         }
 
-        if (card.suit == Card.Suit.WILD) {
-            topCard = topCard.withEquivSuit(wildSelection);
-        }
         switch (card.family) {
             case SKIP -> isSkipping = true;
             case REVERSE -> {
@@ -134,13 +139,12 @@ public class CardGame {
                     isSkipping = true;
                 } else {
                     isAntiClockwise = !isAntiClockwise;
+                    report.shard(new ReverseShard(isAntiClockwise));
                 }
             }
             case DRAW -> drawCount -= card.number;
         }
 
-        // 7-0 rules (only for NUMBER family)
-        MutableComponent swapMessage = null;
         if (card.family == Card.Family.NUMBER) {
             if (rules.sevenRuleEnabled() && card.number == 7 && swapTarget != null) {
                 CardPlayer targetPlayer = deAmputate(swapTarget);
@@ -152,15 +156,12 @@ public class CardGame {
                     targetPlayer.hand.addAll(temp);
                     cardPlayer.swapGeneration++;
                     targetPlayer.swapGeneration++;
-                    swapMessage = Component.translatable("game.minopp.play.swap_hands", cardPlayer.name, targetPlayer.name)
-                            .withStyle(Style.EMPTY.withColor(0xFFAA00));
+                    report.shard(new HandSwapShard(cardPlayer.uuid, targetPlayer.uuid));
                     report.sound(Mino.id("game.hand_swap"), 0);
                 }
             } else if (rules.zeroRuleEnabled() && card.number == 0) {
                 rotateHands();
-                swapMessage = Component.translatable("game.minopp.play.rotate_hands",
-                                Component.translatable("gui.minopp.play.direction." + (isAntiClockwise ? "ccw" : "cw")))
-                                .withStyle(Style.EMPTY.withColor(0xFFAA00));
+                report.shard(new HandRotateShard(isAntiClockwise));
                 report.sound(Mino.id("game.hand_swap"), 0);
             }
         }
@@ -170,26 +171,23 @@ public class CardGame {
         }
 
         advanceTurn(report);
-
-        if (swapMessage != null) {
-            return isCut ? report.cutWithExtra(swapMessage) : report.playedWithExtra(swapMessage);
-        }
-        return isCut ? report.cut() : report.played();
+        return report;
     }
 
     public ActionReport playNoCard(CardPlayer cardPlayer, TableRuleConfig rules) {
         ActionReport report = ActionReport.builder(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (playerIndex == -1) return report.fail(Component.translatable("game.minopp.play.no_player"));
-        if (playerIndex != currentPlayerIndex) return report.fail(Component.translatable("game.minopp.play.not_your_turn"));
+        if (playerIndex == -1) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.no_player")));
+        if (playerIndex != currentPlayerIndex) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.not_your_turn")));
 
-        boolean drawn = currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN;
         if (currentPlayerPhase == PlayerActionPhase.DISCARD_HAND) {
             int drawCount;
             if (this.drawCount > 0) {
                 drawCount = this.drawCount;
                 if (!doDrawCard(cardPlayer, drawCount, report)) {
-                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
+                    report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
+                    report.shouldDestroyGame = true;
+                    return report;
                 }
                 this.topCard = topCard.withEquivFamily(Card.Family.NUMBER);
                 this.drawCount = 0;
@@ -197,29 +195,34 @@ public class CardGame {
             } else if (rules.drawUntilMatch()) {
                 drawCount = doDrawUntilMatch(cardPlayer, report);
                 if (drawCount == 0) {
-                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
+                    report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
+                    report.shouldDestroyGame = true;
+                    return report;
                 }
                 lastDrawnCard = cardPlayer.hand.getLast();
             } else {
                 drawCount = 1;
                 if (!doDrawCard(cardPlayer, drawCount, report)) {
-                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
+                    report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
+                    report.shouldDestroyGame = true;
+                    return report;
                 }
                 lastDrawnCard = cardPlayer.hand.getLast();
             }
             currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
             report.sound(Mino.id("game.turn_notice_again"), 500 * (drawCount > 1 ? drawCount + 1 : 1), cardPlayer);
-            return report.drew(drawCount);
+            report.shard(new DrawShard(cardPlayer.uuid, drawCount));
+            return report;
         } else if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN) {
-            // Force Play check: only applies to the lastDrawnCard
             if (rules.forcePlay() && lastDrawnCard != null && lastDrawnCard.canPlayOn(topCard)) {
-                return report.fail(Component.translatable("game.minopp.play.force_play"));
+                return report.shard(new RejectionShard(Component.translatable("game.minopp.play.force_play")));
             }
             report.sound(Mino.id("game.pass"), 0);
+            report.shard(new PassShard(cardPlayer.uuid, true));
             advanceTurn(report);
         }
 
-        return report.playedNoCard(drawn);
+        return report;
     }
 
 
@@ -229,15 +232,19 @@ public class CardGame {
             if (realPlayer.hand.size() <= 1) {
                 realPlayer.hasShoutedMino = true;
                 report.sound(Mino.id("game.mino_shout"), 0);
-                return report.messageAll(Component.translatable("game.minopp.play.mino_shout", realPlayer.name));
+                report.shard(new MinoShoutShard(realPlayer.uuid));
+                return report;
             } else {
                 if (!doDrawCard(realPlayer, 2, report)) {
-                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
+                    report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
+                    report.shouldDestroyGame = true;
+                    return report;
                 }
-                realPlayer.hasShoutedMino = true; // Avoid penalty again and again
+                realPlayer.hasShoutedMino = true;
                 report.sound(Mino.id("game.mino_shout"), 0);
                 report.sound(Mino.id("game.mino_shout_invalid"), 500);
-                return report.messageAll(Component.translatable("game.minopp.play.mino_shout_invalid", realPlayer.name));
+                report.shard(new MinoShoutPenaltyShard(realPlayer.uuid, 2));
+                return report;
             }
         }
         return null;
@@ -246,22 +253,25 @@ public class CardGame {
     public ActionReport doubtMino(CardPlayer srcPlayer, UUID targetPlayerWithoutHand) {
         ActionReport report = ActionReport.builder(this, srcPlayer);
         CardPlayer targetPlayer = deAmputate(targetPlayerWithoutHand);
-        if (targetPlayer == null) return report.fail(Component.translatable("game.minopp.play.no_player"));
+        if (targetPlayer == null) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.no_player")));
         if (players.get(currentPlayerIndex).equals(targetPlayer)) {
-            return report.fail(Component.translatable("game.minopp.play.doubt_target_playing"));
+            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_playing")));
         } else if (srcPlayer.equals(targetPlayer)) {
-            return report.fail(Component.translatable("game.minopp.play.doubt_target_self"));
+            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_self")));
         } else if (targetPlayer.hasShoutedMino) {
-            return report.fail(Component.translatable("game.minopp.play.doubt_target_shouted"));
+            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_shouted")));
         } else if (targetPlayer.hand.size() > 1) {
-            return report.fail(Component.translatable("game.minopp.play.doubt_target_hand"));
+            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_hand")));
         } else {
             if (!doDrawCard(targetPlayer, 2, report)) {
-                return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
+                report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
+                report.shouldDestroyGame = true;
+                return report;
             }
-            targetPlayer.hasShoutedMino = true; // Avoid penalty again and again
+            targetPlayer.hasShoutedMino = true;
             report.sound(Mino.id("game.doubt_success"), 0);
-            return report.messageAll(Component.translatable("game.minopp.play.doubt_success", srcPlayer.name, targetPlayer.name));
+            report.shard(new MinoDoubtShard(srcPlayer.uuid, targetPlayer.uuid, 2));
+            return report;
         }
     }
 
@@ -327,19 +337,19 @@ public class CardGame {
     }
 
     private void advanceTurn(ActionReport report) {
-//        CardPlayer previousPlayer = players.get(currentPlayer);
-
         currentPlayerPhase = PlayerActionPhase.DISCARD_HAND;
         lastDrawnCard = null;
-        if (isSkipping) currentPlayerIndex = (currentPlayerIndex + (isAntiClockwise ? -1 : 1)) % players.size();
-        currentPlayerIndex = (currentPlayerIndex + (isAntiClockwise ? -1 : 1)) % players.size();
-        if (currentPlayerIndex < 0) currentPlayerIndex += players.size();
+        if (isSkipping) {
+            int skippedIdx = Math.floorMod(currentPlayerIndex + (isAntiClockwise ? -1 : 1), players.size());
+            report.shard(new SkipShard(players.get(skippedIdx).uuid));
+            currentPlayerIndex = Math.floorMod(currentPlayerIndex + (isAntiClockwise ? -1 : 1), players.size());
+        }
+        currentPlayerIndex = Math.floorMod(currentPlayerIndex + (isAntiClockwise ? -1 : 1), players.size());
         isSkipping = false;
 
         CardPlayer currentPlayer = players.get(currentPlayerIndex);
         currentPlayer.hasShoutedMino = false;
         report.sound(Mino.id("game.turn_notice"), 500, currentPlayer);
-        // report.effect(new PlayerGlowEffectEvent(0, currentPlayer.uuid, 10));
     }
 
     public CardPlayer deAmputate(CardPlayer playerWithoutHand) {

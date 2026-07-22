@@ -186,9 +186,11 @@ public class EntityAutoPlayer extends LivingEntity {
                     }
                     CardPlayer realPlayer = tableEntity.game.deAmputate(cardPlayer);
                     ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules);
-                    if (result.isFail) {
-                        for (var msg : result.messages) {
-                            Mino.LOGGER.warn("AutoPlayer Failed! {}: {}", realPlayer.name, msg.message().getString());
+                    if (result.isFail()) {
+                        for (var shard : result.shards) {
+                            if (shard instanceof cn.zbx1425.minopp.game.shard.RejectionShard rejection) {
+                                Mino.LOGGER.warn("AutoPlayer Failed! {}: {}", realPlayer.name, rejection.message().getString());
+                            }
                         }
                         autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules, true);
                         try {

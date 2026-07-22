@@ -5,6 +5,10 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.*;
+import cn.zbx1425.minopp.game.client.gui.MessageGuiShard;
+import cn.zbx1425.minopp.game.client.shard.ShardExtractor;
+import cn.zbx1425.minopp.game.client.shard.ShardExtractors;
+import cn.zbx1425.minopp.game.shard.ActionReportShard;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.multiver.GuiShim;
 import com.mojang.datafixers.util.Pair;
@@ -102,8 +106,8 @@ public class GameOverlayLayer {
         if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
-        for (String part : tableEntity.state.message().getString().split("\n")) {
-            drawStringWithBackdrop(guiGraphics, font, Component.literal(part), x, y, 0xFFFFFFFF);
+        for (MessageGuiShard msg : extractAllMessages(tableEntity.stateShards)) {
+            drawStringWithBackdrop(guiGraphics, font, msg.message, x, y, msg.color);
             y += font.lineHeight;
         }
         y += font.lineHeight;
@@ -162,25 +166,26 @@ public class GameOverlayLayer {
         drawStringWithBackdrop(g, font, topCardInfo, x, y, 0xFFFFFFDD);
         y += font.lineHeight * 2;
 
-        String[] stateLines = tableEntity.state.message().getString().split("\n");
-        for (int i = 0; i < stateLines.length; i++) {
-            int lineColor = (i == 0) ? 0xFFFFFFFF : 0xFFFFAA00;
-            drawStringWithBackdrop(g, font, Component.literal(stateLines[i]), x, y, lineColor);
+        for (MessageGuiShard msg : extractAllMessages(tableEntity.stateShards)) {
+            drawStringWithBackdrop(g, font, msg.message, x, y, msg.color);
             y += font.lineHeight;
         }
-        for (ListIterator<Pair<ActionMessage, Long>> it = tableEntity.clientMessageList.listIterator(tableEntity.clientMessageList.size()); it.hasPrevious(); ) {
+        for (ListIterator<Pair<ActionReportShard, Long>> it = tableEntity.clientEphemeralShards.listIterator(tableEntity.clientEphemeralShards.size()); it.hasPrevious(); ) {
             if (y > Minecraft.getInstance().getWindow().getGuiScaledHeight() - font.lineHeight - 40) {
                 break;
             }
-            Pair<ActionMessage, Long> entry = it.previous();
+            Pair<ActionReportShard, Long> entry = it.previous();
             long currentTime = System.currentTimeMillis();
             if (entry.getSecond() - 200 < currentTime) {
                 it.remove();
             } else {
-                int color = entry.getFirst().type().isEphemeral() ? 0x00FF0000 : 0x00AAAAAA;
-                int alpha = Mth.clamp(0 ,0xFF, (int)(0xFF * (entry.getSecond() - currentTime) / 1000));
-                drawStringWithBackdrop(g, font, entry.getFirst().message(), x, y, alpha << 24 | color);
-                y += font.lineHeight;
+                List<MessageGuiShard> msgs = extractAllMessages(List.of(entry.getFirst()));
+                int alpha = Mth.clamp(0, 0xFF, (int)(0xFF * (entry.getSecond() - currentTime) / 1000));
+                for (MessageGuiShard msg : msgs) {
+                    int color = (msg.color & 0x00FFFFFF) | (alpha << 24);
+                    drawStringWithBackdrop(g, font, msg.message, x, y, color);
+                    y += font.lineHeight;
+                }
             }
         }
 
@@ -428,6 +433,18 @@ public class GameOverlayLayer {
             zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
         }
         MinoClient.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<MessageGuiShard> extractAllMessages(List<ActionReportShard> shards) {
+        List<MessageGuiShard> result = new ArrayList<>();
+        for (ActionReportShard shard : shards) {
+            ShardExtractor<ActionReportShard> extractor = ShardExtractors.getUnchecked(shard.shardType());
+            if (extractor != null) {
+                result.addAll(extractor.extractMessages(shard));
+            }
+        }
+        return result;
     }
 
     public static final GameOverlayLayer INSTANCE = new GameOverlayLayer();

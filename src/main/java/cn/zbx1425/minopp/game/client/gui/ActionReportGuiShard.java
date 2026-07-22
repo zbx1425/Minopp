@@ -8,5 +8,4 @@ public abstract class ActionReportGuiShard {
     public abstract void render(GuiGraphicsExtractor g, int x, int y);
 
     public abstract Vector2i getAdvance();
-
 }
