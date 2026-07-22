@@ -5,10 +5,13 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.*;
+import cn.zbx1425.minopp.game.client.gui.BadgeGuiShard;
 import cn.zbx1425.minopp.game.client.gui.MessageGuiShard;
 import cn.zbx1425.minopp.game.client.shard.ShardExtractor;
 import cn.zbx1425.minopp.game.client.shard.ShardExtractors;
 import cn.zbx1425.minopp.game.shard.ActionReportShard;
+import cn.zbx1425.minopp.game.shard.ActionReportShards;
+import cn.zbx1425.minopp.game.shard.GameWonShard;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.platform.multiver.GuiShim;
 import com.mojang.datafixers.util.Pair;
@@ -42,6 +45,7 @@ import net.minecraft.util.FastColor;
 //import net.neoforged.neoforge.client.gui.GuiLayer;
 
 import java.util.*;
+import java.util.function.Function;
 
 //? if <26.1
 //public class GameOverlayLayer implements LayeredDraw.Layer {
@@ -50,12 +54,18 @@ import java.util.*;
 //? if >=26.1 && !neoforge
 public class GameOverlayLayer {
 
-    // Some animation related stuff
+    private static final int BG_COLOR_SOLID = 0xFF888888;
+    private static final int BG_COLOR_BACKDROP = 0x66000000;
+
+    private static final int AVATAR_SIZE = 16;
+    private static final int NAME_WIDTH = 80;
+    private static final int NAME_PAD_X = 3;
+    private static final int ROW_HEIGHT = 20;
+
     private double zoomAnimationProgress = 0;
     private double zoomAnimationTarget = 0;
     private final Long2FloatArrayMap handCardCurrentXOff = new Long2FloatArrayMap();
 
-    // Newly drawn card highlight tracking
     private final Set<Long> newlyDrawnCardHashes = new HashSet<>();
     private final Map<UUID, Integer> lastSwapGeneration = new HashMap<>();
     private CardGame.PlayerActionPhase lastPhase = null;
@@ -92,7 +102,6 @@ public class GameOverlayLayer {
         } else {
             TurnDeadMan.tick(tableEntity.game, deltaTracker);
             if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
-                // Only render active view when the player is looking at the same table as the hand cards
                 renderGameActive(guiGraphics, deltaTracker, tableEntity);
             } else {
                 zoomAnimationTarget = 0;
@@ -102,31 +111,35 @@ public class GameOverlayLayer {
         MinoClient.handCardOverlayActive = renderHandCards(guiGraphics, deltaTracker);
     }
 
-    private void renderGameInactive(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    // ========== Game Inactive ==========
+
+    private void renderGameInactive(GuiGraphicsExtractor g, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
-        for (MessageGuiShard msg : extractAllMessages(tableEntity.stateShards)) {
-            drawStringWithBackdrop(guiGraphics, font, msg.message, x, y, msg.color);
-            y += font.lineHeight;
-        }
+
+        Function<UUID, String> nameResolver = buildNameResolver(null, tableEntity);
+        List<CardPlayer> playerList = tableEntity.getPlayersList();
+        y = renderShardPanel(g, font, x, y, tableEntity, playerList, null, nameResolver);
+
         y += font.lineHeight;
-        drawStringWithBackdrop(guiGraphics, font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
+        drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
     }
+
+    // ========== Game Active ==========
 
     private void renderGameActive(GuiGraphicsExtractor g, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
-        // Zoom effect target
         if (currentPlayer.equals(cardPlayer)) {
             if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND) {
                 zoomAnimationTarget = 1;
             } else {
                 if (zoomAnimationTarget < 1.01) {
-                    zoomAnimationTarget = 1.5; // Zoom in first
-                } else if (zoomAnimationProgress >= 1.5) { // Already zoomed in
-                    zoomAnimationTarget = 1.05; // Zoom out, but not trigger zoom in again
+                    zoomAnimationTarget = 1.5;
+                } else if (zoomAnimationProgress >= 1.5) {
+                    zoomAnimationTarget = 1.05;
                 }
             }
         } else {
@@ -136,7 +149,11 @@ public class GameOverlayLayer {
         if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
-        drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
+
+        Function<UUID, String> nameResolver = buildNameResolver(tableEntity.game, tableEntity);
+
+        // --- Status lines ---
+        drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.game_active").append(" \u00a9 Zbx1425"), x, y, 0xFF7090FF);
         y += font.lineHeight;
         if (currentPlayer.equals(cardPlayer)) {
             drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
@@ -166,29 +183,144 @@ public class GameOverlayLayer {
         drawStringWithBackdrop(g, font, topCardInfo, x, y, 0xFFFFFFDD);
         y += font.lineHeight * 2;
 
-        for (MessageGuiShard msg : extractAllMessages(tableEntity.stateShards)) {
-            drawStringWithBackdrop(g, font, msg.message, x, y, msg.color);
-            y += font.lineHeight;
-        }
-        for (ListIterator<Pair<ActionReportShard, Long>> it = tableEntity.clientEphemeralShards.listIterator(tableEntity.clientEphemeralShards.size()); it.hasPrevious(); ) {
-            if (y > Minecraft.getInstance().getWindow().getGuiScaledHeight() - font.lineHeight - 40) {
-                break;
+        // --- Shard panel (badges + messages) ---
+        List<CardPlayer> orderedPlayers = getOrderedPlayers(tableEntity.game);
+        y = renderShardPanel(g, font, x, y, tableEntity, orderedPlayers, currentPlayer, nameResolver);
+
+        // --- Cursor hints ---
+        renderCursorHints(g, font, tableEntity, cardPlayer, currentPlayer);
+    }
+
+    // ========== Shared Shard Panel: badges + messages ==========
+
+    private int renderShardPanel(GuiGraphicsExtractor g, Font font, int x, int y,
+                                  BlockEntityMinoTable tableEntity, List<CardPlayer> players,
+                                  CardPlayer currentPlayer, Function<UUID, String> nameResolver) {
+
+        boolean hasGameWon = tableEntity.stateShards.stream().anyMatch(s -> s instanceof GameWonShard);
+
+        // Layer 1: Current state badges
+        Map<UUID, List<BadgeGuiShard>> currentBadges = new LinkedHashMap<>();
+        List<MessageGuiShard> currentMessages = new ArrayList<>();
+        for (ActionReportShard shard : tableEntity.stateShards) {
+            ShardExtractor<ActionReportShard> ext = ShardExtractors.getUnchecked(shard.shardType());
+            if (ext != null) {
+                if (!hasGameWon || shard.shardType() == ActionReportShards.GAME_WON) {
+                    mergeBadges(currentBadges, ext.extractBadges(shard));
+                }
+                currentMessages.addAll(ext.extractMessages(shard, nameResolver));
             }
-            Pair<ActionReportShard, Long> entry = it.previous();
-            long currentTime = System.currentTimeMillis();
-            if (entry.getSecond() - 200 < currentTime) {
-                it.remove();
-            } else {
-                List<MessageGuiShard> msgs = extractAllMessages(List.of(entry.getFirst()));
-                int alpha = Mth.clamp(0, 0xFF, (int)(0xFF * (entry.getSecond() - currentTime) / 1000));
-                for (MessageGuiShard msg : msgs) {
-                    int color = (msg.color & 0x00FFFFFF) | (alpha << 24);
-                    drawStringWithBackdrop(g, font, msg.message, x, y, color);
-                    y += font.lineHeight;
+        }
+
+        // Layer 2: Sticky badges (TOP_CARD_STICKY)
+        Map<UUID, List<BadgeGuiShard>> stickyBadges = new LinkedHashMap<>();
+        if (!hasGameWon) {
+            for (ActionReportShard shard : tableEntity.clientStickyShards) {
+                ShardExtractor<ActionReportShard> ext = ShardExtractors.getUnchecked(shard.shardType());
+                if (ext != null) {
+                    mergeBadges(stickyBadges, ext.extractBadges(shard));
                 }
             }
         }
 
+        // Layer 3: Ephemeral/Noteworthy badges + messages (newest = leftmost / topmost)
+        long currentTime = System.currentTimeMillis();
+        Map<UUID, List<Pair<BadgeGuiShard, Float>>> noteworthyBadges = new LinkedHashMap<>();
+        List<Pair<MessageGuiShard, Float>> noteworthyMessages = new ArrayList<>();
+        for (ListIterator<Pair<ActionReportShard, Long>> it =
+                     tableEntity.clientEphemeralShards.listIterator(tableEntity.clientEphemeralShards.size()); it.hasPrevious(); ) {
+            Pair<ActionReportShard, Long> entry = it.previous();
+            if (entry.getSecond() < currentTime) {
+                it.remove();
+                continue;
+            }
+            float alpha = Mth.clamp((float)(entry.getSecond() - currentTime) / 4000f, 0f, 1f);
+            ShardExtractor<ActionReportShard> ext = ShardExtractors.getUnchecked(entry.getFirst().shardType());
+            if (ext != null) {
+                Map<UUID, List<BadgeGuiShard>> badges = ext.extractBadges(entry.getFirst());
+                for (Map.Entry<UUID, List<BadgeGuiShard>> e : badges.entrySet()) {
+                    noteworthyBadges.computeIfAbsent(e.getKey(), k -> new ArrayList<>());
+                    for (BadgeGuiShard badge : e.getValue()) {
+                        noteworthyBadges.get(e.getKey()).add(new Pair<>(badge, alpha));
+                    }
+                }
+                for (MessageGuiShard msg : ext.extractMessages(entry.getFirst(), nameResolver)) {
+                    noteworthyMessages.add(new Pair<>(msg, alpha));
+                }
+            }
+        }
+
+        // --- Render player rows ---
+        boolean hasBadges = !currentBadges.isEmpty() || !stickyBadges.isEmpty() || !noteworthyBadges.isEmpty();
+        if (!players.isEmpty() && hasBadges) {
+            for (CardPlayer p : players) {
+                int rowX = x;
+                boolean isCurrent = currentPlayer != null && p.equals(currentPlayer);
+
+                if (isCurrent) {
+                    g.fill(rowX - 1, y - 1, rowX + AVATAR_SIZE + 1, y + AVATAR_SIZE + 1, 0xFFFFFF00);
+                }
+                g.fill(rowX, y, rowX + AVATAR_SIZE, y + AVATAR_SIZE, 0xFF888888);
+                rowX += AVATAR_SIZE;
+
+                Component nameComp = Component.literal(p.name);
+                g.fill(rowX, y, rowX + NAME_WIDTH, y + AVATAR_SIZE, BG_COLOR_BACKDROP);
+                g.text(font, nameComp, rowX + NAME_PAD_X, y + (AVATAR_SIZE - font.lineHeight) / 2,
+                        isCurrent ? 0xFFFFFFFF : 0xFFAAAAAA, true);
+                rowX += NAME_WIDTH;
+
+                // Order: Current → Sticky → Ephemeral (newest leftmost)
+                List<BadgeGuiShard> playerCurrentBadges = currentBadges.getOrDefault(p.uuid, List.of());
+                for (BadgeGuiShard badge : playerCurrentBadges) {
+                    badge.render(g, font, rowX, y, BG_COLOR_SOLID);
+                    rowX += BadgeGuiShard.WIDTH;
+                }
+
+                List<BadgeGuiShard> playerStickyBadges = stickyBadges.getOrDefault(p.uuid, List.of());
+                for (BadgeGuiShard badge : playerStickyBadges) {
+                    badge.render(g, font, rowX, y, BG_COLOR_SOLID);
+                    rowX += BadgeGuiShard.WIDTH;
+                }
+
+                List<Pair<BadgeGuiShard, Float>> playerNoteworthyBadges = noteworthyBadges.getOrDefault(p.uuid, List.of());
+                for (Pair<BadgeGuiShard, Float> entry : playerNoteworthyBadges) {
+                    int alpha = (int)(entry.getSecond() * 0x66);
+                    entry.getFirst().render(g, font, rowX, y, alpha << 24);
+                    rowX += BadgeGuiShard.WIDTH;
+                }
+
+                y += ROW_HEIGHT;
+            }
+            y += font.lineHeight;
+        }
+
+        // --- Message list ---
+        for (MessageGuiShard msg : currentMessages) {
+            drawStringWithBackdrop(g, font, msg.message, x, y, msg.color);
+            y += font.lineHeight;
+        }
+
+        for (Pair<MessageGuiShard, Float> entry : noteworthyMessages) {
+            if (y > Minecraft.getInstance().getWindow().getGuiScaledHeight() - font.lineHeight - 40) break;
+            int alpha = (int)(entry.getSecond() * 0xFF);
+            MessageGuiShard msg = entry.getFirst();
+            int color;
+            if (msg.preserveColor) {
+                color = (msg.color & 0x00FFFFFF) | (alpha << 24);
+            } else {
+                color = 0xAAAAAA | (alpha << 24);
+            }
+            drawStringWithBackdrop(g, font, msg.message, x, y, color);
+            y += font.lineHeight;
+        }
+
+        return y;
+    }
+
+    // ========== Cursor Hints ==========
+
+    private static void renderCursorHints(GuiGraphicsExtractor g, Font font,
+                                           BlockEntityMinoTable tableEntity, CardPlayer cardPlayer, CardPlayer currentPlayer) {
         if (Minecraft.getInstance().hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos hitPos = ((BlockHitResult) Minecraft.getInstance().hitResult).getBlockPos();
             BlockState hitState = Minecraft.getInstance().level.getBlockState(hitPos);
@@ -232,22 +364,49 @@ public class GameOverlayLayer {
             GuiShim.popMatrix(g);
         }
     }
-    
+
+    // ========== Helpers ==========
+
+    private static Function<UUID, String> buildNameResolver(CardGame game, BlockEntityMinoTable tableEntity) {
+        return uuid -> {
+            if (game != null) {
+                for (CardPlayer p : game.players) {
+                    if (p.uuid.equals(uuid)) return p.name;
+                }
+            }
+            for (CardPlayer p : tableEntity.getPlayersList()) {
+                if (p.uuid.equals(uuid)) return p.name;
+            }
+            return uuid.toString().substring(0, 8);
+        };
+    }
+
+    private static List<CardPlayer> getOrderedPlayers(CardGame game) {
+        List<CardPlayer> result = new ArrayList<>();
+        int n = game.players.size();
+        for (int i = 0; i < n; i++) {
+            int idx = game.isAntiClockwise ? (n - i) % n : i;
+            result.add(game.players.get(idx));
+        }
+        return result;
+    }
+
+    private static void mergeBadges(Map<UUID, List<BadgeGuiShard>> target, Map<UUID, List<BadgeGuiShard>> source) {
+        for (Map.Entry<UUID, List<BadgeGuiShard>> e : source.entrySet()) {
+            target.computeIfAbsent(e.getKey(), k -> new ArrayList<>()).addAll(e.getValue());
+        }
+    }
+
     private static void drawStringWithBackdrop(GuiGraphicsExtractor guiGraphics, Font font, Component component, int x, int y, int color) {
         int i = (int)(0.4 * 255.0F) << 24 & -16777216;
-        int var10001 = x - 2;
-        int var10002 = y;
-        int var10003 = x + font.width(component) + 2;
-        guiGraphics.fill(var10001, var10002, var10003, y + font.lineHeight, i);
+        guiGraphics.fill(x - 2, y, x + font.width(component) + 2, y + font.lineHeight, i);
         guiGraphics.text(font, component, x, y, color, true);
     }
 
+    // ========== Hand Cards ==========
+
     private static final Identifier ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
-    /**
-     * Render hand cards on the screen
-     * @return whether the hand cards are rendered
-     */
     private boolean renderHandCards(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
         if (Minecraft.getInstance().options.hideGui) return false;
 
@@ -268,7 +427,6 @@ public class GameOverlayLayer {
         if (realPlayer == null) return false;
         int clientHandIndex = Mth.clamp(ItemHandCards.getClientHandIndex(player), 0, realPlayer.hand.size() - 1);
 
-        // Compute some hashes for hand cards, for the sake of animation
         realPlayer.hand.sort(Card::compareTo);
         LongArrayList handCardHashes = new LongArrayList();
         for (Card card : realPlayer.hand) {
@@ -279,9 +437,7 @@ public class GameOverlayLayer {
             }
         }
 
-        // Track newly drawn cards (after hash computation)
         updateDrawnCardTracking(tableEntity, realPlayer, handCardHashes);
-
         handCardCurrentXOff.keySet().removeIf(hash -> !handCardHashes.contains(hash));
 
         //? if <26.1
@@ -329,7 +485,6 @@ public class GameOverlayLayer {
 
             float shadowAlpha = (float) Math.max(Mth.lerp(zoomAnimationProgress, 0.5, 0), 0);
 
-//            guiGraphics.fill(x + 3, y + 3, x + CARD_WIDTH - 3, y + CARD_HEIGHT - 3, card.suit.color);
             GuiShim.blit(g,
                 ATLAS_LOCATION,
                 x + 5, y + 5, CARD_WIDTH - 10, CARD_HEIGHT - 10,
@@ -347,7 +502,6 @@ public class GameOverlayLayer {
             } else {
                 Component cardName = card.getCardFaceName().copy()
                         .withStyle(Style.EMPTY.withFont(GuiShim.getMiencraftyFontDesc()));
-                // blend color with shadowAlpha
                 int colorA = (int)(0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
                 g.text(font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
             }
@@ -360,9 +514,11 @@ public class GameOverlayLayer {
 
         //? if <26.1
         //RenderSystem.disableBlend();
-        
+
         return true;
     }
+
+    // ========== Drawn Card Tracking ==========
 
     private void updateDrawnCardTracking(BlockEntityMinoTable tableEntity, CardPlayer realPlayer, LongArrayList currentHashes) {
         CardGame game = tableEntity.game;
@@ -374,7 +530,6 @@ public class GameOverlayLayer {
             return;
         }
 
-        // Check swapGeneration change → clear highlights, snapshot current state
         Integer prevGen = lastSwapGeneration.get(realPlayer.uuid);
         if (prevGen != null && prevGen != realPlayer.swapGeneration) {
             newlyDrawnCardHashes.clear();
@@ -386,7 +541,6 @@ public class GameOverlayLayer {
         }
         lastSwapGeneration.put(realPlayer.uuid, realPlayer.swapGeneration);
 
-        // Turn/player change → clear highlights
         if (game.currentPlayerIndex != lastCurrentPlayerIndex) {
             newlyDrawnCardHashes.clear();
             lastHandCardHashes = new LongArrayList(currentHashes);
@@ -398,10 +552,8 @@ public class GameOverlayLayer {
         CardPlayer currentPlayer = game.players.get(game.currentPlayerIndex);
         boolean isOurTurn = currentPlayer.equals(realPlayer);
 
-        // Detect phase transition DISCARD_HAND → DISCARD_DRAWN (we just drew)
         if (isOurTurn && lastPhase == CardGame.PlayerActionPhase.DISCARD_HAND
                 && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN) {
-            // Sorted merge diff to find newly added hashes
             newlyDrawnCardHashes.clear();
             int i = 0, j = 0;
             while (i < currentHashes.size() && j < lastHandCardHashes.size()) {
@@ -433,18 +585,6 @@ public class GameOverlayLayer {
             zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
         }
         MinoClient.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<MessageGuiShard> extractAllMessages(List<ActionReportShard> shards) {
-        List<MessageGuiShard> result = new ArrayList<>();
-        for (ActionReportShard shard : shards) {
-            ShardExtractor<ActionReportShard> extractor = ShardExtractors.getUnchecked(shard.shardType());
-            if (extractor != null) {
-                result.addAll(extractor.extractMessages(shard));
-            }
-        }
-        return result;
     }
 
     public static final GameOverlayLayer INSTANCE = new GameOverlayLayer();

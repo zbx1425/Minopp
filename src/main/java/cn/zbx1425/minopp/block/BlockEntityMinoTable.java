@@ -61,6 +61,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             new SystemShard(Component.translatable("game.minopp.play.no_game"))));
 
     public List<Pair<ActionReportShard, Long>> clientEphemeralShards = new ArrayList<>();
+    public List<ActionReportShard> clientStickyShards = new ArrayList<>();
 
     public ItemStack award = ItemStack.EMPTY;
     public boolean demo = false;
@@ -92,11 +93,20 @@ public class BlockEntityMinoTable extends BlockEntity {
         if (!newStateShards.equals(stateShards)) {
             if (previousGame == null && game != null) {
                 clientEphemeralShards.clear();
+                clientStickyShards.clear();
             } else {
-                long expiry = System.currentTimeMillis() + 16000;
+                boolean newStateHasPlay = newStateShards.stream()
+                        .anyMatch(s -> s instanceof cn.zbx1425.minopp.game.shard.PlayShard);
+                if (newStateHasPlay) {
+                    clientStickyShards.clear();
+                }
+                long expiry = System.currentTimeMillis() + 6000;
                 for (ActionReportShard oldShard : stateShards) {
-                    if (oldShard.shardType().transitionBehavior() == ActionReportShard.TransitionBehavior.NOTEWORTHY) {
+                    if (oldShard.isNoteworthy()) {
                         clientEphemeralShards.add(new Pair<>(oldShard, expiry));
+                    } else if (oldShard.shardType().transitionBehavior() == ActionReportShard.TransitionBehavior.TOP_CARD_STICKY
+                               && !newStateHasPlay) {
+                        clientStickyShards.add(oldShard);
                     }
                 }
             }
@@ -297,10 +307,6 @@ public class BlockEntityMinoTable extends BlockEntity {
             }
         }
 
-        if (!newState.isEmpty()) {
-            stateShards = newState;
-        }
-
         if (!rejections.isEmpty() && player != null) {
             S2CActionEphemeralPacket.sendS2C(player, getBlockPos(), rejections);
         }
@@ -311,6 +317,10 @@ public class BlockEntityMinoTable extends BlockEntity {
 
         if (result.shouldDestroyGame) {
             destroyGame(cardPlayer);
+        }
+
+        if (!newState.isEmpty()) {
+            stateShards = newState;
         }
 
         if (!result.effects.isEmpty()) {

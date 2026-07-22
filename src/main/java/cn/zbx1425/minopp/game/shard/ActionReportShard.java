@@ -7,6 +7,10 @@ public interface ActionReportShard {
 
     ShardType<? extends ActionReportShard> shardType();
 
+    default boolean isNoteworthy() {
+        return shardType().transitionBehavior() == TransitionBehavior.NOTEWORTHY;
+    }
+
     record ShardType<T extends ActionReportShard>(
         Identifier id,
         MapCodec<T> codec,
