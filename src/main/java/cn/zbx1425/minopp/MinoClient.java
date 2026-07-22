@@ -4,7 +4,7 @@ import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import cn.zbx1425.minopp.network.S2CAutoPlayerScreenPacket;
 import cn.zbx1425.minopp.platform.ClientPlatform;
-import cn.zbx1425.minopp.effect.EffectQueue;
+import cn.zbx1425.minopp.game.effect.EffectQueue;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;

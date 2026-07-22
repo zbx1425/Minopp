@@ -1,4 +1,4 @@
-package cn.zbx1425.minopp.effect;
+package cn.zbx1425.minopp.game.effect;
 
 import cn.zbx1425.minopp.Mino;
 import net.minecraft.resources.Identifier;

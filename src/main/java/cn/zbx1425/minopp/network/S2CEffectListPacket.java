@@ -2,15 +2,13 @@ package cn.zbx1425.minopp.network;
 
 import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
-import cn.zbx1425.minopp.effect.EffectEvent;
-import cn.zbx1425.minopp.effect.EffectEvents;
+import cn.zbx1425.minopp.game.effect.EffectEvent;
+import cn.zbx1425.minopp.game.effect.EffectEvents;
 import cn.zbx1425.minopp.platform.ServerPlatform;
-import cn.zbx1425.minopp.effect.EffectQueue;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;

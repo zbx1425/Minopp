@@ -1,7 +1,7 @@
 package cn.zbx1425.minopp.game;
 
-import cn.zbx1425.minopp.effect.EffectEvent;
-import cn.zbx1425.minopp.effect.SoundEffectEvent;
+import cn.zbx1425.minopp.game.effect.EffectEvent;
+import cn.zbx1425.minopp.game.effect.SoundEffectEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;

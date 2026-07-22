@@ -1,9 +1,9 @@
 package cn.zbx1425.minopp.block;
 
 import cn.zbx1425.minopp.Mino;
-import cn.zbx1425.minopp.effect.EffectEvent;
-import cn.zbx1425.minopp.effect.EffectEvents;
-import cn.zbx1425.minopp.effect.SeatActionTakenEffectEvent;
+import cn.zbx1425.minopp.game.effect.EffectEvent;
+import cn.zbx1425.minopp.game.effect.EffectEvents;
+import cn.zbx1425.minopp.game.effect.SeatActionTakenEffectEvent;
 import cn.zbx1425.minopp.game.ActionMessage;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardGame;
@@ -12,7 +12,6 @@ import cn.zbx1425.minopp.game.TableRuleConfig;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
-import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;

@@ -1,4 +1,4 @@
-package cn.zbx1425.minopp.effect;
+package cn.zbx1425.minopp.game.effect;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.gui.SeatControlScreen;

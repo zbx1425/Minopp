@@ -164,7 +164,6 @@ public class Card implements Comparable<Card> {
                 .optionalFieldOf("suit", Suit.BLUE).forGetter(c -> c.suit),
             Codec.INT.optionalFieldOf("number", 0).forGetter(c -> c.number),
             self.optionalFieldOf("actualCard").forGetter(c -> Optional.ofNullable(c.equivCard))
-        ).apply(instance, (family, suit, number, equivCard) ->
-            new Card(family, suit, number, equivCard.orElse(null))))
+        ).apply(instance, Card::new))
     );
 }
