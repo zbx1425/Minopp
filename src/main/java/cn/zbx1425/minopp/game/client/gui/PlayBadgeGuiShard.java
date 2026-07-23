@@ -1,14 +1,17 @@
 package cn.zbx1425.minopp.game.client.gui;
 
 import cn.zbx1425.minopp.game.Card;
+import cn.zbx1425.minopp.game.client.shard.ShardResources;
+import cn.zbx1425.minopp.gui.GameOverlayLayer;import cn.zbx1425.minopp.platform.multiver.GuiShim;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 
 public class PlayBadgeGuiShard extends BadgeGuiShard {
 
-    private static final int BG_PLAY = 0xFF00A1E8;
+    public static final int BG_PLAY = 0xFF00A1E8;
 
     private final Card card;
 
@@ -23,7 +26,24 @@ public class PlayBadgeGuiShard extends BadgeGuiShard {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int bgColor) {
-        super.render(g, font, x, y, BG_PLAY);
+    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int tintColor, int alpha) {
+        int bg = (tintColor & 0x00FFFFFF) | (alpha << 24);
+        g.fill(x, y, x + WIDTH, y + HEIGHT, bg);
+
+        if (card.getEquivSuit() == Card.Suit.WILD) {
+            GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION, x, y, 16, 16, 228, 0, 10, 10, 256, 128);
+        } else {
+            g.blitSprite(RenderPipelines.GUI_TEXTURED, ShardResources.INSTANCE.getSpriteForSuit(card.getEquivSuit()), x, y, 16, 16);
+        }
+
+        if (card.family == Card.Family.REVERSE) {
+            GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION,  x + 16 + 3, y + 3, 208, 0, 10, 10, 256, 128);
+        } else if (card.family == Card.Family.SKIP) {
+            GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION,  x + 16 + 3, y + 3, 218, 0, 10, 10, 256, 128);
+        } else {
+            String briefNumberRepr = card.family == Card.Family.DRAW ? ("+" + -card.number) : (card.suit == Card.Suit.WILD ? "" : Integer.toString(card.number));
+            int reprWidth = font.width(briefNumberRepr);
+            g.text(font, briefNumberRepr, x + 16 + (16 - reprWidth) / 2, y + (16 - 8) / 2, 0xFFFFFFFF);
+        }
     }
 }

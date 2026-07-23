@@ -22,11 +22,11 @@ public class GameWonBadgeGuiShard extends BadgeGuiShard {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int bgColor) {
+    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int tintColor, int alpha) {
         if (handSize == 0) {
-            super.render(g, font, x, y, 0xFFFF0000);
+            super.render(g, font, x, y, 0xFF0000, alpha);
         } else {
-            super.render(g, font, x, y, bgColor);
+            super.render(g, font, x, y, tintColor, alpha);
         }
     }
 }

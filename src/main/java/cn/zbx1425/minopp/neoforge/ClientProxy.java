@@ -3,6 +3,7 @@ package cn.zbx1425.minopp.neoforge;
 
 /*import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
+import cn.zbx1425.minopp.game.client.shard.ShardResources;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
 //? if neoforge && 1.21.1
 //import cn.zbx1425.minopp.neoforge.compat.signmeup.MinimapVisibility;
@@ -12,6 +13,7 @@ import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.data.AtlasIds;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.*;
@@ -81,6 +83,13 @@ public class ClientProxy {
             MinoNeoForge.PACKET_REGISTRY.commitClient(event);
         }
         //? }
+
+        @SubscribeEvent
+        public static void onTextureAtlasStitched(TextureAtlasStitchedEvent event) {
+            if (event.getAtlas() == Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.ITEMS)) {
+                ShardResources.INSTANCE.onResourceReload();
+            }
+        }
     }
 
     public static class ForgeEventBusListener {

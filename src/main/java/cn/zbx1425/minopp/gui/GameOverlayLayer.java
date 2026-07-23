@@ -4,9 +4,11 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.game.*;
 import cn.zbx1425.minopp.game.client.gui.BadgeGuiShard;
 import cn.zbx1425.minopp.game.client.gui.MessageGuiShard;
+import cn.zbx1425.minopp.game.client.gui.PlayBadgeGuiShard;
 import cn.zbx1425.minopp.game.client.shard.ShardExtractor;
 import cn.zbx1425.minopp.game.client.shard.ShardExtractors;
 import cn.zbx1425.minopp.game.shard.ActionReportShard;
@@ -21,17 +23,23 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NonNull;
 
 //? if <26.1 {
@@ -45,6 +53,7 @@ import net.minecraft.util.FastColor;
 //import net.neoforged.neoforge.client.gui.GuiLayer;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 //? if <26.1
@@ -54,13 +63,14 @@ import java.util.function.Function;
 //? if >=26.1 && !neoforge
 public class GameOverlayLayer {
 
-    private static final int BG_COLOR_SOLID = 0xFF888888;
-    private static final int BG_COLOR_BACKDROP = 0x66000000;
+    private static final int BG_COLOR_SOLID = 0x888888;
+    private static final int BG_COLOR_BACKDROP = 0x444444;
+    private static final int BACKDROP_ALPHA = 0x66;
 
     private static final int AVATAR_SIZE = 16;
-    private static final int NAME_WIDTH = 80;
     private static final int NAME_PAD_X = 3;
     private static final int ROW_HEIGHT = 20;
+    private static final String NAME_MEASURE = "WWW…WWW";
 
     private double zoomAnimationProgress = 0;
     private double zoomAnimationTarget = 0;
@@ -119,8 +129,21 @@ public class GameOverlayLayer {
         Font font = Minecraft.getInstance().font;
 
         Function<UUID, String> nameResolver = buildNameResolver(null, tableEntity);
-        List<CardPlayer> playerList = tableEntity.getPlayersList();
-        y = renderShardPanel(g, font, x, y, tableEntity, playerList, null, nameResolver);
+        boolean hasGameWon = tableEntity.stateShards.stream().anyMatch(s -> s instanceof GameWonShard);
+        if (hasGameWon) {
+            List<CardPlayer> playerList = tableEntity.getPlayersList();
+            y = renderShardPanel(g, font, x, y, tableEntity, playerList, null, false, null, nameResolver);
+        } else {
+            for (ActionReportShard shard : tableEntity.stateShards) {
+                ShardExtractor<ActionReportShard> ext = ShardExtractors.getUnchecked(shard.shardType());
+                if (ext != null) {
+                    for (MessageGuiShard msg : ext.extractMessages(shard, nameResolver)) {
+                        msg.render(g, font, x, y, msg.color, 0xFF);
+                        y += msg.getAdvance(font);
+                    }
+                }
+            }
+        }
 
         y += font.lineHeight;
         drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
@@ -156,18 +179,18 @@ public class GameOverlayLayer {
         drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.game_active").append(" \u00a9 Zbx1425"), x, y, 0xFF7090FF);
         y += font.lineHeight;
         if (currentPlayer.equals(cardPlayer)) {
-            drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
-                    (System.currentTimeMillis() % 400 < 200) ? 0xFFFFFFFF : 0xFFFFFF00);
+//            drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()), x, y,
+//                    (System.currentTimeMillis() % 400 < 200) ? 0xFFFFFFFF : 0xFFFFFF00);
             if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN
                     && tableEntity.rules.forcePlay() && tableEntity.game.lastDrawnCard != null) {
-                y += font.lineHeight;
                 drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.force_play_hint",
                         tableEntity.game.lastDrawnCard.getDisplayName()), x, y, 0xFFFFAA00);
+                y += font.lineHeight;
             }
         } else {
-            drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.turn_other", currentPlayer.name), x, y, 0xFFAAAAAA);
+//            drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.turn_other", currentPlayer.name), x, y, 0xFFAAAAAA);
         }
-        y += font.lineHeight;
+//        y += font.lineHeight;
         MutableComponent auxInfo = Component.translatable("gui.minopp.play.direction." + (tableEntity.game.isAntiClockwise ? "ccw" : "cw"));
         if (tableEntity.game.drawCount > 0) {
             auxInfo = auxInfo.append(", ").append(Component.translatable("gui.minopp.play.draw_accumulate", tableEntity.game.drawCount));
@@ -175,17 +198,19 @@ public class GameOverlayLayer {
         drawStringWithBackdrop(g, font, auxInfo, x, y, 0xFFAAAAAA);
         y += font.lineHeight * 2;
 
-        MutableComponent topCardInfo = Component.translatable("gui.minopp.play.top_card", tableEntity.game.topCard.getDisplayName().getString());
-        if (tableEntity.game.topCard.suit == Card.Suit.WILD) {
-            topCardInfo.append(", ").append(Component.translatable("gui.minopp.play.top_card_wild_color",
-                    Component.translatable("game.minopp.card.suit." + tableEntity.game.topCard.getEquivSuit().name().toLowerCase())));
-        }
-        drawStringWithBackdrop(g, font, topCardInfo, x, y, 0xFFFFFFDD);
-        y += font.lineHeight * 2;
+//        MutableComponent topCardInfo = Component.translatable("gui.minopp.play.top_card", tableEntity.game.topCard.getDisplayName().getString());
+//        if (tableEntity.game.topCard.suit == Card.Suit.WILD) {
+//            topCardInfo.append(", ").append(Component.translatable("gui.minopp.play.top_card_wild_color",
+//                    Component.translatable("game.minopp.card.suit." + tableEntity.game.topCard.getEquivSuit().name().toLowerCase())));
+//        }
+//        drawStringWithBackdrop(g, font, topCardInfo, x, y, 0xFFFFFFDD);
+//        y += font.lineHeight * 2;
 
         // --- Shard panel (badges + messages) ---
         List<CardPlayer> orderedPlayers = getOrderedPlayers(tableEntity.game);
-        y = renderShardPanel(g, font, x, y, tableEntity, orderedPlayers, currentPlayer, nameResolver);
+        boolean showPending = tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND;
+        UUID selfUuid = player != null ? player.getUUID() : null;
+        y = renderShardPanel(g, font, x, y, tableEntity, orderedPlayers, currentPlayer, showPending, selfUuid, nameResolver);
 
         // --- Cursor hints ---
         renderCursorHints(g, font, tableEntity, cardPlayer, currentPlayer);
@@ -193,10 +218,14 @@ public class GameOverlayLayer {
 
     // ========== Shared Shard Panel: badges + messages ==========
 
+    private static final long MAX_EPHEMERAL_DURATION_MS = 8000;
+
     private int renderShardPanel(GuiGraphicsExtractor g, Font font, int x, int y,
                                   BlockEntityMinoTable tableEntity, List<CardPlayer> players,
-                                  CardPlayer currentPlayer, Function<UUID, String> nameResolver) {
+                                  CardPlayer currentPlayer, boolean isTurnFirstDiscard,
+                                  UUID selfUuid, Function<UUID, String> nameResolver) {
 
+        int nameWidth = font.width(NAME_MEASURE) + NAME_PAD_X * 2;
         boolean hasGameWon = tableEntity.stateShards.stream().anyMatch(s -> s instanceof GameWonShard);
 
         // Layer 1: Current state badges
@@ -225,68 +254,91 @@ public class GameOverlayLayer {
 
         // Layer 3: Ephemeral/Noteworthy badges + messages (newest = leftmost / topmost)
         long currentTime = System.currentTimeMillis();
-        Map<UUID, List<Pair<BadgeGuiShard, Float>>> noteworthyBadges = new LinkedHashMap<>();
-        List<Pair<MessageGuiShard, Float>> noteworthyMessages = new ArrayList<>();
+        Map<UUID, List<Pair<BadgeGuiShard, Integer>>> noteworthyBadges = new LinkedHashMap<>();
+        List<Pair<MessageGuiShard, Integer>> noteworthyMessages = new ArrayList<>();
         for (ListIterator<Pair<ActionReportShard, Long>> it =
                      tableEntity.clientEphemeralShards.listIterator(tableEntity.clientEphemeralShards.size()); it.hasPrevious(); ) {
             Pair<ActionReportShard, Long> entry = it.previous();
-            if (entry.getSecond() < currentTime) {
+            long insertTime = entry.getSecond();
+            if (currentTime - insertTime > MAX_EPHEMERAL_DURATION_MS) {
                 it.remove();
                 continue;
             }
-            float alpha = Mth.clamp((float)(entry.getSecond() - currentTime) / 4000f, 0f, 1f);
             ShardExtractor<ActionReportShard> ext = ShardExtractors.getUnchecked(entry.getFirst().shardType());
             if (ext != null) {
                 Map<UUID, List<BadgeGuiShard>> badges = ext.extractBadges(entry.getFirst());
                 for (Map.Entry<UUID, List<BadgeGuiShard>> e : badges.entrySet()) {
                     noteworthyBadges.computeIfAbsent(e.getKey(), k -> new ArrayList<>());
                     for (BadgeGuiShard badge : e.getValue()) {
-                        noteworthyBadges.get(e.getKey()).add(new Pair<>(badge, alpha));
+                        long remaining = insertTime + badge.getEphemeralDurationMs() - currentTime;
+                        if (remaining <= 0) continue;
+                        float alphaF = Mth.clamp((float) remaining / (badge.getEphemeralDurationMs() * 0.5f), 0f, 1f);
+                        noteworthyBadges.get(e.getKey()).add(new Pair<>(badge, (int)(alphaF * 0xFF)));
                     }
                 }
                 for (MessageGuiShard msg : ext.extractMessages(entry.getFirst(), nameResolver)) {
-                    noteworthyMessages.add(new Pair<>(msg, alpha));
+                    long remaining = insertTime + msg.getEphemeralDurationMs() - currentTime;
+                    if (remaining <= 0) continue;
+                    float alphaF = Mth.clamp((float) remaining / (msg.getEphemeralDurationMs() * 0.5f), 0f, 1f);
+                    noteworthyMessages.add(new Pair<>(msg, (int)(alphaF * 0xFF)));
                 }
             }
         }
 
         // --- Render player rows ---
-        boolean hasBadges = !currentBadges.isEmpty() || !stickyBadges.isEmpty() || !noteworthyBadges.isEmpty();
+        boolean hasBadges = !currentBadges.isEmpty() || !stickyBadges.isEmpty() || !noteworthyBadges.isEmpty()
+                || (currentPlayer != null && isTurnFirstDiscard);
         if (!players.isEmpty() && hasBadges) {
+            int highlightColor = (selfUuid != null && currentPlayer != null && currentPlayer.uuid.equals(selfUuid))
+                    ? 0xFFFFFF00 : 0xFF0094DA;
             for (CardPlayer p : players) {
                 int rowX = x;
                 boolean isCurrent = currentPlayer != null && p.equals(currentPlayer);
 
                 if (isCurrent) {
-                    g.fill(rowX - 1, y - 1, rowX + AVATAR_SIZE + 1, y + AVATAR_SIZE + 1, 0xFFFFFF00);
+                    g.fill(rowX - 1, y - 1, rowX + AVATAR_SIZE + 1, y + AVATAR_SIZE + 1, highlightColor);
                 }
-                g.fill(rowX, y, rowX + AVATAR_SIZE, y + AVATAR_SIZE, 0xFF888888);
+                Identifier skinTexture = resolveSkinTexture(p.uuid, tableEntity);
+                PlayerFaceExtractor.extractRenderState(g, skinTexture, rowX, y, AVATAR_SIZE, true, false, -1);
                 rowX += AVATAR_SIZE;
 
-                Component nameComp = Component.literal(p.name);
-                g.fill(rowX, y, rowX + NAME_WIDTH, y + AVATAR_SIZE, BG_COLOR_BACKDROP);
+                Component nameComp = truncateName(p.name, font, nameWidth - NAME_PAD_X * 2);
+                g.fill(rowX + (isCurrent ? 1 : 0), y, rowX + nameWidth, y + AVATAR_SIZE, BACKDROP_ALPHA << 24);
                 g.text(font, nameComp, rowX + NAME_PAD_X, y + (AVATAR_SIZE - font.lineHeight) / 2,
                         isCurrent ? 0xFFFFFFFF : 0xFFAAAAAA, true);
-                rowX += NAME_WIDTH;
+                rowX += nameWidth;
 
-                // Order: Current → Sticky → Ephemeral (newest leftmost)
+                // Order: PendingAction → Current → Sticky → Ephemeral (newest leftmost)
+
+                if (isCurrent && isTurnFirstDiscard) {
+                    g.fill(rowX, y, rowX + BadgeGuiShard.WIDTH, y + BadgeGuiShard.HEIGHT, highlightColor);
+                    g.fill(rowX + 1, y + 1, rowX + BadgeGuiShard.WIDTH - 1, y + BadgeGuiShard.HEIGHT - 1, BACKDROP_ALPHA << 24);
+                    Component pendingLabel = Component.literal(". . .");
+                    int textW = font.width(pendingLabel);
+                    int textX = rowX + (BadgeGuiShard.WIDTH - textW) / 2;
+                    int textY = y + (BadgeGuiShard.HEIGHT - font.lineHeight) / 2;
+                    g.text(font, pendingLabel, textX, textY, 0xFFFFFFFF, true);
+                    rowX += BadgeGuiShard.WIDTH;
+                }
+
                 List<BadgeGuiShard> playerCurrentBadges = currentBadges.getOrDefault(p.uuid, List.of());
                 for (BadgeGuiShard badge : playerCurrentBadges) {
-                    badge.render(g, font, rowX, y, BG_COLOR_SOLID);
-                    rowX += BadgeGuiShard.WIDTH;
+                    int tint = badge instanceof PlayBadgeGuiShard ? PlayBadgeGuiShard.BG_PLAY : BG_COLOR_SOLID;
+                    badge.render(g, font, rowX, y, tint, 0xFF);
+                    rowX += badge.getAdvance(font);
                 }
 
                 List<BadgeGuiShard> playerStickyBadges = stickyBadges.getOrDefault(p.uuid, List.of());
                 for (BadgeGuiShard badge : playerStickyBadges) {
-                    badge.render(g, font, rowX, y, BG_COLOR_SOLID);
-                    rowX += BadgeGuiShard.WIDTH;
+                    int tint = badge instanceof PlayBadgeGuiShard ? PlayBadgeGuiShard.BG_PLAY : BG_COLOR_SOLID;
+                    badge.render(g, font, rowX, y, tint, 0xFF);
+                    rowX += badge.getAdvance(font);
                 }
 
-                List<Pair<BadgeGuiShard, Float>> playerNoteworthyBadges = noteworthyBadges.getOrDefault(p.uuid, List.of());
-                for (Pair<BadgeGuiShard, Float> entry : playerNoteworthyBadges) {
-                    int alpha = (int)(entry.getSecond() * 0x66);
-                    entry.getFirst().render(g, font, rowX, y, alpha << 24);
-                    rowX += BadgeGuiShard.WIDTH;
+                List<Pair<BadgeGuiShard, Integer>> playerNoteworthyBadges = noteworthyBadges.getOrDefault(p.uuid, List.of());
+                for (Pair<BadgeGuiShard, Integer> entry : playerNoteworthyBadges) {
+                    entry.getFirst().render(g, font, rowX, y, BG_COLOR_BACKDROP, entry.getSecond());
+                    rowX += entry.getFirst().getAdvance(font);
                 }
 
                 y += ROW_HEIGHT;
@@ -296,22 +348,16 @@ public class GameOverlayLayer {
 
         // --- Message list ---
         for (MessageGuiShard msg : currentMessages) {
-            drawStringWithBackdrop(g, font, msg.message, x, y, msg.color);
-            y += font.lineHeight;
+            msg.render(g, font, x, y, msg.color, 0xFF);
+            y += msg.getAdvance(font);
         }
 
-        for (Pair<MessageGuiShard, Float> entry : noteworthyMessages) {
+        for (Pair<MessageGuiShard, Integer> entry : noteworthyMessages) {
             if (y > Minecraft.getInstance().getWindow().getGuiScaledHeight() - font.lineHeight - 40) break;
-            int alpha = (int)(entry.getSecond() * 0xFF);
             MessageGuiShard msg = entry.getFirst();
-            int color;
-            if (msg.preserveColor) {
-                color = (msg.color & 0x00FFFFFF) | (alpha << 24);
-            } else {
-                color = 0xAAAAAA | (alpha << 24);
-            }
-            drawStringWithBackdrop(g, font, msg.message, x, y, color);
-            y += font.lineHeight;
+            int tintColor = msg.preserveColor ? msg.color : 0xAAAAAA;
+            msg.render(g, font, x, y, tintColor, entry.getSecond());
+            y += msg.getAdvance(font);
         }
 
         return y;
@@ -391,10 +437,48 @@ public class GameOverlayLayer {
         return result;
     }
 
+    private static Component truncateName(String name, Font font, int maxWidth) {
+        if (font.width(name) <= maxWidth) {
+            return Component.literal(name);
+        }
+        if (name.length() <= 6) {
+            return Component.literal(name);
+        }
+        return Component.literal(name.substring(0, 3) + "\u2026" + name.substring(name.length() - 3));
+    }
+
     private static void mergeBadges(Map<UUID, List<BadgeGuiShard>> target, Map<UUID, List<BadgeGuiShard>> source) {
         for (Map.Entry<UUID, List<BadgeGuiShard>> e : source.entrySet()) {
             target.computeIfAbsent(e.getKey(), k -> new ArrayList<>()).addAll(e.getValue());
         }
+    }
+
+    private static Identifier resolveSkinTexture(UUID uuid, BlockEntityMinoTable tableEntity) {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null) {
+            PlayerInfo info = connection.getPlayerInfo(uuid);
+            if (info != null) {
+                return info.getSkin().body().texturePath();
+            }
+        }
+
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level != null) {
+            AABB searchArea = AABB.ofSize(Vec3.atCenterOf(tableEntity.getBlockPos()), 20, 20, 20);
+            for (EntityAutoPlayer autoPlayer : level.getEntitiesOfClass(EntityAutoPlayer.class, searchArea)) {
+                if (autoPlayer.getUUID().equals(uuid)) {
+                    return autoPlayer.clientSkinGameProfile
+                            .thenCompose(profileOpt -> profileOpt
+                                    .map(gp -> Minecraft.getInstance().getSkinManager().get(gp))
+                                    .orElse(CompletableFuture.completedFuture(Optional.empty())))
+                            .getNow(Optional.empty())
+                            .map(skin -> skin.body().texturePath())
+                            .orElse(DefaultPlayerSkin.get(uuid).body().texturePath());
+                }
+            }
+        }
+
+        return DefaultPlayerSkin.get(uuid).body().texturePath();
     }
 
     private static void drawStringWithBackdrop(GuiGraphicsExtractor guiGraphics, Font font, Component component, int x, int y, int color) {
@@ -405,7 +489,7 @@ public class GameOverlayLayer {
 
     // ========== Hand Cards ==========
 
-    private static final Identifier ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
+    public static final Identifier ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
     private boolean renderHandCards(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
         if (Minecraft.getInstance().options.hideGui) return false;

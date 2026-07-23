@@ -42,9 +42,9 @@ public class S2CActionEphemeralPacket {
             }
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-                    long expiry = System.currentTimeMillis() + 8000;
+                    long insertTime = System.currentTimeMillis();
                     for (ActionReportShard shard : shards) {
-                        tableEntity.clientEphemeralShards.add(new Pair<>(shard, expiry));
+                        tableEntity.clientEphemeralShards.add(new Pair<>(shard, insertTime));
                     }
                 }
             });

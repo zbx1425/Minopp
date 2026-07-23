@@ -10,6 +10,7 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.game.TableRuleConfig;
 import cn.zbx1425.minopp.game.shard.ActionReportShard;
 import cn.zbx1425.minopp.game.shard.ActionReportShards;
+import cn.zbx1425.minopp.game.shard.GameWonShard;
 import cn.zbx1425.minopp.game.shard.SystemShard;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
@@ -94,19 +95,39 @@ public class BlockEntityMinoTable extends BlockEntity {
             if (previousGame == null && game != null) {
                 clientEphemeralShards.clear();
                 clientStickyShards.clear();
+            } else if (previousGame != null && game == null) {
+                boolean hasGameWon = newStateShards.stream()
+                        .anyMatch(s -> s instanceof GameWonShard);
+                if (hasGameWon) {
+                    long insertTime = System.currentTimeMillis();
+                    for (ActionReportShard oldShard : stateShards) {
+                        if (oldShard.isNoteworthy()) {
+                            clientEphemeralShards.add(new Pair<>(oldShard, insertTime));
+                        }
+                    }
+                } else {
+                    clientEphemeralShards.clear();
+                }
+                clientStickyShards.clear();
             } else {
                 boolean newStateHasPlay = newStateShards.stream()
                         .anyMatch(s -> s instanceof cn.zbx1425.minopp.game.shard.PlayShard);
+                long insertTime = System.currentTimeMillis();
                 if (newStateHasPlay) {
+                    for (ActionReportShard sticky : clientStickyShards) {
+                        clientEphemeralShards.add(new Pair<>(sticky, insertTime));
+                    }
                     clientStickyShards.clear();
                 }
-                long expiry = System.currentTimeMillis() + 6000;
                 for (ActionReportShard oldShard : stateShards) {
                     if (oldShard.isNoteworthy()) {
-                        clientEphemeralShards.add(new Pair<>(oldShard, expiry));
-                    } else if (oldShard.shardType().transitionBehavior() == ActionReportShard.TransitionBehavior.TOP_CARD_STICKY
-                               && !newStateHasPlay) {
-                        clientStickyShards.add(oldShard);
+                        clientEphemeralShards.add(new Pair<>(oldShard, insertTime));
+                    } else if (oldShard.shardType().transitionBehavior() == ActionReportShard.TransitionBehavior.TOP_CARD_STICKY) {
+                        if (newStateHasPlay) {
+                            clientEphemeralShards.add(new Pair<>(oldShard, insertTime));
+                        } else {
+                            clientStickyShards.add(oldShard);
+                        }
                     }
                 }
             }

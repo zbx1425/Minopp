@@ -1,8 +1,8 @@
 package cn.zbx1425.minopp.game.client.gui;
 
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import org.joml.Vector2i;
 
 public class MessageGuiShard extends ActionReportGuiShard {
 
@@ -21,11 +21,19 @@ public class MessageGuiShard extends ActionReportGuiShard {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor g, int x, int y) {
+    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int tintColor, int alpha) {
+        int backdropAlpha = (int)(0.4f * alpha);
+        g.fill(x - 2, y, x + font.width(message) + 2, y + font.lineHeight, backdropAlpha << 24);
+        int textColor = (tintColor & 0x00FFFFFF) | (alpha << 24);
+        g.text(font, message, x, y, textColor, true);
+    }
+
+    public long getEphemeralDurationMs() {
+        return 8000;
     }
 
     @Override
-    public Vector2i getAdvance() {
-        return new Vector2i(0, 10);
+    public int getAdvance(Font font) {
+        return font.lineHeight;
     }
 }

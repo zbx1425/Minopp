@@ -6,6 +6,6 @@ public class SwapBadgeGuiShard extends BadgeGuiShard {
 
     @Override
     public Component getLabel() {
-        return Component.literal("Swap");
+        return Component.literal("←→");
     }
 }

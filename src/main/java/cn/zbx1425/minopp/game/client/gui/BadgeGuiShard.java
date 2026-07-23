@@ -6,29 +6,31 @@ import net.minecraft.network.chat.Component;
 
 public class BadgeGuiShard extends ActionReportGuiShard {
 
-    public static final int WIDTH = 48;
+    public static final int WIDTH = 32;
     public static final int HEIGHT = 16;
 
     public Component getLabel() {
         return Component.empty();
     }
 
-    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int bgColor) {
-        g.fill(x, y, x + WIDTH, y + HEIGHT, bgColor);
+    @Override
+    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int tintColor, int alpha) {
+        int bg = (tintColor & 0x00FFFFFF) | (alpha << 24);
+        g.fill(x, y, x + WIDTH, y + HEIGHT, bg);
         Component label = getLabel();
         int textW = font.width(label);
         int textX = x + (WIDTH - textW) / 2;
         int textY = y + (HEIGHT - font.lineHeight) / 2;
-        g.text(font, label, textX, textY, 0xFFFFFFFF, true);
+        int textColor = 0xFFFFFF | (alpha << 24);
+        g.text(font, label, textX, textY, textColor, true);
+    }
+
+    public long getEphemeralDurationMs() {
+        return 3000;
     }
 
     @Override
-    public void render(GuiGraphicsExtractor g, int x, int y) {
-        // Not used directly; use render(g, font, x, y, bgColor) instead
-    }
-
-    @Override
-    public org.joml.Vector2i getAdvance() {
-        return new org.joml.Vector2i(WIDTH, HEIGHT);
+    public int getAdvance(Font font) {
+        return WIDTH;
     }
 }

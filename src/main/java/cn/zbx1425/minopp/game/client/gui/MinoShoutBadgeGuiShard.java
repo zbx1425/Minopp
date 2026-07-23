@@ -13,7 +13,7 @@ public class MinoShoutBadgeGuiShard extends BadgeGuiShard {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int bgColor) {
-        super.render(g, font, x, y, 0xFFFF0000);
+    public void render(GuiGraphicsExtractor g, Font font, int x, int y, int tintColor, int alpha) {
+        super.render(g, font, x, y, 0xFF0000, alpha);
     }
 }
