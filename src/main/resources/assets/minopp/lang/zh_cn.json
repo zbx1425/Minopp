@@ -54,9 +54,10 @@
   "gui.minopp.play.start_hint": "走到桌子旁，右键以加入对局。",
   "gui.minopp.play.game_active": "Mino++ 对局",
   "gui.minopp.play.turn_other": "现在轮到 %s。",
-  "gui.minopp.play.discard_hand": "轮到你了！请出牌。",
-  "gui.minopp.play.draw": "请从牌堆抽牌。",
-  "gui.minopp.play.discard_drawn": "请出刚抽到的牌。",
+  "gui.minopp.play.discard_hand": "轮到你了！",
+  "gui.minopp.play.draw": "必须从牌堆抽牌！",
+  "gui.minopp.play.discard_drawn": "出刚抽到的牌？",
+  "gui.minopp.play.discard_drawn_force": "必须出刚抽到的 %s！",
   "gui.minopp.play.direction.cw": "顺时针",
   "gui.minopp.play.direction.ccw": "逆时针",
   "gui.minopp.play.draw_accumulate": "累计抽牌数：%s",
@@ -150,6 +151,5 @@
   "game.minopp.play.rotate_hands": "所有人的手牌发生了轮转（%s）！",
   "game.minopp.play.must_draw_now": "你现在必须抽牌。",
   "game.minopp.play.force_play": "你必须出刚抽到的牌。",
-  "game.minopp.play.force_play_only_drawn": "你只能出刚抽到的牌。",
-  "gui.minopp.play.force_play_hint": "必须出刚抽到的 %s。"
+  "game.minopp.play.force_play_only_drawn": "你只能出刚抽到的牌。"
 }

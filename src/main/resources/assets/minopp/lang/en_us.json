@@ -54,9 +54,10 @@
   "gui.minopp.play.start_hint": "Stand beside the table and right-click to join.",
   "gui.minopp.play.game_active": "Mino++ Game",
   "gui.minopp.play.turn_other": "It's %s's turn.",
-  "gui.minopp.play.discard_hand": "It's your turn! Please play a card.",
-  "gui.minopp.play.draw": "Please draw from the deck.",
-  "gui.minopp.play.discard_drawn": "You have drawn card(s). Please play it.",
+  "gui.minopp.play.discard_hand": "Your turn!",
+  "gui.minopp.play.draw": "Must draw!",
+  "gui.minopp.play.discard_drawn": "You have drawn card(s). Play?",
+  "gui.minopp.play.discard_drawn_force": "Must play the drawn %s!",
   "gui.minopp.play.direction.cw": "Clockwise",
   "gui.minopp.play.direction.ccw": "Counter-Clockwise",
   "gui.minopp.play.draw_accumulate": "Draw Count: %s",
@@ -149,7 +150,5 @@
   "game.minopp.play.swap_hands": "%1$s swapped hands with %2$s!",
   "game.minopp.play.rotate_hands": "All hands rotated (%s)!",
   "game.minopp.play.must_draw_now": "You must draw cards now.",
-  "game.minopp.play.force_play": "You must play the drawn card.",
-  "game.minopp.play.force_play_only_drawn": "You can only play the card you just drew.",
-  "gui.minopp.play.force_play_hint": "You must play the drawn %s."
+  "game.minopp.play.force_play": "You must play the drawn card."
 }

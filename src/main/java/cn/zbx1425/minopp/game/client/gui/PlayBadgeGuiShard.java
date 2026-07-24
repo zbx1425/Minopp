@@ -30,11 +30,13 @@ public class PlayBadgeGuiShard extends BadgeGuiShard {
         int bg = (tintColor & 0x00FFFFFF) | (alpha << 24);
         g.fill(x, y, x + WIDTH, y + HEIGHT, bg);
 
-        if (card.getEquivSuit() == Card.Suit.WILD) {
+        if (card.suit == Card.Suit.WILD) {
             GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION, x, y, 16, 16, 228, 0, 10, 10, 256, 128);
-        } else {
-            g.blitSprite(RenderPipelines.GUI_TEXTURED, ShardResources.INSTANCE.getSpriteForSuit(card.getEquivSuit()), x, y, 16, 16);
         }
+
+        g.blitSprite(RenderPipelines.GUI_TEXTURED, ShardResources.INSTANCE.getSpriteForSuit(card.getEquivSuit()),
+            x + ((card.suit == Card.Suit.WILD && card.number == -1) ? 16 : 1),
+            y, 16, 16);
 
         if (card.family == Card.Family.REVERSE) {
             GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION,  x + 16 + 3, y + 3, 208, 0, 10, 10, 256, 128);
