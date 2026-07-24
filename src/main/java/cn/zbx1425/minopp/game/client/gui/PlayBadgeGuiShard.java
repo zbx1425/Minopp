@@ -31,7 +31,7 @@ public class PlayBadgeGuiShard extends BadgeGuiShard {
         g.fill(x, y, x + WIDTH, y + HEIGHT, bg);
 
         if (card.suit == Card.Suit.WILD) {
-            GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION, x, y, 16, 16, 228, 0, 10, 10, 256, 128);
+            GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION, x + 1, y + 1, 14, 14, 228, 0, 9, 9, 256, 128);
         }
 
         g.blitSprite(RenderPipelines.GUI_TEXTURED, ShardResources.INSTANCE.getSpriteForSuit(card.getEquivSuit()),

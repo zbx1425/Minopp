@@ -6,20 +6,40 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 public class AutoPlayer {
 
+    /** Avoid winning, i.e. always not play when on the last card. */
     public boolean noWin;
-    public boolean noPlayerDraw;
-    public float forgetChance;
-    public byte noDelay;
-    public boolean startGame;
+
+    /** Avoid playing / passing forward a draw card to a human player, unless impossible due to the force play rule. */
+    public boolean noHumanDraw;
+
+    /** Strategy for handling 7/0 cards. */
     public SevenZeroStrategy sevenZeroStrategy;
 
+    /** The possibility that the bot will not shout 'Mino' when it should (0~1). */
+    public float forgetChance;
+
+    /** Reduce thinking delay. 0: Norm, 1: Faster, 2: Fastest */
+    public byte noDelay;
+
+    /** If the bot can initiate a game. */
+    public boolean startGame;
+
     public enum SevenZeroStrategy {
-        SMART, RANDOM, PREFER, NEVER;
+        /** Try to use 7/0 cards when it can bring itself advantage. */
+        SMART,
+        /** Treat 7/0 cards like other number cards. */
+        RANDOM,
+        /** Use a 7/0 cards whenever it's playable. */
+        PREFER,
+        /** Avoid playing 7/0 cards, unless impossible due to the force play rule. */
+        NEVER;
 
         public static SevenZeroStrategy fromOrdinal(int ordinal) {
             if (ordinal < 0 || ordinal >= values().length) return SMART;
@@ -31,9 +51,9 @@ public class AutoPlayer {
         this(false, false, 0.2f, (byte) 0, false, SevenZeroStrategy.SMART);
     }
 
-    public AutoPlayer(boolean noWin, boolean noPlayerDraw, float forgetChance, byte noDelay, boolean startGame, SevenZeroStrategy sevenZeroStrategy) {
+    public AutoPlayer(boolean noWin, boolean noHumanDraw, float forgetChance, byte noDelay, boolean startGame, SevenZeroStrategy sevenZeroStrategy) {
         this.noWin = noWin;
-        this.noPlayerDraw = noPlayerDraw;
+        this.noHumanDraw = noHumanDraw;
         this.forgetChance = forgetChance;
         this.noDelay = noDelay;
         this.startGame = startGame;
@@ -41,7 +61,7 @@ public class AutoPlayer {
     }
 
     public AutoPlayer copy() {
-        return new AutoPlayer(noWin, noPlayerDraw, forgetChance, noDelay, startGame, sevenZeroStrategy);
+        return new AutoPlayer(noWin, noHumanDraw, forgetChance, noDelay, startGame, sevenZeroStrategy);
     }
 
     private static final Logger LOGGER = Mino.LOGGER;
@@ -55,309 +75,327 @@ public class AutoPlayer {
 
         CardPlayer nextPlayer = game.players.get(
                 (game.currentPlayerIndex + (game.isAntiClockwise ? -1 : 1) + game.players.size()) % game.players.size());
-        boolean canPlayDrawCard = !noPlayerDraw || server.getPlayerList().getPlayer(nextPlayer.uuid) == null;
+        boolean canPlayDrawCard = !noHumanDraw || server.getPlayerList().getPlayer(nextPlayer.uuid) == null;
 
         if (trace) {
             LOGGER.warn("AP: Start of Decision");
             LOGGER.warn("AP: Player: {} ({}), Hand size: {}", realPlayer.name, realPlayer.uuid, realPlayer.hand.size());
             LOGGER.warn("AP: Hand: {}", realPlayer.hand);
-            LOGGER.warn("AP: TopCard: {}, Phase: {}, DrawCount: {}, LastDrawnCard: {}",
-                    topCard, game.currentPlayerPhase, game.drawCount, game.lastDrawnCard);
+            LOGGER.warn("AP: TopCard: {}, Phase: {}, DrawCount: {}, ForcePlayCard: {}",
+                    topCard, game.currentPlayerPhase, game.drawCount, game.forcePlayCard);
             LOGGER.warn("AP: Strategy: sevenZero={}, noWin={}, noPlayerDraw={}, canPlayDrawCard={}",
-                    sevenZeroStrategy, noWin, noPlayerDraw, canPlayDrawCard);
+                    sevenZeroStrategy, noWin, noHumanDraw, canPlayDrawCard);
             LOGGER.warn("AP: Rules: stacking={}, forcePlay={}, sevenRule={}, zeroRule={}, drawUntilMatch={}",
                     rules.stackingEnabled(), rules.forcePlay(), rules.sevenRuleEnabled(), rules.zeroRuleEnabled(), rules.drawUntilMatch());
         }
 
-        // Stacking OFF + drawCount > 0: must draw
-        if (!rules.stackingEnabled() && game.drawCount > 0) {
-            if (trace) LOGGER.warn("AP: Decision: playNoCard (stacking OFF, drawCount > 0)");
+        // Phase A: DISCARD_DRAWN + forcePlayCard set
+        if (game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN
+                && game.forcePlayCard != null) {
+            if (trace) LOGGER.warn("AP: Phase A: handleForcePlay");
+            return handleForcePlay(game, realPlayer, rules, trace);
+        }
+
+        // Phase B: DISCARD_HAND + drawCount > 0
+        if (game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND && game.drawCount > 0) {
+            if (trace) LOGGER.warn("AP: Phase B: handleDrawStacking");
+            return handleDrawStacking(game, realPlayer, rules, canPlayDrawCard, trace);
+        }
+
+        // Phase C: Normal play (DISCARD_HAND drawCount==0, or DISCARD_DRAWN without forced forcePlayCard)
+        if (trace) LOGGER.warn("AP: Phase C: handleNormalPlay");
+        return handleNormalPlay(game, realPlayer, rules, canPlayDrawCard, trace);
+    }
+
+    private ActionReport handleForcePlay(CardGame game, CardPlayer realPlayer, TableRuleConfig rules, boolean trace) {
+        Card forceCard = game.forcePlayCard;
+        Card.Suit wildSuit = pickBestWildColor(realPlayer, forceCard);
+        UUID swapTarget = pickSwapTarget(game, realPlayer, forceCard, rules);
+        boolean shout = shouldShoutMino(realPlayer, forceCard, game, rules, swapTarget);
+        if (trace) {
+            LOGGER.warn("AP: ForcePlay: playing {}, wildSuit={}, swapTarget={}, shout={}",
+                    forceCard, wildSuit, swapTarget, shout);
+        }
+        return game.playCard(realPlayer, forceCard, wildSuit, shout, rules, swapTarget);
+    }
+
+    private ActionReport handleDrawStacking(CardGame game, CardPlayer realPlayer, TableRuleConfig rules,
+                                             boolean canPlayDrawCard, boolean trace) {
+        if (!rules.stackingEnabled()) {
+            if (trace) LOGGER.warn("AP: DrawStacking: stacking disabled, drawing");
             return game.playNoCard(realPlayer, rules);
         }
 
-        // noWin: refuse to play last card
-        if (noWin && realPlayer.hand.size() <= 1) {
-            if (trace) LOGGER.warn("AP: Decision: playNoCard (noWin, hand size <= 1)");
-            return game.playNoCard(realPlayer, rules);
-        }
+        List<Card> stackable = getPlayableCards(game, realPlayer, rules);
+        if (trace) LOGGER.warn("AP: DrawStacking: stackable cards: {}", stackable);
 
-        // DISCARD_DRAWN phase: special handling for Force Play
-        if (game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN) {
-            if (trace) LOGGER.warn("AP: Entering DISCARD_DRAWN handler");
-            return handleDiscardDrawnPhase(game, realPlayer, rules, topCard, canPlayDrawCard, trace);
-        }
+        if (noWin && realPlayer.hand.size() == 1) stackable.clear();
+        if (!canPlayDrawCard) stackable.clear();
 
-        // DISCARD_HAND phase: normal card selection
-        if (trace) LOGGER.warn("AP: Entering DISCARD_HAND card selection");
-        Card bestCard = selectBestCard(game, realPlayer, rules, topCard, canPlayDrawCard, trace);
-        if (bestCard != null) {
-            if (trace) LOGGER.warn("AP: Decision: play card {}", bestCard);
-            return playSelectedCard(game, realPlayer, rules, bestCard, canPlayDrawCard, trace);
-        }
-        if (trace) LOGGER.warn("AP: Decision: playNoCard (no suitable card found)");
-        return game.playNoCard(realPlayer, rules);
-    }
-
-    private ActionReport handleDiscardDrawnPhase(CardGame game, CardPlayer realPlayer, TableRuleConfig rules,
-                                                  Card topCard, boolean canPlayDrawCard, boolean trace) {
-        if (rules.forcePlay() && game.lastDrawnCard != null) {
-            Card drawn = game.lastDrawnCard;
-            if (trace) LOGGER.warn("AP: DISCARD_DRAWN: forcePlay active, lastDrawnCard={}, canPlayOn={}",
-                    drawn, drawn.canPlayOn(topCard));
-            if (drawn.canPlayOn(topCard)) {
-                if (noWin && realPlayer.hand.size() <= 1) {
-                    if (trace) LOGGER.warn("AP: Decision: playNoCard (forcePlay but noWin, hand size <= 1)");
-                    return game.playNoCard(realPlayer, rules);
-                }
-                if (trace) LOGGER.warn("AP: Decision: play lastDrawnCard {} (forcePlay)", drawn);
-                return playSelectedCard(game, realPlayer, rules, drawn, canPlayDrawCard, trace);
-            } else {
-                if (trace) LOGGER.warn("AP: Decision: playNoCard (forcePlay, drawn card not playable)");
-                return game.playNoCard(realPlayer, rules);
+        if (!stackable.isEmpty()) {
+            Card card = stackable.get(0);
+            Card.Suit wildSuit = pickBestWildColor(realPlayer, card);
+            boolean shout = shouldShoutMino(realPlayer, card, game, rules, null);
+            if (trace) {
+                LOGGER.warn("AP: DrawStacking: stacking {}, wildSuit={}, shout={}", card, wildSuit, shout);
             }
-        }
-        if (trace) LOGGER.warn("AP: DISCARD_DRAWN: no forcePlay, selecting best card");
-        Card bestCard = selectBestCardForDrawnPhase(game, realPlayer, rules, topCard, canPlayDrawCard, trace);
-        if (bestCard != null) {
-            if (trace) LOGGER.warn("AP: Decision: play card {} (drawn phase)", bestCard);
-            return playSelectedCard(game, realPlayer, rules, bestCard, canPlayDrawCard, trace);
-        }
-        if (trace) LOGGER.warn("AP: Decision: playNoCard (drawn phase, no suitable card)");
-        return game.playNoCard(realPlayer, rules);
-    }
-
-    private Card selectBestCardForDrawnPhase(CardGame game, CardPlayer realPlayer, TableRuleConfig rules,
-                                              Card topCard, boolean canPlayDrawCard, boolean trace) {
-        for (Card card : realPlayer.hand) {
-            if (shouldSkipSevenZero(card, rules)) {
-                if (trace) LOGGER.warn("AP:   DrawnPhase skip 7/0: {}", card);
-                continue;
-            }
-            if (!card.canPlayOn(topCard)) continue;
-            if (!canPlayDrawCard && card.family == Card.Family.DRAW) {
-                if (trace) LOGGER.warn("AP:   DrawnPhase skip draw card (noPlayerDraw): {}", card);
-                continue;
-            }
-            if (noWin && realPlayer.hand.size() <= 1) {
-                if (trace) LOGGER.warn("AP:   DrawnPhase skip (noWin, last card): {}", card);
-                continue;
-            }
-            if (trace) LOGGER.warn("AP:   DrawnPhase selected: {}", card);
-            return card;
-        }
-        return null;
-    }
-
-    private ActionReport playSelectedCard(CardGame game, CardPlayer realPlayer, TableRuleConfig rules,
-                                           Card card, boolean canPlayDrawCard, boolean trace) {
-        boolean shout = shouldShoutMino(realPlayer, card, game, rules);
-        UUID swapTarget = null;
-
-        if (card.suit == Card.Suit.WILD) {
-            Card.Suit wildSuit = getMostCommonSuit(realPlayer);
-            if (trace) LOGGER.warn("AP:   Playing wild card {}, chosen suit={}, shout={}", card, wildSuit, shout);
             return game.playCard(realPlayer, card, wildSuit, shout, rules, null);
         }
-
-        if (rules.sevenRuleEnabled() && card.family == Card.Family.NUMBER && card.number == 7) {
-            swapTarget = chooseSwapTargetSmart(game, realPlayer);
-            if (trace) LOGGER.warn("AP:   Playing 7, swapTarget={}", swapTarget);
-        }
-        if (trace) LOGGER.warn("AP:   Playing card {}, shout={}, swapTarget={}", card, shout, swapTarget);
-        return game.playCard(realPlayer, card, null, shout, rules, swapTarget);
+        if (trace) LOGGER.warn("AP: DrawStacking: no stacking option, drawing {} cards", game.drawCount);
+        return game.playNoCard(realPlayer, rules);
     }
 
-    private Card selectBestCard(CardGame game, CardPlayer realPlayer, TableRuleConfig rules,
-                                 Card topCard, boolean canPlayDrawCard, boolean trace) {
-        // PREFER: try 7/0 first
-        if (sevenZeroStrategy == SevenZeroStrategy.PREFER) {
-            Card sevenZero = findPlayableSevenZero(game, realPlayer, topCard, canPlayDrawCard);
-            if (sevenZero != null) {
-                if (trace) LOGGER.warn("AP:   selectBestCard: PREFER found 7/0: {}", sevenZero);
-                return sevenZero;
+    private ActionReport handleNormalPlay(CardGame game, CardPlayer realPlayer, TableRuleConfig rules,
+                                           boolean canPlayDrawCard, boolean trace) {
+        List<Card> playable = getPlayableCards(game, realPlayer, rules);
+        if (trace) LOGGER.warn("AP: NormalPlay: playable cards: {}", playable);
+
+        List<Card> candidates = applyConstraints(playable, realPlayer, rules, canPlayDrawCard);
+        if (trace) LOGGER.warn("AP: NormalPlay: after constraints: {}", candidates);
+
+        if (!candidates.isEmpty()) {
+            Card bestCard = chooseBestCard(candidates, game, realPlayer, rules, trace);
+            Card.Suit wildSuit = pickBestWildColor(realPlayer, bestCard);
+            UUID swapTarget = pickSwapTarget(game, realPlayer, bestCard, rules);
+            boolean shout = shouldShoutMino(realPlayer, bestCard, game, rules, swapTarget);
+            if (trace) {
+                LOGGER.warn("AP: NormalPlay: chose {}, wildSuit={}, swapTarget={}, shout={}",
+                        bestCard, wildSuit, swapTarget, shout);
             }
+            return game.playCard(realPlayer, bestCard, wildSuit, shout, rules, swapTarget);
         }
+        if (trace) LOGGER.warn("AP: NormalPlay: no card to play, drawing/passing");
+        return game.playNoCard(realPlayer, rules);
+    }
 
-        // 1. Same number, different suit (switch color - more interesting play)
-        for (Card card : realPlayer.hand) {
-            if (shouldSkipSevenZero(card, rules)) continue;
-            if (!card.canPlayOn(topCard)) continue;
-            if (card.suit == Card.Suit.WILD) continue;
-            if (card.family == Card.Family.DRAW && !canPlayDrawCard) continue;
-            if (card.number == topCard.number && card.suit != topCard.getEquivSuit()) {
-                if (trace) LOGGER.warn("AP:   selectBestCard: same number diff suit: {}", card);
-                return card;
-            }
-        }
+    // --- Card filtering ---
 
-        // SMART: try beneficial 7/0 here (between same-number and same-suit)
-        if (sevenZeroStrategy == SevenZeroStrategy.SMART) {
-            Card smartCard = findSmartSevenZero(game, realPlayer, topCard);
-            if (smartCard != null) {
-                if (trace) LOGGER.warn("AP:   selectBestCard: SMART beneficial 7/0: {}", smartCard);
-                return smartCard;
-            }
-        }
-
-        // 2. Same suit
-        for (Card card : realPlayer.hand) {
-            if (shouldSkipSevenZero(card, rules)) continue;
-            if (!card.canPlayOn(topCard)) continue;
-            if (card.suit == Card.Suit.WILD) continue;
-            if (card.family == Card.Family.DRAW && !canPlayDrawCard) continue;
-            if (card.suit == topCard.getEquivSuit()) {
-                if (trace) LOGGER.warn("AP:   selectBestCard: same suit: {}", card);
-                return card;
-            }
-        }
-
-        // 3. Wild non-draw
-        for (Card card : realPlayer.hand) {
-            if (card.suit == Card.Suit.WILD && card.family != Card.Family.DRAW && card.canPlayOn(topCard)) {
-                if (trace) LOGGER.warn("AP:   selectBestCard: wild non-draw: {}", card);
-                return card;
-            }
-        }
-
-        // 4. Other playable (non-wild)
-        for (Card card : realPlayer.hand) {
-            if (shouldSkipSevenZero(card, rules)) continue;
-            if (!card.canPlayOn(topCard)) continue;
-            if (card.suit == Card.Suit.WILD) continue;
-            if (card.family == Card.Family.DRAW && !canPlayDrawCard) continue;
-            if (trace) LOGGER.warn("AP:   selectBestCard: other playable: {}", card);
-            return card;
-        }
-
-        // 5. Wild draw (last resort among normal cards)
-        if (canPlayDrawCard) {
-            for (Card card : realPlayer.hand) {
-                if (card.suit == Card.Suit.WILD && card.family == Card.Family.DRAW && card.canPlayOn(topCard)) {
-                    if (trace) LOGGER.warn("AP:   selectBestCard: wild draw: {}", card);
-                    return card;
+    private List<Card> getPlayableCards(CardGame game, CardPlayer player, TableRuleConfig rules) {
+        List<Card> result = new ArrayList<>();
+        boolean hasNonWD4Playable = false;
+        for (Card c : player.hand) {
+            if (c.canPlayOn(game.topCard)) {
+                result.add(c);
+                if (!(c.suit == Card.Suit.WILD && c.family == Card.Family.DRAW)) {
+                    hasNonWD4Playable = true;
                 }
             }
         }
+        if (!rules.wildDrawFourFreeUse() && hasNonWD4Playable) {
+            result.removeIf(c -> c.suit == Card.Suit.WILD && c.family == Card.Family.DRAW);
+        }
+        return result;
+    }
 
-        // NEVER: don't play 7/0 in DISCARD_HAND - just go draw
+    private List<Card> applyConstraints(List<Card> playable, CardPlayer player, TableRuleConfig rules,
+                                         boolean canPlayDrawCard) {
+        List<Card> result = new ArrayList<>(playable);
+        if (noWin && player.hand.size() == 1) {
+            result.clear();
+            return result;
+        }
+        if (!canPlayDrawCard) {
+            result.removeIf(c -> c.family == Card.Family.DRAW);
+        }
         if (sevenZeroStrategy == SevenZeroStrategy.NEVER) {
-            if (trace) LOGGER.warn("AP:   selectBestCard: NEVER strategy, no non-7/0 found, will draw");
-            return null;
+            if (rules.sevenRuleEnabled()) {
+                result.removeIf(c -> c.family == Card.Family.NUMBER && c.number == 7);
+            }
+            if (rules.zeroRuleEnabled()) {
+                result.removeIf(c -> c.family == Card.Family.NUMBER && c.number == 0);
+            }
         }
+        return result;
+    }
 
-        // SMART fallback: play 7/0 even if not beneficial (better than drawing)
-        if (sevenZeroStrategy == SevenZeroStrategy.SMART) {
-            Card sevenZero = findPlayableSevenZero(game, realPlayer, topCard, canPlayDrawCard);
-            if (sevenZero != null) {
-                if (trace) LOGGER.warn("AP:   selectBestCard: SMART fallback 7/0: {}", sevenZero);
-                return sevenZero;
+    // --- Card scoring ---
+
+    private Card chooseBestCard(List<Card> candidates, CardGame game, CardPlayer realPlayer,
+                                 TableRuleConfig rules, boolean trace) {
+        Card best = null;
+        int bestScore = Integer.MIN_VALUE;
+        List<Card> tied = new ArrayList<>();
+
+        for (Card card : candidates) {
+            int score = scoreCard(card, game, realPlayer, rules);
+            if (trace) LOGGER.warn("AP:   Score {}: {}", card, score);
+            if (score > bestScore) {
+                bestScore = score;
+                best = card;
+                tied.clear();
+                tied.add(card);
+            } else if (score == bestScore) {
+                tied.add(card);
             }
         }
 
-        if (trace) LOGGER.warn("AP:   selectBestCard: nothing found");
-        return null;
-    }
-
-    private boolean shouldSkipSevenZero(Card card, TableRuleConfig rules) {
-        if (card.family != Card.Family.NUMBER) return false;
-        if (sevenZeroStrategy == SevenZeroStrategy.RANDOM) return false;
-        if (sevenZeroStrategy == SevenZeroStrategy.PREFER) return false;
-        // SMART and NEVER skip 7/0 from normal loops (handled separately)
-        if (card.number == 7 && rules.sevenRuleEnabled()) return true;
-        if (card.number == 0 && rules.zeroRuleEnabled()) return true;
-        return false;
-    }
-
-    private Card findPlayableSevenZero(CardGame game, CardPlayer realPlayer, Card topCard, boolean canPlayDrawCard) {
-        for (Card card : realPlayer.hand) {
-            if (card.family != Card.Family.NUMBER) continue;
-            if (!card.canPlayOn(topCard)) continue;
-            if (card.number == 7 || card.number == 0) {
-                return card;
-            }
-        }
-        return null;
-    }
-
-    private Card findSmartSevenZero(CardGame game, CardPlayer realPlayer, Card topCard) {
-        // 7: swap if target has fewer cards than us - 1 (we play a card then swap)
-        CardPlayer target = chooseSmartSwapTarget(game, realPlayer);
-        if (target != null && target.hand.size() < realPlayer.hand.size() - 1) {
-            for (Card card : realPlayer.hand) {
-                if (card.family == Card.Family.NUMBER && card.number == 7 && card.canPlayOn(topCard)) {
-                    return card;
-                }
-            }
-        }
-
-        // 0: rotate if the player whose hand we'd receive has fewer cards than us - 1
-        int srcIdx = (game.players.indexOf(realPlayer) + (game.isAntiClockwise ? 1 : -1) + game.players.size()) % game.players.size();
-        CardPlayer srcPlayer = game.players.get(srcIdx);
-        if (srcPlayer.hand.size() < realPlayer.hand.size() - 1) {
-            for (Card card : realPlayer.hand) {
-                if (card.family == Card.Family.NUMBER && card.number == 0 && card.canPlayOn(topCard)) {
-                    return card;
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean shouldShoutMino(CardPlayer realPlayer, Card cardToPlay, CardGame game, TableRuleConfig rules) {
-        if (new Random().nextFloat() < forgetChance) return false;
-        int handAfterPlay = realPlayer.hand.size() - 1;
-        // Playing 7 with seven rule: after swap, our hand = target's hand size
-        if (rules.sevenRuleEnabled() && cardToPlay.family == Card.Family.NUMBER && cardToPlay.number == 7) {
-            CardPlayer target = chooseSmartSwapTarget(game, realPlayer);
-            if (target != null) {
-                handAfterPlay = target.hand.size();
-            }
-        }
-        // Playing 0 with zero rule: after rotate, our hand = source player's hand size
-        if (rules.zeroRuleEnabled() && cardToPlay.family == Card.Family.NUMBER && cardToPlay.number == 0) {
-            int srcIdx = (game.players.indexOf(realPlayer) + (game.isAntiClockwise ? 1 : -1) + game.players.size()) % game.players.size();
-            handAfterPlay = game.players.get(srcIdx).hand.size();
-        }
-        return handAfterPlay <= 1;
-    }
-
-    private UUID chooseSwapTargetSmart(CardGame game, CardPlayer realPlayer) {
-        CardPlayer target = chooseSmartSwapTarget(game, realPlayer);
-        return target != null ? target.uuid : null;
-    }
-
-    private CardPlayer chooseSmartSwapTarget(CardGame game, CardPlayer realPlayer) {
-        CardPlayer best = null;
-        int minCards = Integer.MAX_VALUE;
-        for (CardPlayer p : game.players) {
-            if (p.equals(realPlayer)) continue;
-            if (p.hand.size() < minCards) {
-                minCards = p.hand.size();
-                best = p;
-            }
+        if (tied.size() > 1) {
+            Card chosen = tied.get(new Random().nextInt(tied.size()));
+            if (trace) LOGGER.warn("AP:   Tied: {}, randomly chose: {}", tied, chosen);
+            return chosen;
         }
         return best;
     }
 
-    private Card.Suit getMostCommonSuit(CardPlayer realPlayer) {
-        int[] suitCount = new int[4];
-        for (Card handCard : realPlayer.hand) {
-            if (handCard.suit != Card.Suit.WILD) {
-                suitCount[handCard.suit.ordinal()]++;
+    private int scoreCard(Card card, CardGame game, CardPlayer realPlayer, TableRuleConfig rules) {
+        int score = 0;
+
+        if (card.suit == Card.Suit.WILD) {
+            score += (card.family == Card.Family.DRAW) ? -10 : 0;
+        } else {
+            switch (card.family) {
+                case SKIP, REVERSE -> score += 20;
+                case DRAW -> score += 15;
+                case NUMBER -> score += 10;
             }
         }
-        Card.Suit mostCommonSuit = Card.Suit.values()[new Random().nextInt(0, 4)];
-        for (int i = 0; i < 4; i++) {
-            if (suitCount[i] > suitCount[mostCommonSuit.ordinal()]) {
-                mostCommonSuit = Card.Suit.values()[i];
+
+        if (card.suit != Card.Suit.WILD) {
+            int remaining = countSuitInHand(realPlayer.hand, card.suit) - 1;
+            score += remaining * 3;
+        }
+
+        if (card.family == Card.Family.NUMBER) {
+            if (card.number == 7 && rules.sevenRuleEnabled()) {
+                switch (sevenZeroStrategy) {
+                    case SMART -> score += evaluateSevenSwap(game, realPlayer);
+                    case PREFER -> score += 25;
+                    default -> {}
+                }
+            }
+            if (card.number == 0 && rules.zeroRuleEnabled()) {
+                switch (sevenZeroStrategy) {
+                    case SMART -> score += evaluateZeroRotate(game, realPlayer);
+                    case PREFER -> score += 25;
+                    default -> {}
+                }
             }
         }
-        return mostCommonSuit;
+
+        return score;
+    }
+
+    private int countSuitInHand(List<Card> hand, Card.Suit suit) {
+        int count = 0;
+        for (Card c : hand) {
+            if (c.suit == suit) count++;
+        }
+        return count;
+    }
+
+    private int evaluateSevenSwap(CardGame game, CardPlayer realPlayer) {
+        int mySize = realPlayer.hand.size() - 1;
+        int minSize = mySize;
+        boolean found = false;
+        for (CardPlayer p : game.players) {
+            if (p.equals(realPlayer)) continue;
+            if (p.hand.size() < minSize) {
+                minSize = p.hand.size();
+                found = true;
+            }
+        }
+        if (!found) return -5;
+        return 5 + (mySize - minSize) * 3;
+    }
+
+    private int evaluateZeroRotate(CardGame game, CardPlayer realPlayer) {
+        int botIndex = game.players.indexOf(realPlayer);
+        int n = game.players.size();
+        int srcIndex = game.isAntiClockwise
+                ? (botIndex + 1) % n
+                : Math.floorMod(botIndex - 1, n);
+        int srcHandSize = game.players.get(srcIndex).hand.size();
+        int mySize = realPlayer.hand.size() - 1;
+        int diff = mySize - srcHandSize;
+        if (diff > 0) return 5 + diff * 2;
+        return -10;
+    }
+
+    // --- Auxiliary decisions ---
+
+    private Card.Suit pickBestWildColor(CardPlayer player, Card card) {
+        if (card.suit != Card.Suit.WILD) return null;
+        int[] counts = new int[4];
+        boolean skipped = false;
+        for (Card c : player.hand) {
+            if (!skipped && c.equals(card)) {
+                skipped = true;
+                continue;
+            }
+            if (c.suit != Card.Suit.WILD) {
+                counts[c.suit.ordinal()]++;
+            }
+        }
+        int bestIdx = 0;
+        for (int i = 1; i < 4; i++) {
+            if (counts[i] > counts[bestIdx]) bestIdx = i;
+        }
+        return Card.Suit.values()[bestIdx];
+    }
+
+    private UUID pickSwapTarget(CardGame game, CardPlayer realPlayer, Card card, TableRuleConfig rules) {
+        if (card.family != Card.Family.NUMBER || card.number != 7 || !rules.sevenRuleEnabled()) {
+            return null;
+        }
+        switch (sevenZeroStrategy) {
+            case SMART -> {
+                int mySize = realPlayer.hand.size() - 1;
+                CardPlayer bestTarget = null;
+                int minSize = mySize;
+                for (CardPlayer p : game.players) {
+                    if (p.equals(realPlayer)) continue;
+                    if (p.hand.size() < minSize) {
+                        minSize = p.hand.size();
+                        bestTarget = p;
+                    }
+                }
+                return bestTarget != null ? bestTarget.uuid : null;
+            }
+            case PREFER -> {
+                CardPlayer bestTarget = null;
+                int minSize = Integer.MAX_VALUE;
+                for (CardPlayer p : game.players) {
+                    if (p.equals(realPlayer)) continue;
+                    if (p.hand.size() < minSize) {
+                        minSize = p.hand.size();
+                        bestTarget = p;
+                    }
+                }
+                return bestTarget != null ? bestTarget.uuid : null;
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
+    private boolean shouldShoutMino(CardPlayer realPlayer, Card card, CardGame game,
+                                     TableRuleConfig rules, UUID swapTarget) {
+        int predictedSize;
+        if (card.family == Card.Family.NUMBER && card.number == 7
+                && rules.sevenRuleEnabled() && swapTarget != null) {
+            CardPlayer target = game.deAmputate(swapTarget);
+            predictedSize = target != null ? target.hand.size() : realPlayer.hand.size() - 1;
+        } else if (card.family == Card.Family.NUMBER && card.number == 0
+                && rules.zeroRuleEnabled()) {
+            int botIndex = game.players.indexOf(realPlayer);
+            int n = game.players.size();
+            int srcIndex = game.isAntiClockwise
+                    ? (botIndex + 1) % n
+                    : Math.floorMod(botIndex - 1, n);
+            predictedSize = game.players.get(srcIndex).hand.size();
+        } else {
+            predictedSize = realPlayer.hand.size() - 1;
+        }
+        if (predictedSize <= 1) {
+            return new Random().nextFloat() >= forgetChance;
+        }
+        return false;
     }
 
     public static final Codec<AutoPlayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
         Codec.BOOL.optionalFieldOf("NoWin", false).forGetter(a -> a.noWin),
-        Codec.BOOL.optionalFieldOf("NoPlayerDraw", false).forGetter(a -> a.noPlayerDraw),
+        Codec.BOOL.optionalFieldOf("NoPlayerDraw", false).forGetter(a -> a.noHumanDraw),
         Codec.FLOAT.optionalFieldOf("ForgetChance", 0.2f).forGetter(a -> a.forgetChance),
         Codec.BYTE.optionalFieldOf("NoDelay", (byte) 0).forGetter(a -> a.noDelay),
         Codec.BOOL.optionalFieldOf("StartGame", false).forGetter(a -> a.startGame),

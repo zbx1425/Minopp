@@ -182,9 +182,9 @@ public class GameOverlayLayer {
         y += font.lineHeight;
         if (currentPlayer.equals(cardPlayer)) {
             if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN
-                    && tableEntity.rules.forcePlay() && tableEntity.game.lastDrawnCard != null) {
+                    && tableEntity.game.forcePlayCard != null) {
                 drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.discard_drawn_force",
-                        tableEntity.game.lastDrawnCard.getDisplayName()), x, y, 0xFFFFAA00);
+                        tableEntity.game.forcePlayCard.getDisplayName()), x, y, 0xFFFFAA00);
             } else {
                 drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()),
                     x, y, 0xFFFFAA00);
@@ -310,8 +310,8 @@ public class GameOverlayLayer {
                 rowX += nameWidth;
 
                 // Order: PendingAction → Current → Sticky → Ephemeral (newest leftmost)
-                boolean isSecondDiscardAndPulsing = isSecondDiscard
-                    && ((Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0) % 40 >= 20);
+                boolean isSecondDiscardAndPulsing = isSecondDiscard && currentPlayer.uuid.equals(selfUuid)
+                    && ((Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0) % 40 >= 32);
                 if (isCurrent && (isFirstDiscard || isSecondDiscardAndPulsing)) {
                     PendingActionGuiShard.INSTANCE.render(g, font, rowX, y, highlightColor, 0xFF);
                     rowX += PendingActionGuiShard.INSTANCE.getAdvance(font);

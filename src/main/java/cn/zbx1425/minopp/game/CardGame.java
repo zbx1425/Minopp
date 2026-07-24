@@ -26,7 +26,7 @@ public class CardGame {
     public ArrayList<Card> deck = new ArrayList<>();
     public ArrayList<Card> discardDeck = new ArrayList<>();
     public Card topCard;
-    public Card lastDrawnCard = null;
+    public Card forcePlayCard = null;
 
     public CardGame(ArrayList<CardPlayer> players) {
         this.players = players;
@@ -34,14 +34,14 @@ public class CardGame {
 
     private CardGame(int currentPlayerIndex, int drawCount, boolean isSkipping, PlayerActionPhase currentPlayerPhase,
                      boolean isAntiClockwise, ArrayList<Card> deck, ArrayList<Card> discardDeck, Card topCard,
-                     Card lastDrawnCard, ArrayList<CardPlayer> players) {
+                     Card forcePlayCard, ArrayList<CardPlayer> players) {
         this.players = players;
         this.currentPlayerIndex = currentPlayerIndex;
         this.drawCount = drawCount;
         this.isSkipping = isSkipping;
         this.currentPlayerPhase = currentPlayerPhase;
         this.isAntiClockwise = isAntiClockwise;
-        this.lastDrawnCard = lastDrawnCard;
+        this.forcePlayCard = forcePlayCard;
         this.deck = deck;
         this.discardDeck = discardDeck;
         this.topCard = topCard;
@@ -94,8 +94,8 @@ public class CardGame {
         }
 
         if (!card.canPlayOn(topCard)) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.invalid_card")));
-        if (rules.forcePlay() && currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN
-                && lastDrawnCard != null && !card.equals(lastDrawnCard)) {
+        if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN
+                && forcePlayCard != null && !card.equals(forcePlayCard)) {
             return report.shard(new RejectionShard(Component.translatable("game.minopp.play.force_play_only_drawn")));
         }
         if (!rules.wildDrawFourFreeUse() && card.suit == Card.Suit.WILD && card.family == Card.Family.DRAW) {
@@ -185,36 +185,30 @@ public class CardGame {
             if (this.drawCount > 0) {
                 drawCount = this.drawCount;
                 if (!doDrawCard(cardPlayer, drawCount, report)) {
-                    report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
-                    report.shouldDestroyGame = true;
-                    return report;
+                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
                 }
                 this.topCard = topCard.withEquivFamily(Card.Family.NUMBER);
                 this.drawCount = 0;
-                lastDrawnCard = null;
+                forcePlayCard = null;
             } else if (rules.drawUntilMatch()) {
-                drawCount = doDrawUntilMatch(cardPlayer, report);
+                drawCount = doDrawUntilMatch(cardPlayer, report, rules);
                 if (drawCount == 0) {
-                    report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
-                    report.shouldDestroyGame = true;
-                    return report;
+                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
                 }
-                lastDrawnCard = cardPlayer.hand.getLast();
+                forcePlayCard = resolveForcePlay(cardPlayer.hand.getLast(), cardPlayer, rules);
             } else {
                 drawCount = 1;
                 if (!doDrawCard(cardPlayer, drawCount, report)) {
-                    report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
-                    report.shouldDestroyGame = true;
-                    return report;
+                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
                 }
-                lastDrawnCard = cardPlayer.hand.getLast();
+                forcePlayCard = resolveForcePlay(cardPlayer.hand.getLast(), cardPlayer, rules);
             }
             currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
             report.sound(Mino.id("game.turn_notice_again"), 500 * (drawCount > 1 ? drawCount + 1 : 1), cardPlayer);
             report.shard(new DrawShard(cardPlayer.uuid, drawCount));
             return report;
         } else if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN) {
-            if (rules.forcePlay() && lastDrawnCard != null && lastDrawnCard.canPlayOn(topCard)) {
+            if (forcePlayCard != null) {
                 return report.shard(new RejectionShard(Component.translatable("game.minopp.play.force_play")));
             }
             report.sound(Mino.id("game.pass"), 0);
@@ -236,9 +230,7 @@ public class CardGame {
                 return report;
             } else {
                 if (!doDrawCard(realPlayer, 2, report)) {
-                    report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
-                    report.shouldDestroyGame = true;
-                    return report;
+                    return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
                 }
                 realPlayer.hasShoutedMino = true;
                 report.sound(Mino.id("game.mino_shout"), 0);
@@ -264,9 +256,7 @@ public class CardGame {
             return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_hand")));
         } else {
             if (!doDrawCard(targetPlayer, 2, report)) {
-                report.shard(new SystemShard(Component.translatable("game.minopp.play.deck_depleted")));
-                report.shouldDestroyGame = true;
-                return report;
+                return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
             }
             targetPlayer.hasShoutedMino = true;
             report.sound(Mino.id("game.doubt_success"), 0);
@@ -296,7 +286,7 @@ public class CardGame {
         }
     }
 
-    private int doDrawUntilMatch(CardPlayer cardPlayer, ActionReport report) {
+    private int doDrawUntilMatch(CardPlayer cardPlayer, ActionReport report, TableRuleConfig rules) {
         int count = 0;
         while (true) {
             if (deck.isEmpty()) {
@@ -312,9 +302,29 @@ public class CardGame {
             if (count > 1) {
                 report.sound(Mino.id("game.draw_multi"), 500 * (count - 1) + 200);
             }
-            if (drawn.canPlayOn(topCard)) break;
+            if (drawn.canPlayOn(topCard)) {
+                if (!rules.wildDrawFourFreeUse()
+                        && drawn.suit == Card.Suit.WILD && drawn.family == Card.Family.DRAW) {
+                    boolean hasOtherPlayable = cardPlayer.hand.stream()
+                            .anyMatch(c -> !c.equals(drawn) && c.canPlayOn(topCard));
+                    if (hasOtherPlayable) continue;
+                }
+                break;
+            }
         }
         return count;
+    }
+
+    private Card resolveForcePlay(Card drawn, CardPlayer player, TableRuleConfig rules) {
+        if (!rules.forcePlay()) return null;
+        if (!drawn.canPlayOn(topCard)) return null;
+        if (!rules.wildDrawFourFreeUse() && drawn.suit == Card.Suit.WILD && drawn.family == Card.Family.DRAW) {
+            for (Card c : player.hand) {
+                if (c.equals(drawn)) continue;
+                if (c.canPlayOn(topCard)) return null;
+            }
+        }
+        return drawn;
     }
 
     public boolean doDrawCard(CardPlayer cardPlayer, int drawCount, ActionReport report) {
@@ -338,7 +348,7 @@ public class CardGame {
 
     private void advanceTurn(ActionReport report) {
         currentPlayerPhase = PlayerActionPhase.DISCARD_HAND;
-        lastDrawnCard = null;
+        forcePlayCard = null;
         if (isSkipping) {
             int skippedIdx = Math.floorMod(currentPlayerIndex + (isAntiClockwise ? -1 : 1), players.size());
             report.shard(new SkipShard(players.get(skippedIdx).uuid));
@@ -377,7 +387,7 @@ public class CardGame {
         Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
             .optionalFieldOf("discardDeck").xmap(opt -> opt.orElseGet(ArrayList::new), Optional::of).forGetter(g -> g.discardDeck),
         Card.CODEC.fieldOf("topCard").forGetter(g -> g.topCard),
-        Card.CODEC.optionalFieldOf("lastDrawnCard").forGetter(g -> Optional.ofNullable(g.lastDrawnCard)),
+        Card.CODEC.optionalFieldOf("forcePlayCard").forGetter(g -> Optional.ofNullable(g.forcePlayCard)),
         CardPlayer.CODEC.listOf().xmap(ArrayList::new, Function.identity())
             .optionalFieldOf("players").xmap(opt -> opt.orElseGet(ArrayList::new), Optional::of).forGetter(g -> g.players)
     ).apply(instance, (ci, dc, sk, ph, ac, dk, dd, tc, ldc, pl) ->

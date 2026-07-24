@@ -75,7 +75,7 @@ public class AutoPlayerScreen {
                 .option(Option.<Boolean>createBuilder()
                         .name(Component.translatable("gui.minopp.bot_config.no_player_draw"))
                         .description(OptionDescription.of(Component.translatable("gui.minopp.bot_config.no_player_draw.summary")))
-                        .binding(false, () -> target.autoPlayer.noPlayerDraw, value -> target.autoPlayer.noPlayerDraw = value)
+                        .binding(false, () -> target.autoPlayer.noHumanDraw, value -> target.autoPlayer.noHumanDraw = value)
                         .controller(opt -> BooleanControllerBuilder.create(opt).yesNoFormatter())
                         .build()
                 )
