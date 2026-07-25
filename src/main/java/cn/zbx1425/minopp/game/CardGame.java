@@ -90,7 +90,7 @@ public class CardGame {
         if (!cardPlayer.hand.contains(card)) return report.reject(Component.translatable("game.minopp.play.not_your_card"));
 
         if (!rules.stackingEnabled() && drawCount > 0) {
-            return report.reject(Component.translatable("game.minopp.play.must_draw_now"));
+            return report.reject(Component.translatable("game.minopp.play.must_draw"));
         }
 
         boolean isCut = false;
