@@ -63,6 +63,7 @@ public class BlockEntityMinoTable extends BlockEntity {
 
     public ItemStack award = ItemStack.EMPTY;
     public boolean demo = false;
+    public boolean rulesLocked = false;
     public TableRuleConfig rules = TableRuleConfig.DEFAULT;
 
     public static final List<Direction> PLAYER_ORDER = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
@@ -78,7 +79,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (Map.Entry<Direction, CardPlayer> e : players.entrySet()) {
             if (e.getValue() != null) map.put(e.getKey().getSerializedName(), e.getValue());
         }
-        return new MinoTableState(map, game, stateShards, award, demo, rules);
+        return new MinoTableState(map, game, stateShards, award, demo, rulesLocked, rules);
     }
 
     private void applyLoadedState(MinoTableState loaded) {
@@ -92,6 +93,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         }
         award = loaded.award();
         demo = loaded.demo();
+        rulesLocked = loaded.rulesLocked();
         rules = loaded.rules();
     }
 
@@ -362,6 +364,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         List<ActionReportShard> stateShards,
         ItemStack award,
         boolean demo,
+        boolean rulesLocked,
         TableRuleConfig rules
     ) {
         public static final MapCodec<MinoTableState> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -372,9 +375,10 @@ public class BlockEntityMinoTable extends BlockEntity {
                 .optionalFieldOf("stateShards", DEFAULT_STATE_SHARDS).forGetter(MinoTableState::stateShards),
             ItemStack.OPTIONAL_CODEC.optionalFieldOf("award", ItemStack.EMPTY).forGetter(MinoTableState::award),
             Codec.BOOL.optionalFieldOf("demo", false).forGetter(MinoTableState::demo),
+            Codec.BOOL.optionalFieldOf("rulesLocked", false).forGetter(MinoTableState::rulesLocked),
             TableRuleConfig.CODEC.optionalFieldOf("rules", TableRuleConfig.DEFAULT).forGetter(MinoTableState::rules)
-        ).apply(instance, (players, game, stateShards, award, demo, rules) ->
-            new MinoTableState(players, game.orElse(null), stateShards, award, demo, rules)));
+        ).apply(instance, (players, game, stateShards, award, demo, rulesLocked, rules) ->
+            new MinoTableState(players, game.orElse(null), stateShards, award, demo, rulesLocked, rules)));
 
         public static final Codec<MinoTableState> CODEC = MAP_CODEC.codec();
     }

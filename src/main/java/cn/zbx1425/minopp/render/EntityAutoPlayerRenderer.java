@@ -110,17 +110,21 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         return new AvatarRenderState();
     }
 
-    @Override
-    public void extractRenderState(EntityAutoPlayer entity, AvatarRenderState state, float partialTicks) {
-        super.extractRenderState(entity, state, partialTicks);
-        HumanoidMobRenderer.extractHumanoidRenderState(entity, state, partialTicks, this.itemModelResolver);
-        state.skin = entity.clientSkinGameProfile.thenCompose(gameProfile ->
+    public static PlayerSkin resolveClientSkin(EntityAutoPlayer entity) {
+        return entity.clientSkinGameProfile.thenCompose(gameProfile ->
                 gameProfile.map(gameProfileBang ->
                     Minecraft.getInstance().getSkinManager().get(gameProfileBang)
                 ).orElse(CompletableFuture.completedFuture(Optional.empty()))
             )
             .getNow(Optional.empty())
             .orElseGet(() -> DefaultPlayerSkin.get(Util.NIL_UUID));
+    }
+
+    @Override
+    public void extractRenderState(EntityAutoPlayer entity, AvatarRenderState state, float partialTicks) {
+        super.extractRenderState(entity, state, partialTicks);
+        HumanoidMobRenderer.extractHumanoidRenderState(entity, state, partialTicks, this.itemModelResolver);
+        state.skin = resolveClientSkin(entity);
         ItemStack handStack = entity.getMainHandItem();
         state.rightArmPose = !handStack.isEmpty() ? HumanoidModel.ArmPose.ITEM : HumanoidModel.ArmPose.EMPTY;
         state.id = entity.getId();

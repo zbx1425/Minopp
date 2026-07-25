@@ -5,6 +5,7 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
+import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
 import cn.zbx1425.minopp.game.*;
 import cn.zbx1425.minopp.game.client.gui.BadgeGuiShard;
 import cn.zbx1425.minopp.game.client.gui.MessageGuiShard;
@@ -53,7 +54,6 @@ import net.minecraft.util.FastColor;
 //import net.neoforged.neoforge.client.gui.GuiLayer;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 //? if <26.1
@@ -147,6 +147,17 @@ public class GameOverlayLayer {
 
         y += font.lineHeight;
         drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.start_hint"), x, y, 0xFF00DD55);
+        y += font.lineHeight * 2;
+
+        int rulesWidth = getGameRulesWidth(font);
+        int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int rulesRightEdge = screenWidth - 20;
+        int rulesLeftEdge = rulesRightEdge - rulesWidth;
+        if (rulesLeftEdge > 200) {
+            renderGameRules(g, font, tableEntity.rules, false, rulesRightEdge, 60);
+        } else {
+            renderGameRules(g, font, tableEntity.rules, true, x, y);
+        }
     }
 
     // ========== Game Active ==========
@@ -196,9 +207,13 @@ public class GameOverlayLayer {
         }
         y += font.lineHeight * 2;
 
-        // --- Shard panel (badges + messages) ---
-        UUID selfUuid = player != null ? player.getUUID() : null;
-        y = renderShardPanel(g, font, x, y, tableEntity, tableEntity.game, tableEntity.game.players, currentPlayer, selfUuid, nameResolver);
+        // --- Shard panel or Game rules ---
+        if (player != null && player.isShiftKeyDown()) {
+            renderGameRules(g, font, tableEntity.rules, true, x, y);
+        } else {
+            UUID selfUuid = player != null ? player.getUUID() : null;
+            y = renderShardPanel(g, font, x, y, tableEntity, tableEntity.game, tableEntity.game.players, currentPlayer, selfUuid, nameResolver);
+        }
 
         // --- Cursor hints ---
         renderCursorHints(g, font, tableEntity, cardPlayer, currentPlayer);
@@ -411,6 +426,81 @@ public class GameOverlayLayer {
         }
     }
 
+    // ========== Game Rules Panel ==========
+
+    private static final int RULE_SQUARE_SIZE = 12;
+    private static final int RULE_SQUARE_TEXT_GAP = 5;
+    private static final int RULE_ROW_SPACING = 2;
+    private static final int RULE_ROW_HEIGHT = RULE_SQUARE_SIZE + RULE_ROW_SPACING;
+
+    private static final String[] RULE_KEYS = {
+        "gui.minopp.table_rules.stacking",
+        "gui.minopp.table_rules.jump_in",
+        "gui.minopp.table_rules.seven_rule",
+        "gui.minopp.table_rules.zero_rule",
+        "gui.minopp.table_rules.draw_until_match",
+        "gui.minopp.table_rules.force_play",
+        "gui.minopp.table_rules.wd4_free"
+    };
+
+    private static boolean[] getRuleValues(TableRuleConfig rules) {
+        return new boolean[] {
+            rules.stackingEnabled(),
+            rules.jumpInEnabled(),
+            rules.sevenRuleEnabled(),
+            rules.zeroRuleEnabled(),
+            rules.drawUntilMatch(),
+            rules.forcePlay(),
+            rules.wildDrawFourFreeUse()
+        };
+    }
+
+    private static int getGameRulesWidth(Font font) {
+        int maxTextWidth = 0;
+        for (String key : RULE_KEYS) {
+            maxTextWidth = Math.max(maxTextWidth, font.width(Component.translatable(key)));
+        }
+        int titleWidth = font.width(Component.translatable("gui.minopp.table_rules.title"));
+        int rowWidth = RULE_SQUARE_SIZE + RULE_SQUARE_TEXT_GAP + maxTextWidth;
+        return Math.max(rowWidth, titleWidth);
+    }
+
+    private static void renderGameRules(GuiGraphicsExtractor g, Font font,
+                                         TableRuleConfig rules, boolean leftSide, int x, int y) {
+        Component title = Component.translatable("gui.minopp.table_rules.title");
+        boolean[] values = getRuleValues(rules);
+        int textYOffset = (RULE_SQUARE_SIZE - font.lineHeight) / 2;
+
+        if (leftSide) {
+            g.text(font, title, x, y, 0xFF7090FF, true);
+            y += 12 + RULE_ROW_SPACING;
+            for (int i = 0; i < RULE_KEYS.length; i++) {
+                boolean enabled = values[i];
+                int squareColor = enabled ? 0xFF55AA55 : 0xFF444444;
+                g.fill(x + 1, y + 1, x + 1 + RULE_SQUARE_SIZE, y + 1 + RULE_SQUARE_SIZE, 0xFF000000);
+                g.fill(x, y, x + RULE_SQUARE_SIZE, y + RULE_SQUARE_SIZE, squareColor);
+                int textColor = enabled ? 0xFFFFFFFF : 0xFF888888;
+                g.text(font, Component.translatable(RULE_KEYS[i]),
+                    x + RULE_SQUARE_SIZE + RULE_SQUARE_TEXT_GAP, y + textYOffset, textColor, true);
+                y += RULE_ROW_HEIGHT;
+            }
+        } else {
+            g.text(font, title, x - font.width(title), y, 0xFF7090FF, true);
+            y += 12 + RULE_ROW_SPACING;
+            for (int i = 0; i < RULE_KEYS.length; i++) {
+                boolean enabled = values[i];
+                int squareColor = enabled ? 0xFF55AA55 : 0xFF444444;
+                int squareX = x - RULE_SQUARE_SIZE;
+                g.fill(squareX + 1, y + 1, squareX + 1 + RULE_SQUARE_SIZE, y + 1 + RULE_SQUARE_SIZE, 0xFF000000);
+                g.fill(squareX, y, squareX + RULE_SQUARE_SIZE, y + RULE_SQUARE_SIZE, squareColor);
+                int textColor = enabled ? 0xFFFFFFFF : 0xFF888888;
+                Component text = Component.translatable(RULE_KEYS[i]);
+                g.text(font, text, squareX - RULE_SQUARE_TEXT_GAP - font.width(text), y + textYOffset, textColor, true);
+                y += RULE_ROW_HEIGHT;
+            }
+        }
+    }
+
     // ========== Helpers ==========
 
     private static int lerpColor(int from, int to, float t) {
@@ -469,13 +559,7 @@ public class GameOverlayLayer {
             AABB searchArea = AABB.ofSize(Vec3.atCenterOf(tableEntity.getBlockPos()), 20, 20, 20);
             for (EntityAutoPlayer autoPlayer : level.getEntitiesOfClass(EntityAutoPlayer.class, searchArea)) {
                 if (autoPlayer.getUUID().equals(uuid)) {
-                    return autoPlayer.clientSkinGameProfile
-                            .thenCompose(profileOpt -> profileOpt
-                                    .map(gp -> Minecraft.getInstance().getSkinManager().get(gp))
-                                    .orElse(CompletableFuture.completedFuture(Optional.empty())))
-                            .getNow(Optional.empty())
-                            .map(skin -> skin.body().texturePath())
-                            .orElse(DefaultPlayerSkin.get(uuid).body().texturePath());
+                    return EntityAutoPlayerRenderer.resolveClientSkin(autoPlayer).body().texturePath();
                 }
             }
         }

@@ -27,6 +27,7 @@ public class C2STableRuleConfigPacket {
             if (!(level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity)) return;
             if (tableEntity.game != null) return;
             if (tableEntity.demo) return;
+            if (tableEntity.rulesLocked) return;
             TableRuleConfig config = NbtIOShim.decodeNullable(TableRuleConfig.CODEC, rulesNbt);
             if (config == null) return;
             tableEntity.rules = config;

@@ -145,6 +145,7 @@
   "gui.minopp.table_rules.force_play.desc": "If you draw a playable card, you must play it immediately.",
   "gui.minopp.table_rules.wd4_free": "Wild Draw Four Free Use",
   "gui.minopp.table_rules.wd4_free.desc": "Wild Draw Four can be played at any time, without the restriction of having no matching color cards.",
+  "gui.minopp.table_rules.locked": "The rules of this table have been locked by an administrator.",
 
   "gui.minopp.swap_selection.title": "Select a player to swap hands with",
 

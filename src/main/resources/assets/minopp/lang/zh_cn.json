@@ -145,6 +145,7 @@
   "gui.minopp.table_rules.force_play.desc": "如果抽到的牌可以打出，则必须立即打出。",
   "gui.minopp.table_rules.wd4_free": "自由转色 +4",
   "gui.minopp.table_rules.wd4_free.desc": "转色 +4 可以在任何时候使用，无需满足手中没有匹配颜色牌的限制。",
+  "gui.minopp.table_rules.locked": "这张桌子的规则已被管理员锁定。",
 
   "gui.minopp.swap_selection.title": "选择要交换手牌的玩家",
 

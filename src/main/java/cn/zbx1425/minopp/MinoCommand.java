@@ -82,6 +82,27 @@ public class MinoCommand {
                                 return 0;
                             }
                         })))
+                .then(Commands.literal("set_table_rules_fixed")
+                        .requires((commandSourceStack) -> commandSourceStack.isPlayer()
+                            && PlayerShim.hasPermissions(Objects.requireNonNull(commandSourceStack.getPlayer()), 2))
+                        .then(Commands.argument("locked", BoolArgumentType.bool())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            if (!player.getBlockStateOn().is(Mino.BLOCK_MINO_TABLE.get())) {
+                                context.getSource().sendFailure(Component.literal("Requirement: Stand on a table"));
+                                return 0;
+                            }
+                            BlockPos corePos = BlockMinoTable.getCore(player.getBlockStateOn(), player.getOnPos());
+                            if (PlayerShim.serverLevel(player).getBlockEntity(corePos) instanceof BlockEntityMinoTable tableEntity) {
+                                tableEntity.rulesLocked = BoolArgumentType.getBool(context, "locked");
+                                tableEntity.sync();
+                                context.getSource().sendSuccess(() -> Component.literal("Table rules locked: " + tableEntity.rulesLocked), true);
+                                return 1;
+                            } else {
+                                context.getSource().sendFailure(Component.literal("Requirement: Stand on a table"));
+                                return 0;
+                            }
+                        })))
         );
     }
 

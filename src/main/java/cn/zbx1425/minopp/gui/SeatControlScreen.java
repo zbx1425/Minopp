@@ -6,6 +6,7 @@ import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.C2SSeatControlPacket;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -74,7 +75,9 @@ public class SeatControlScreen extends Screen {
             stopButton.active = tableEntity.game != null;
             CardPlayer cardPlayer = ItemHandCards.getCardPlayer(minecraft.player);
             leaveButton.active = tableEntity.game == null && tableEntity.getPlayersList().contains(cardPlayer);
-            rulesButton.active = tableEntity.game == null;
+            rulesButton.active = tableEntity.game == null && !tableEntity.rulesLocked;
+            rulesButton.setTooltip(tableEntity.rulesLocked
+                    ? Tooltip.create(Component.translatable("gui.minopp.table_rules.locked")) : null);
 
             int xOff = (width - PANEL_WIDTH) / 2;
             int yOff = (height - PANEL_HEIGHT) / 2;
