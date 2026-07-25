@@ -13,6 +13,11 @@ public record HandRotateShard(
         return ActionReportShards.HAND_ROTATE;
     }
 
+    @Override
+    public boolean isNoteworthy() {
+        return true;
+    }
+
     public static final MapCodec<HandRotateShard> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
         Codec.BOOL.fieldOf("isAntiClockwise").forGetter(HandRotateShard::isAntiClockwise)
     ).apply(instance, HandRotateShard::new));

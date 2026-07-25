@@ -10,13 +10,11 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.game.TableRuleConfig;
 import cn.zbx1425.minopp.game.shard.ActionReportShard;
 import cn.zbx1425.minopp.game.shard.ActionReportShards;
-import cn.zbx1425.minopp.game.shard.GameWonShard;
 import cn.zbx1425.minopp.game.shard.SystemShard;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -61,8 +59,7 @@ public class BlockEntityMinoTable extends BlockEntity {
     public List<ActionReportShard> stateShards = new ArrayList<>(List.of(
             new SystemShard(Component.translatable("game.minopp.play.no_game"))));
 
-    public List<Pair<ActionReportShard, Long>> clientEphemeralShards = new ArrayList<>();
-    public List<ActionReportShard> clientStickyShards = new ArrayList<>();
+    public final MinoTableClientData clientData = new MinoTableClientData();
 
     public ItemStack award = ItemStack.EMPTY;
     public boolean demo = false;
@@ -88,52 +85,10 @@ public class BlockEntityMinoTable extends BlockEntity {
         for (Direction d : PLAYER_ORDER) {
             players.put(d, loaded.players().get(d.getSerializedName()));
         }
-        CardGame previousGame = game;
         game = loaded.game();
-        List<ActionReportShard> newStateShards = loaded.stateShards();
-        if (!newStateShards.equals(stateShards)) {
-            if (previousGame == null && game != null) {
-                clientEphemeralShards.clear();
-                clientStickyShards.clear();
-            } else if (previousGame != null && game == null) {
-                boolean hasGameWon = newStateShards.stream()
-                        .anyMatch(s -> s instanceof GameWonShard);
-                if (hasGameWon) {
-                    long insertTime = System.currentTimeMillis();
-                    for (ActionReportShard oldShard : stateShards) {
-                        if (oldShard.isNoteworthy()) {
-                            clientEphemeralShards.add(new Pair<>(oldShard, insertTime));
-                        }
-                    }
-                } else {
-                    clientEphemeralShards.clear();
-                }
-                clientStickyShards.clear();
-            } else {
-                boolean newStateHasPlay = newStateShards.stream()
-                        .anyMatch(s -> s instanceof cn.zbx1425.minopp.game.shard.PlayShard);
-                long insertTime = System.currentTimeMillis();
-                if (newStateHasPlay) {
-                    for (ActionReportShard sticky : clientStickyShards) {
-                        clientEphemeralShards.add(new Pair<>(sticky, insertTime));
-                    }
-                    clientStickyShards.clear();
-                }
-                for (ActionReportShard oldShard : stateShards) {
-                    if (oldShard.isNoteworthy()) {
-                        clientEphemeralShards.add(new Pair<>(oldShard, insertTime));
-                    } else if (oldShard.shardType().transitionBehavior() == ActionReportShard.TransitionBehavior.TOP_CARD_STICKY) {
-                        if (newStateHasPlay) {
-                            clientEphemeralShards.add(new Pair<>(oldShard, insertTime));
-                        } else {
-                            clientStickyShards.add(oldShard);
-                        }
-                    }
-                }
-            }
-            stateShards = new ArrayList<>(newStateShards);
-            clientEphemeralShards.removeIf(entry ->
-                    entry.getFirst().shardType().lifecycle() == ActionReportShard.Lifecycle.REJECTION);
+        stateShards = new ArrayList<>(loaded.stateShards());
+        if (level != null && level.isClientSide()) {
+            clientData.onBlockEntitySync(game, stateShards);
         }
         award = loaded.award();
         demo = loaded.demo();

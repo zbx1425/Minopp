@@ -79,9 +79,9 @@ public class GameOverlayLayer {
     private final Long2FloatArrayMap handCardCurrentXOff = new Long2FloatArrayMap();
 
     private final Set<Long> newlyDrawnCardHashes = new HashSet<>();
-    private final Map<UUID, Integer> lastSwapGeneration = new HashMap<>();
+    private int lastSwapGeneration = -1;
     private CardGame.PlayerActionPhase lastPhase = null;
-    private int lastCurrentPlayerIndex = -1;
+    private int lastRoundId = -1;
     private LongArrayList lastHandCardHashes = new LongArrayList();
 
     //? if <26.1
@@ -214,7 +214,7 @@ public class GameOverlayLayer {
         int nameWidth = font.width(NAME_MEASURE) + NAME_PAD_X * 2;
         boolean hasGameWon = tableEntity.stateShards.stream().anyMatch(s -> s instanceof GameWonShard);
 
-        // Layer 1: Current state badges
+        // 1: Current state badges
         Map<UUID, List<BadgeGuiShard>> currentBadges = new LinkedHashMap<>();
         List<MessageGuiShard> currentMessages = new ArrayList<>();
         for (ActionReportShard shard : tableEntity.stateShards) {
@@ -227,23 +227,26 @@ public class GameOverlayLayer {
             }
         }
 
-        // Layer 2: Sticky badges (TOP_CARD_STICKY)
-        Map<UUID, List<BadgeGuiShard>> stickyBadges = new LinkedHashMap<>();
-        if (!hasGameWon) {
-            for (ActionReportShard shard : tableEntity.clientStickyShards) {
-                ShardExtractor<ActionReportShard> ext = ShardExtractors.getUnchecked(shard.shardType());
-                if (ext != null) {
-                    mergeBadges(stickyBadges, ext.extractBadges(shard));
-                }
+        // 2: Top card badge
+        Map<UUID, List<BadgeGuiShard>> topCardBadges = new LinkedHashMap<>();
+        if (!hasGameWon && game != null) {
+            boolean currentHasPlay = tableEntity.stateShards.stream()
+                    .anyMatch(s -> s instanceof cn.zbx1425.minopp.game.shard.PlayShard);
+            if (!currentHasPlay) {
+                UUID badgeOwner = game.topCardPlayer != null
+                        ? game.topCardPlayer
+                        : game.players.get(game.currentPlayerIndex).uuid;
+                topCardBadges.put(badgeOwner, List.of(new PlayBadgeGuiShard(game.topCard)));
             }
         }
 
-        // Layer 3: Ephemeral/Noteworthy badges + messages (newest = leftmost / topmost)
+        // 3: Ephemeral/Noteworthy badges/messages
         long currentTime = System.currentTimeMillis();
         Map<UUID, List<Pair<BadgeGuiShard, Integer>>> noteworthyBadges = new LinkedHashMap<>();
         List<Pair<MessageGuiShard, Integer>> noteworthyMessages = new ArrayList<>();
+        List<Pair<ActionReportShard, Long>> ephemeralShards = tableEntity.clientData.getEphemeralShards();
         for (ListIterator<Pair<ActionReportShard, Long>> it =
-                     tableEntity.clientEphemeralShards.listIterator(tableEntity.clientEphemeralShards.size()); it.hasPrevious(); ) {
+                     ephemeralShards.listIterator(ephemeralShards.size()); it.hasPrevious(); ) {
             Pair<ActionReportShard, Long> entry = it.previous();
             long insertTime = entry.getSecond();
             if (currentTime - insertTime > MAX_EPHEMERAL_DURATION_MS) {
@@ -274,7 +277,7 @@ public class GameOverlayLayer {
         // --- Render player rows ---
         boolean isFirstDiscard = game != null && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND;
         boolean isSecondDiscard = game != null && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN;
-        boolean hasBadges = !currentBadges.isEmpty() || !stickyBadges.isEmpty() || !noteworthyBadges.isEmpty()
+        boolean hasBadges = !currentBadges.isEmpty() || !topCardBadges.isEmpty() || !noteworthyBadges.isEmpty()
                 || (currentPlayer != null && isFirstDiscard);
         if (!players.isEmpty() && hasBadges) {
             int highlightColor = (currentPlayer != null && currentPlayer.uuid.equals(selfUuid))
@@ -321,7 +324,7 @@ public class GameOverlayLayer {
                     badge.render(g, font, rowX, y, tint, 0xFF);
                     rowX += badge.getAdvance(font);
                 }
-                for (BadgeGuiShard badge : stickyBadges.getOrDefault(p.uuid, List.of())) {
+                for (BadgeGuiShard badge : topCardBadges.getOrDefault(p.uuid, List.of())) {
                     int tint = badge instanceof PlayBadgeGuiShard ? PlayBadgeGuiShard.BG_PLAY : BG_COLOR_SOLID;
                     badge.render(g, font, rowX, y, tint, 0xFF);
                     rowX += badge.getAdvance(font);
@@ -589,57 +592,56 @@ public class GameOverlayLayer {
         if (game == null) {
             newlyDrawnCardHashes.clear();
             lastPhase = null;
-            lastCurrentPlayerIndex = -1;
+            lastRoundId = -1;
+            lastSwapGeneration = -1;
             lastHandCardHashes.clear();
             return;
         }
 
-        Integer prevGen = lastSwapGeneration.get(realPlayer.uuid);
-        if (prevGen != null && prevGen != realPlayer.swapGeneration) {
+        if (lastSwapGeneration != realPlayer.swapGeneration) {
             newlyDrawnCardHashes.clear();
             lastHandCardHashes = new LongArrayList(currentHashes);
-            lastSwapGeneration.put(realPlayer.uuid, realPlayer.swapGeneration);
+            lastSwapGeneration = realPlayer.swapGeneration;
             lastPhase = game.currentPlayerPhase;
-            lastCurrentPlayerIndex = game.currentPlayerIndex;
-            return;
-        }
-        lastSwapGeneration.put(realPlayer.uuid, realPlayer.swapGeneration);
-
-        if (game.currentPlayerIndex != lastCurrentPlayerIndex) {
-            newlyDrawnCardHashes.clear();
-            lastHandCardHashes = new LongArrayList(currentHashes);
-            lastPhase = game.currentPlayerPhase;
-            lastCurrentPlayerIndex = game.currentPlayerIndex;
+            lastRoundId = game.roundId;
             return;
         }
 
-        CardPlayer currentPlayer = game.players.get(game.currentPlayerIndex);
-        boolean isOurTurn = currentPlayer.equals(realPlayer);
+        if (game.roundId != lastRoundId) {
+            CardPlayer currentPlayer = game.players.get(game.currentPlayerIndex);
+            boolean isOurTurn = currentPlayer.equals(realPlayer);
 
-        if (isOurTurn && lastPhase == CardGame.PlayerActionPhase.DISCARD_HAND
-                && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN) {
-            newlyDrawnCardHashes.clear();
-            int i = 0, j = 0;
-            while (i < currentHashes.size() && j < lastHandCardHashes.size()) {
-                long curr = currentHashes.getLong(i);
-                long prev = lastHandCardHashes.getLong(j);
-                if (curr == prev) {
-                    i++; j++;
-                } else if (curr < prev) {
-                    newlyDrawnCardHashes.add(curr);
-                    i++;
-                } else {
-                    j++;
+            if (isOurTurn && lastPhase == CardGame.PlayerActionPhase.DISCARD_HAND
+                    && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN) {
+                newlyDrawnCardHashes.clear();
+                int i = 0, j = 0;
+                while (i < currentHashes.size() && j < lastHandCardHashes.size()) {
+                    long curr = currentHashes.getLong(i);
+                    long prev = lastHandCardHashes.getLong(j);
+                    if (curr == prev) {
+                        i++; j++;
+                    } else if (curr < prev) {
+                        newlyDrawnCardHashes.add(curr);
+                        i++;
+                    } else {
+                        j++;
+                    }
                 }
+                while (i < currentHashes.size()) {
+                    newlyDrawnCardHashes.add(currentHashes.getLong(i++));
+                }
+            } else {
+                newlyDrawnCardHashes.clear();
             }
-            while (i < currentHashes.size()) {
-                newlyDrawnCardHashes.add(currentHashes.getLong(i++));
-            }
+
+            lastHandCardHashes = new LongArrayList(currentHashes);
+            lastPhase = game.currentPlayerPhase;
+            lastRoundId = game.roundId;
+            return;
         }
 
         lastHandCardHashes = new LongArrayList(currentHashes);
         lastPhase = game.currentPlayerPhase;
-        lastCurrentPlayerIndex = game.currentPlayerIndex;
     }
 
     private void performZoomAnimation(DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {

@@ -63,6 +63,7 @@
   "gui.minopp.play.draw_accumulate": "累计抽牌数：%s",
   "gui.minopp.play.top_card": "上张牌：%s",
   "gui.minopp.play.top_card_wild_color": "颜色是 %s",
+  "gui.minopp.play.win": "胜利",
 
   "gui.minopp.play.cursor.play": "出牌",
   "gui.minopp.play.cursor.pass": "§6不出",

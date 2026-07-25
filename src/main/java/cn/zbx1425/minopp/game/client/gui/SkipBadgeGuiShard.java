@@ -16,8 +16,9 @@ public class SkipBadgeGuiShard extends BadgeGuiShard {
     @Override
     public void render(GuiGraphicsExtractor g, Font font, int x, int y, int tintColor, int alpha) {
         int bg = (tintColor & 0x00FFFFFF) | (alpha << 24);
+        int alphaWhite = (alpha << 24) | 0x00FFFFFF;
         g.fill(x, y, x + WIDTH, y + HEIGHT, bg);
 
-        GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION,  x + (WIDTH - 10) / 2, y + 3, 218, 0, 10, 10, 256, 128);
+        GuiShim.blit(g, GameOverlayLayer.ATLAS_LOCATION,  x + (WIDTH - 10) / 2, y + 3, 218, 0, 10, 10, 256, 128, alphaWhite);
     }
 }

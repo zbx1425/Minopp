@@ -27,6 +27,28 @@ public class GuiShim {
         guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u, v, w, h, texW, texH);
     }
 
+    public static void blit(
+        GuiGraphicsExtractor guiGraphics,
+        Identifier texture,
+        int x, int y, int w, int h,
+        float u, float v, int uw, int vh,
+        int texW, int texH,
+        int color
+    ) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u, v, w, h, uw, vh, texW, texH, color);
+    }
+
+    public static void blit(
+        GuiGraphicsExtractor guiGraphics,
+        Identifier texture,
+        int x, int y, float u, float v,
+        int w, int h,
+        int texW, int texH,
+        int color
+    ) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u, v, w, h, texW, texH, color);
+    }
+
     public static void translate(GuiGraphicsExtractor guiGraphics, float x, float y) {
         guiGraphics.pose().translate(x, y);
     }

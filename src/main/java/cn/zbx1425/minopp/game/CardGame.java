@@ -7,6 +7,7 @@ import cn.zbx1425.minopp.game.effect.PlayerGlowEffectEvent;
 import cn.zbx1425.minopp.game.shard.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 
 import java.util.*;
@@ -26,7 +27,9 @@ public class CardGame {
     public ArrayList<Card> deck = new ArrayList<>();
     public ArrayList<Card> discardDeck = new ArrayList<>();
     public Card topCard;
+    public UUID topCardPlayer = null;
     public Card forcePlayCard = null;
+    public int roundId = 0;
 
     public CardGame(ArrayList<CardPlayer> players) {
         this.players = players;
@@ -34,7 +37,7 @@ public class CardGame {
 
     private CardGame(int currentPlayerIndex, int drawCount, boolean isSkipping, PlayerActionPhase currentPlayerPhase,
                      boolean isAntiClockwise, ArrayList<Card> deck, ArrayList<Card> discardDeck, Card topCard,
-                     Card forcePlayCard, ArrayList<CardPlayer> players) {
+                     UUID topCardPlayer, Card forcePlayCard, int roundId, ArrayList<CardPlayer> players) {
         this.players = players;
         this.currentPlayerIndex = currentPlayerIndex;
         this.drawCount = drawCount;
@@ -45,6 +48,8 @@ public class CardGame {
         this.deck = deck;
         this.discardDeck = discardDeck;
         this.topCard = topCard;
+        this.topCardPlayer = topCardPlayer;
+        this.roundId = roundId;
     }
 
     public ActionReport initiate(CardPlayer cardPlayer, int initialCardCount) {
@@ -68,6 +73,8 @@ public class CardGame {
             tobeTopCard = deck.removeLast();
         }
         topCard = tobeTopCard;
+        topCardPlayer = null;
+        roundId = 0;
         ActionReport report = ActionReport.builder(this, cardPlayer);
         report.sound(Mino.id("game.play"), 0);
         report.sound(Mino.id("game.turn_notice"), 500, players.get(currentPlayerIndex));
@@ -108,6 +115,8 @@ public class CardGame {
         }
         if (isCut) currentPlayerIndex = playerIndex;
         doDiscardCard(cardPlayer, card, report);
+        topCardPlayer = cardPlayer.uuid;
+        roundId++;
 
         if (card.suit == Card.Suit.WILD) {
             topCard = topCard.withEquivSuit(wildSelection);
@@ -154,8 +163,8 @@ public class CardGame {
                     cardPlayer.hand.addAll(targetPlayer.hand);
                     targetPlayer.hand.clear();
                     targetPlayer.hand.addAll(temp);
-                    cardPlayer.swapGeneration++;
-                    targetPlayer.swapGeneration++;
+                    cardPlayer.swapGeneration = roundId;
+                    targetPlayer.swapGeneration = roundId;
                     report.shard(new HandSwapShard(cardPlayer.uuid, targetPlayer.uuid));
                     report.sound(Mino.id("game.hand_swap"), 0);
                 }
@@ -204,6 +213,7 @@ public class CardGame {
                 forcePlayCard = resolveForcePlay(cardPlayer.hand.getLast(), cardPlayer, rules);
             }
             currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
+            roundId++;
             report.sound(Mino.id("game.turn_notice_again"), 500 * (drawCount > 1 ? drawCount + 1 : 1), cardPlayer);
             report.shard(new DrawShard(cardPlayer.uuid, drawCount));
             return report;
@@ -211,6 +221,7 @@ public class CardGame {
             if (forcePlayCard != null) {
                 return report.shard(new RejectionShard(Component.translatable("game.minopp.play.force_play")));
             }
+            roundId++;
             report.sound(Mino.id("game.pass"), 0);
             report.shard(new PassShard(cardPlayer.uuid, true));
             advanceTurn(report);
@@ -282,7 +293,7 @@ public class CardGame {
             int srcIndex = isAntiClockwise ? (i + 1) % n : (i - 1 + n) % n;
             players.get(i).hand.clear();
             players.get(i).hand.addAll(hands.get(srcIndex));
-            players.get(i).swapGeneration++;
+            players.get(i).swapGeneration = roundId;
         }
     }
 
@@ -387,9 +398,11 @@ public class CardGame {
         Card.CODEC.listOf().xmap(ArrayList::new, Function.identity())
             .optionalFieldOf("discardDeck").xmap(opt -> opt.orElseGet(ArrayList::new), Optional::of).forGetter(g -> g.discardDeck),
         Card.CODEC.fieldOf("topCard").forGetter(g -> g.topCard),
+        UUIDUtil.CODEC.optionalFieldOf("topCardPlayer").forGetter(g -> Optional.ofNullable(g.topCardPlayer)),
         Card.CODEC.optionalFieldOf("forcePlayCard").forGetter(g -> Optional.ofNullable(g.forcePlayCard)),
+        Codec.INT.optionalFieldOf("roundId", 0).forGetter(g -> g.roundId),
         CardPlayer.CODEC.listOf().xmap(ArrayList::new, Function.identity())
             .optionalFieldOf("players").xmap(opt -> opt.orElseGet(ArrayList::new), Optional::of).forGetter(g -> g.players)
-    ).apply(instance, (ci, dc, sk, ph, ac, dk, dd, tc, ldc, pl) ->
-        new CardGame(ci, dc, sk, ph, ac, dk, dd, tc, ldc.orElse(null), pl)));
+    ).apply(instance, (ci, dc, sk, ph, ac, dk, dd, tc, tcp, ldc, ri, pl) ->
+        new CardGame(ci, dc, sk, ph, ac, dk, dd, tc, tcp.orElse(null), ldc.orElse(null), ri, pl)));
 }

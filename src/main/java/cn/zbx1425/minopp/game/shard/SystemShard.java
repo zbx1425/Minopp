@@ -18,6 +18,11 @@ public record SystemShard(
         return ActionReportShards.SYSTEM;
     }
 
+    @Override
+    public boolean isNoteworthy() {
+        return true;
+    }
+
     private static final Codec<Component> JSON_STRING_COMPONENT_CODEC = Codec.STRING.xmap(
         s -> ComponentSerialization.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(s)).getOrThrow(),
         c -> ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, c).getOrThrow().toString()

@@ -6,7 +6,6 @@ import cn.zbx1425.minopp.game.shard.ActionReportShard;
 import cn.zbx1425.minopp.game.shard.ActionReportShards;
 import cn.zbx1425.minopp.platform.ServerPlatform;
 import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
-import com.mojang.datafixers.util.Pair;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -42,9 +41,8 @@ public class S2CActionEphemeralPacket {
             }
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
-                    long insertTime = System.currentTimeMillis();
                     for (ActionReportShard shard : shards) {
-                        tableEntity.clientEphemeralShards.add(new Pair<>(shard, insertTime));
+                        tableEntity.clientData.addEphemeral(shard);
                     }
                 }
             });

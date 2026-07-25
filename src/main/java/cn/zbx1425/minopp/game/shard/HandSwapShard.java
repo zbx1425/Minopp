@@ -17,6 +17,11 @@ public record HandSwapShard(
         return ActionReportShards.HAND_SWAP;
     }
 
+    @Override
+    public boolean isNoteworthy() {
+        return true;
+    }
+
     public static final MapCodec<HandSwapShard> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
         UUIDUtil.CODEC.fieldOf("source").forGetter(HandSwapShard::source),
         UUIDUtil.CODEC.fieldOf("target").forGetter(HandSwapShard::target)

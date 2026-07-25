@@ -16,7 +16,7 @@ public class GameWonBadgeGuiShard extends BadgeGuiShard {
     @Override
     public Component getLabel() {
         if (handSize == 0) {
-            return Component.literal("WIN").withStyle(Style.EMPTY.withColor(0xFFFF00));
+            return Component.translatable("gui.minopp.play.win").withStyle(Style.EMPTY.withColor(0xFFFF00));
         }
         return Component.literal(String.valueOf(handSize));
     }
