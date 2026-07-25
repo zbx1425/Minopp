@@ -55,6 +55,11 @@ public class ActionReport {
         return this;
     }
 
+    public ActionReport reject(Component component) {
+        this.shard(new RejectionShard(component));
+        return this;
+    }
+
     public boolean isFail() {
         return shards.stream().anyMatch(s ->
                 s.shardType().lifecycle() == ActionReportShard.Lifecycle.REJECTION);

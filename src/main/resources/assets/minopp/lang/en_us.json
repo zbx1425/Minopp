@@ -151,5 +151,7 @@
   "game.minopp.play.swap_hands": "%1$s swapped hands with %2$s!",
   "game.minopp.play.rotate_hands": "All hands rotated (%s)!",
   "game.minopp.play.must_draw_now": "You must draw cards now.",
-  "game.minopp.play.force_play": "You must play the drawn card."
+  "game.minopp.play.force_play": "You must play the drawn card.",
+  "game.minopp.play.force_play_only_drawn": "You can only play the drawn card.",
+  "game.minopp.play.seven_must_swap": "You must choose a player to swap hands with when playing a 7."
 }

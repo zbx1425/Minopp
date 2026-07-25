@@ -86,30 +86,30 @@ public class CardGame {
                                   TableRuleConfig rules, UUID swapTarget) {
         ActionReport report = ActionReport.builder(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (playerIndex == -1) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.no_player")));
-        if (!cardPlayer.hand.contains(card)) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.not_your_card")));
+        if (playerIndex == -1) return report.reject(Component.translatable("game.minopp.play.no_player"));
+        if (!cardPlayer.hand.contains(card)) return report.reject(Component.translatable("game.minopp.play.not_your_card"));
 
         if (!rules.stackingEnabled() && drawCount > 0) {
-            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.must_draw_now")));
+            return report.reject(Component.translatable("game.minopp.play.must_draw_now"));
         }
 
         boolean isCut = false;
         if (rules.jumpInEnabled() && topCard.equals(card) && playerIndex != currentPlayerIndex && topCard.suit != Card.Suit.WILD) {
             isCut = true;
         } else {
-            if (playerIndex != currentPlayerIndex) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.not_your_turn")));
+            if (playerIndex != currentPlayerIndex) return report.reject(Component.translatable("game.minopp.play.not_your_turn"));
         }
 
-        if (!card.canPlayOn(topCard)) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.invalid_card")));
+        if (!card.canPlayOn(topCard)) return report.reject(Component.translatable("game.minopp.play.invalid_card"));
         if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN
                 && forcePlayCard != null && !card.equals(forcePlayCard)) {
-            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.force_play_only_drawn")));
+            return report.reject(Component.translatable("game.minopp.play.force_play_only_drawn"));
         }
         if (!rules.wildDrawFourFreeUse() && card.suit == Card.Suit.WILD && card.family == Card.Family.DRAW) {
             for (Card otherCard : cardPlayer.hand) {
                 if (otherCard.equals(card)) continue;
                 if (otherCard.canPlayOn(topCard)) {
-                    return report.shard(new RejectionShard(Component.translatable("game.minopp.play.rule_forbid")));
+                    return report.reject(Component.translatable("game.minopp.play.rule_forbid"));
                 }
             }
         }
@@ -155,7 +155,10 @@ public class CardGame {
         }
 
         if (card.family == Card.Family.NUMBER) {
-            if (rules.sevenRuleEnabled() && card.number == 7 && swapTarget != null) {
+            if (rules.sevenRuleEnabled() && card.number == 7) {
+                if (swapTarget == null) {
+                    return report.reject(Component.translatable("game.minopp.play.seven_must_swap"));
+                }
                 CardPlayer targetPlayer = deAmputate(swapTarget);
                 if (targetPlayer != null && !targetPlayer.equals(cardPlayer)) {
                     ArrayList<Card> temp = new ArrayList<>(cardPlayer.hand);
@@ -186,8 +189,8 @@ public class CardGame {
     public ActionReport playNoCard(CardPlayer cardPlayer, TableRuleConfig rules) {
         ActionReport report = ActionReport.builder(this, cardPlayer);
         int playerIndex = players.indexOf(cardPlayer);
-        if (playerIndex == -1) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.no_player")));
-        if (playerIndex != currentPlayerIndex) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.not_your_turn")));
+        if (playerIndex == -1) return report.reject(Component.translatable("game.minopp.play.no_player"));
+        if (playerIndex != currentPlayerIndex) return report.reject(Component.translatable("game.minopp.play.not_your_turn"));
 
         if (currentPlayerPhase == PlayerActionPhase.DISCARD_HAND) {
             int drawCount;
@@ -219,7 +222,7 @@ public class CardGame {
             return report;
         } else if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN) {
             if (forcePlayCard != null) {
-                return report.shard(new RejectionShard(Component.translatable("game.minopp.play.force_play")));
+                return report.reject(Component.translatable("game.minopp.play.force_play"));
             }
             roundId++;
             report.sound(Mino.id("game.pass"), 0);
@@ -256,15 +259,15 @@ public class CardGame {
     public ActionReport doubtMino(CardPlayer srcPlayer, UUID targetPlayerWithoutHand) {
         ActionReport report = ActionReport.builder(this, srcPlayer);
         CardPlayer targetPlayer = deAmputate(targetPlayerWithoutHand);
-        if (targetPlayer == null) return report.shard(new RejectionShard(Component.translatable("game.minopp.play.no_player")));
+        if (targetPlayer == null) return report.reject(Component.translatable("game.minopp.play.no_player"));
         if (players.get(currentPlayerIndex).equals(targetPlayer)) {
-            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_playing")));
+            return report.reject(Component.translatable("game.minopp.play.doubt_target_playing"));
         } else if (srcPlayer.equals(targetPlayer)) {
-            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_self")));
+            return report.reject(Component.translatable("game.minopp.play.doubt_target_self"));
         } else if (targetPlayer.hasShoutedMino) {
-            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_shouted")));
+            return report.reject(Component.translatable("game.minopp.play.doubt_target_shouted"));
         } else if (targetPlayer.hand.size() > 1) {
-            return report.shard(new RejectionShard(Component.translatable("game.minopp.play.doubt_target_hand")));
+            return report.reject(Component.translatable("game.minopp.play.doubt_target_hand"));
         } else {
             if (!doDrawCard(targetPlayer, 2, report)) {
                 return report.panic(Component.translatable("game.minopp.play.deck_depleted"));

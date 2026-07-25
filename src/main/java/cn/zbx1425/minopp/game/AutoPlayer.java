@@ -294,7 +294,7 @@ public class AutoPlayer {
                 found = true;
             }
         }
-        if (!found) return -5;
+        if (!found) return -30;
         return 5 + (mySize - minSize) * 3;
     }
 
@@ -337,36 +337,25 @@ public class AutoPlayer {
         if (card.family != Card.Family.NUMBER || card.number != 7 || !rules.sevenRuleEnabled()) {
             return null;
         }
-        switch (sevenZeroStrategy) {
-            case SMART -> {
-                int mySize = realPlayer.hand.size() - 1;
-                CardPlayer bestTarget = null;
-                int minSize = mySize;
-                for (CardPlayer p : game.players) {
-                    if (p.equals(realPlayer)) continue;
-                    if (p.hand.size() < minSize) {
-                        minSize = p.hand.size();
-                        bestTarget = p;
-                    }
-                }
-                return bestTarget != null ? bestTarget.uuid : null;
+        if (sevenZeroStrategy == SevenZeroStrategy.RANDOM) {
+            List<CardPlayer> others = new ArrayList<>();
+            for (CardPlayer p : game.players) {
+                if (!p.equals(realPlayer)) others.add(p);
             }
-            case PREFER -> {
-                CardPlayer bestTarget = null;
-                int minSize = Integer.MAX_VALUE;
-                for (CardPlayer p : game.players) {
-                    if (p.equals(realPlayer)) continue;
-                    if (p.hand.size() < minSize) {
-                        minSize = p.hand.size();
-                        bestTarget = p;
-                    }
-                }
-                return bestTarget != null ? bestTarget.uuid : null;
-            }
-            default -> {
-                return null;
+            if (others.isEmpty()) return realPlayer.uuid;
+            return others.get(new Random().nextInt(others.size())).uuid;
+        }
+        // SMART, PREFER, NEVER: pick the player with fewest cards (minimize our resulting hand size)
+        CardPlayer bestTarget = null;
+        int minSize = Integer.MAX_VALUE;
+        for (CardPlayer p : game.players) {
+            if (p.equals(realPlayer)) continue;
+            if (p.hand.size() < minSize) {
+                minSize = p.hand.size();
+                bestTarget = p;
             }
         }
+        return bestTarget != null ? bestTarget.uuid : realPlayer.uuid;
     }
 
     private boolean shouldShoutMino(CardPlayer realPlayer, Card card, CardGame game,

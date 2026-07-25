@@ -152,5 +152,6 @@
   "game.minopp.play.rotate_hands": "所有人的手牌发生了轮转（%s）！",
   "game.minopp.play.must_draw_now": "你现在必须抽牌。",
   "game.minopp.play.force_play": "你必须出刚抽到的牌。",
-  "game.minopp.play.force_play_only_drawn": "你只能出刚抽到的牌。"
+  "game.minopp.play.force_play_only_drawn": "你只能出刚抽到的牌。",
+  "game.minopp.play.seven_must_swap": "打出 7 时，必须选择一位玩家进行手牌交换。"
 }
