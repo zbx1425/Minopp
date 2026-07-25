@@ -66,11 +66,11 @@ public class GuiShim {
     }
 
 //? if >=26.1 {
-    public static FontDescription getMiencraftyFontDesc() {
+    public static FontDescription getMinecraftyFontDesc() {
         return new FontDescription.Resource(Identifier.withDefaultNamespace("include/default"));
     }
 //? } else {
-    /*public static Identifier getDefaultFontDesc() {
+    /*public static Identifier getMinecraftyFontDesc() {
         return new Identifier.withDefaultNamespace("include/default");
     }
 *///? }

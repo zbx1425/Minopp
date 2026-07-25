@@ -16,7 +16,7 @@
     "block/amethyst_cluster/break1", "block/amethyst_cluster/break2", "block/amethyst_cluster/break3"
   ], "subtitle": "subtitles.minopp.turn_notice_again" },
   "game.turn_notice_continuous": { "sounds": [
-    "note/harp2"
+    "minopp:clock_ticking"
   ], "subtitle": "subtitles.minopp.turn_notice_continuous" },
   "game.win": { "sounds": [
     "ui/toast/challenge_complete"

@@ -31,11 +31,9 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -178,13 +176,17 @@ public class GameOverlayLayer {
         Function<UUID, String> nameResolver = buildNameResolver(tableEntity.game, tableEntity);
 
         // --- Status lines ---
-        drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.game_active").append(" \u00a9 Zbx1425"), x, y, 0xFF7090FF);
+        drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.game_active").append(" © Zbx1425"), x, y, 0xFF7090FF);
         y += font.lineHeight;
         if (currentPlayer.equals(cardPlayer)) {
             if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN
                     && tableEntity.game.forcePlayCard != null) {
                 drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.discard_drawn_force",
-                        tableEntity.game.forcePlayCard.getDisplayName()), x, y, 0xFFFFAA00);
+                        tableEntity.game.forcePlayCard.getDisplayName()), x, y, 0xFFAAAA00);
+            } else if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND
+                    && tableEntity.game.drawCount > 0 && !tableEntity.rules.stackingEnabled()) {
+                drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play.draw"),
+                    x, y, 0xFFFFAA00);
             } else {
                 drawStringWithBackdrop(g, font, Component.translatable("gui.minopp.play." + tableEntity.game.currentPlayerPhase.name().toLowerCase()),
                     x, y, 0xFFFFAA00);
@@ -275,6 +277,10 @@ public class GameOverlayLayer {
         }
 
         // --- Render player rows ---
+        int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int handCardWidth = (int)(100.0 * Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1.5), 0.93, 1.0));
+        int badgeRightLimit = screenWidth - 10 - handCardWidth - 35;
+
         boolean isFirstDiscard = game != null && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND;
         boolean isSecondDiscard = game != null && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN;
         boolean hasBadges = !currentBadges.isEmpty() || !topCardBadges.isEmpty() || !noteworthyBadges.isEmpty()
@@ -320,16 +326,19 @@ public class GameOverlayLayer {
                     rowX += PendingActionGuiShard.INSTANCE.getAdvance(font);
                 }
                 for (BadgeGuiShard badge : currentBadges.getOrDefault(p.uuid, List.of()).stream().skip(isSecondDiscardAndPulsing ? 1 : 0).toList()) {
+                    if (rowX + badge.getAdvance(font) > badgeRightLimit) break;
                     int tint = badge instanceof PlayBadgeGuiShard ? PlayBadgeGuiShard.BG_PLAY : BG_COLOR_SOLID;
                     badge.render(g, font, rowX, y, tint, 0xFF);
                     rowX += badge.getAdvance(font);
                 }
                 for (BadgeGuiShard badge : topCardBadges.getOrDefault(p.uuid, List.of())) {
+                    if (rowX + badge.getAdvance(font) > badgeRightLimit) break;
                     int tint = badge instanceof PlayBadgeGuiShard ? PlayBadgeGuiShard.BG_PLAY : BG_COLOR_SOLID;
                     badge.render(g, font, rowX, y, tint, 0xFF);
                     rowX += badge.getAdvance(font);
                 }
                 for (Pair<BadgeGuiShard, Integer> entry : noteworthyBadges.getOrDefault(p.uuid, List.of())) {
+                    if (rowX + entry.getFirst().getAdvance(font) > badgeRightLimit) break;
                     entry.getFirst().render(g, font, rowX, y, BG_COLOR_BACKDROP, entry.getSecond());
                     rowX += entry.getFirst().getAdvance(font);
                 }
@@ -360,6 +369,11 @@ public class GameOverlayLayer {
 
     private static void renderCursorHints(GuiGraphicsExtractor g, Font font,
                                            BlockEntityMinoTable tableEntity, CardPlayer cardPlayer, CardPlayer currentPlayer) {
+        int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+        int x = width / 2 + 8;
+        int y = height / 2;
+
         if (Minecraft.getInstance().hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos hitPos = ((BlockHitResult) Minecraft.getInstance().hitResult).getBlockPos();
             BlockState hitState = Minecraft.getInstance().level.getBlockState(hitPos);
@@ -374,37 +388,42 @@ public class GameOverlayLayer {
                     };
                     Component shoutMessage = Component.translatable("gui.minopp.play.cursor.shout");
                     boolean isShouting = !isPass && BlockMinoTable.Client.isShoutModifierHeld();
-                    int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-                    int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
-                    boolean highlight = Minecraft.getInstance().level.getGameTime() % 3L < 2L && isPass;
+                    float pulseProgress = isPass ? (System.currentTimeMillis() % 1000) / 1000.0f : 1.0f;
+                    int bgColor = lerpColor(0x80AAAA66, 0x80000000, pulseProgress);
+                    int textColor = lerpColor(0xFF222222, 0xFFFFFFDD, pulseProgress);
                     int msgWidth = Math.max(font.width(cursorMessage), isShouting ? font.width(shoutMessage) : 0);
                     int msgHeight = isShouting ? font.lineHeight * 2 : font.lineHeight;
-                    g.fill(width / 2 + 8, height / 2 - msgHeight / 2 - 2, width / 2 + msgWidth + 16, height / 2 + msgHeight / 2 + 3, highlight ? 0x80AAAA66 : 0x80000000);
-                    g.text(font, cursorMessage, width / 2 + 12, height / 2 - msgHeight / 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                    y -= msgHeight / 2;
+                    g.fill(x, y - 2, x + msgWidth + 8, y + msgHeight + 3, bgColor);
+                    g.text(font, cursorMessage, x + 4, y, textColor);
                     if (isShouting) {
-                        g.text(font, shoutMessage, width / 2 + 12, height / 2 - msgHeight / 2 + font.lineHeight, highlight ? 0xFF222222 : 0xFFFFFFDD);
+                        g.text(font, shoutMessage, x + 4, y + font.lineHeight, textColor);
                     }
+                    y += msgHeight + 6;
                 }
             }
         }
 
         if (TurnDeadMan.isAlarmActive()) {
-            Component deadManMessage = Component.translatable("gui.minopp.play.cursor.dead_man");
-            int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-            int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
-            boolean highlight = Minecraft.getInstance().level.getGameTime() % 3L < 2L;
-            int msgWidth = font.width(deadManMessage);
-            int msgHeight = font.lineHeight;
-            GuiShim.pushMatrix(g);
-            GuiShim.translate(g, (float)(width / 2), (float)(height / 2 + 12));
-            GuiShim.scale(g, 1.5f, 1.5f);
-            g.fill(-msgWidth / 2 - 4, 0, msgWidth / 2 + 4, msgHeight + 4, highlight ? 0x80AAAA66 : 0x80000000);
-            g.text(font, deadManMessage, -msgWidth / 2, 2, highlight ? 0xFF222222 : 0xFFFFFFDD);
-            GuiShim.popMatrix(g);
+            g.fill(x + 1, y + 1, x + 48, y + 48, 0xFF000000);
+            g.fill(x, y, x + 47, y + 47, cycleColor(20, 16, 0xFFEDEDED, 0xFFF5F47C));
+            GuiShim.blit(g, ATLAS_LOCATION, x, y, 47, 47, 208, 50, 47, 47, 256, 128);
         }
     }
 
     // ========== Helpers ==========
+
+    private static int lerpColor(int from, int to, float t) {
+        int a = (int)Mth.lerp(t, (from >> 24) & 0xFF, (to >> 24) & 0xFF);
+        int r = (int)Mth.lerp(t, (from >> 16) & 0xFF, (to >> 16) & 0xFF);
+        int g = (int)Mth.lerp(t, (from >> 8) & 0xFF, (to >> 8) & 0xFF);
+        int b = (int)Mth.lerp(t, from & 0xFF, to & 0xFF);
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    private static int cycleColor(int cycleTicks, int aTicks, int a, int b) {
+        return ((Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0) % cycleTicks >= aTicks) ? b : a;
+    }
 
     private static Function<UUID, String> buildNameResolver(CardGame game, BlockEntityMinoTable tableEntity) {
         return uuid -> {
@@ -427,7 +446,7 @@ public class GameOverlayLayer {
         if (name.length() <= 6) {
             return Component.literal(name);
         }
-        return Component.literal(name.substring(0, 3) + "\u2026" + name.substring(name.length() - 3));
+        return Component.literal(name.substring(0, 3) + "…" + name.substring(name.length() - 3));
     }
 
     private static void mergeBadges(Map<UUID, List<BadgeGuiShard>> target, Map<UUID, List<BadgeGuiShard>> source) {
@@ -568,7 +587,7 @@ public class GameOverlayLayer {
                 GuiShim.blit(g, ATLAS_LOCATION, 0, 0, 228, 0, 10, 10, 256, 128);
             } else {
                 Component cardName = card.getCardFaceName().copy()
-                        .withStyle(Style.EMPTY.withFont(GuiShim.getMiencraftyFontDesc()));
+                        .withStyle(Style.EMPTY.withFont(GuiShim.getMinecraftyFontDesc()));
                 int colorA = (int)(0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
                 g.text(font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
             }
