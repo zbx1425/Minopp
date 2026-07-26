@@ -131,7 +131,7 @@
   "gui.minopp.table_rules.draw_until_match.desc": "カードを引く際、出せるカードが見つかるまで引き続ける。",
   "gui.minopp.table_rules.force_play": "強制プレイ",
   "gui.minopp.table_rules.force_play.desc": "引いたカードが出せる場合、すぐに出さなければならない。",
-  "gui.minopp.table_rules.wd4_free": "ワイルドドロー4 自由使用",
+  "gui.minopp.table_rules.wd4_free": "ワイルド +4 自由使用",
   "gui.minopp.table_rules.wd4_free.desc": "ワイルドドロー4 は、手持ちに一致する色のカードがなくても自由に使用できる。",
   "gui.minopp.table_rules.locked": "このテーブルのルールは管理者によりロックされている。",
   "gui.minopp.swap_selection.title": "手札を交換するプレイヤーを選択してください",

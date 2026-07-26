@@ -191,7 +191,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
 
         public static AABB getPileAabb(BlockEntityMinoTable tableEntity) {
             if (tableEntity.game == null) return new AABB(0, 0, 0, 0, 0, 0);
-            return AABB.ofSize(new Vec3(0.5, 0.94, 0.5), 0.3, 0, 0.4)
+            return AABB.ofSize(new Vec3(0.4, 0.94, 0.4), 0.3, 0, 0.4)
                     .expandTowards(0, (tableEntity.game.deck.size()) * (1 / 16f / 5f) * 0.3f, 0);
         }
     }

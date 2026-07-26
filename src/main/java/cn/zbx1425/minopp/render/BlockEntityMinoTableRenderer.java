@@ -86,18 +86,23 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
         }
 
         poseStack.pushPose();
-        poseStack.translate(0.5, 0.94, 0.5);
+        poseStack.translate(0.4, 0.94, 0.4);
         poseStack.scale(0.4f, 0.3f, 0.4f);
         //? if <26.1
         //BakedModel model = itemRenderer.getModel(HAND_CARDS_MODEL_PLACEHOLDER.get(), null, null, 0);
 
         poseStack.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
         Random deckRandom = new Random(1);
-        for (int ci = 0; ci < Math.ceil(blockEntity.game.deck.size() / 5f); ci++) {
+
+        // Internally, CardGame allows deck to be briefly empty before it tries to re-shuffle the cards.
+        // Add one here to make the deck always visible for better UX.
+        int logicalDeckSize = blockEntity.game.deck.size() + 1;
+
+        for (int ci = 0; ci < Math.ceil(logicalDeckSize / 5f); ci++) {
             poseStack.pushPose();
-            poseStack.translate((ci % 3 - 1) * 0.02, 0, ci / 16f);
-            if (ci == Math.ceil(blockEntity.game.deck.size() / 5f) - 1) {
-                float topCardThicknessRatio =( ((blockEntity.game.deck.size() - 1) % 5) + 1) * (1 / 5f);
+            poseStack.translate((ci % 3 - 1) * 0.02, 0, ci / 16f + 0.01);
+            if (ci == Math.ceil(logicalDeckSize / 5f) - 1) {
+                float topCardThicknessRatio =( ((logicalDeckSize - 1) % 5) + 1) * (1 / 5f);
                 poseStack.translate(0, 0, -(0.5f - topCardThicknessRatio / 2) / 16f);
                 poseStack.scale(1, 1, topCardThicknessRatio);
             }
@@ -124,14 +129,16 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
 
 
         matrices.pushPose();
-        matrices.translate(1, 0.9 + 1 / 16f, 1);
-        matrices.scale(0.2f, 0.2f, 0.2f);
-        matrices.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
+        matrices.translate(1.1, 0.9 + 1 / 16f, 1.1);
         Random discardRandom = new Random(1);
         for (int ci = 0; ci <= blockEntity.game.discardDeck.size(); ci++) {
+            final float HALF_SPREAD = 0.45f;
             matrices.pushPose();
-            matrices.translate(discardRandom.nextFloat() * 6 - 3, discardRandom.nextFloat() * 6 - 3, ci / 32f);
-            matrices.mulPose(Axis.ZP.rotation(discardRandom.nextFloat() * 2 * (float)Math.PI));
+            matrices.translate((discardRandom.nextFloat() * 2 - 1) * HALF_SPREAD, ci * 0.001f, (discardRandom.nextFloat() * 2 - 1) * HALF_SPREAD);
+            matrices.pushPose();
+            matrices.mulPose(Axis.YP.rotation(discardRandom.nextFloat() * 2 * (float)Math.PI));
+            matrices.mulPose(Axis.XP.rotation(-(float)Math.PI / 2));
+            matrices.scale(0.2f, 0.2f, 0.2f);
 
             Card card = ci == blockEntity.game.discardDeck.size() ? blockEntity.game.topCard : blockEntity.game.discardDeck.get(ci);
             float cardU = switch (card.family) {
@@ -144,7 +151,7 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             float cardUW = 16 / 256f;
             float cardVH = 25 / 128f;
             int color = (ci == blockEntity.game.discardDeck.size())
-                    ? 0xFFFFFFFF : 0xFFBBBBBB;
+                    ? 0xFFFFFFFF : 0xFFAAAAAA;
             vertexConsumer
                     .addVertex(matrices.last(), -0.52f, 0.8f, 0).setNormal(matrices.last(), 0, 0, 1)
                     .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
@@ -178,16 +185,16 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                 Matrix4f matrix4f = matrices.last().pose();
                 float g = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
                 int k = (int)(g * 255.0F) << 24;
-                Component component = (card.suit == Card.Suit.WILD)
-                    ? card.getDisplayName().copy().append(Component.translatable("game.minopp.card.suit." + card.getEquivSuit().name().toLowerCase()))
+                Component cardText = (card.suit == Card.Suit.WILD)
+                    ? card.getDisplayName().copy().append(" ").append(Component.translatable("game.minopp.card.suit." + card.getEquivSuit().name().toLowerCase()))
                     : card.getDisplayName();
-                float h = (float)(-font.width(component) / 2);
+                float h = (float)(-font.width(cardText) / 2);
                 //? if <26.1 {
-                /*font.drawInBatch(component, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
-                font.drawInBatch(component, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+                /*font.drawInBatch(cardText, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
+                font.drawInBatch(cardText, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
                 matrices.mulPose(Axis.YP.rotation((float)Math.PI));
-                font.drawInBatch(component, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
-                font.drawInBatch(component, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+                font.drawInBatch(cardText, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
+                font.drawInBatch(cardText, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
                 *///? } else {
 
                 //public void drawInBatch(final String str, final float x, final float y, final int color, final boolean dropShadow,
@@ -197,18 +204,27 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                 // void submitText(PoseStack poseStack, float x, float y, FormattedCharSequence string, boolean dropShadow,
                 // Font.DisplayMode displayMode, int lightCoords, int color, int backgroundColor, int outlineColor);
 
-                FormattedCharSequence cardText = component.getVisualOrderText();
-                sink.submitText(matrices, h, 0, cardText, false, Font.DisplayMode.SEE_THROUGH, LightCoordsUtil.FULL_BRIGHT,
-                    553648127, k, 0);
-                sink.submitText(matrices, h, 0, cardText, false, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT,
-                    -1, 0, 0);
-                matrices.mulPose(Axis.YP.rotation((float)Math.PI));
-                sink.submitText(matrices, h, 0, cardText, false, Font.DisplayMode.SEE_THROUGH, LightCoordsUtil.FULL_BRIGHT,
-                    553648127, k, 0);
-                sink.submitText(matrices, h, 0, cardText, false, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT,
-                    -1, 0, 0);
+                matrices.popPose();
+                matrices.pushPose();
+                matrices.scale(0.3f, 0.3f, 0.3f);
+                double distToTableCenterSqr = camera.pos.distanceToSqr(Vec3.atLowerCornerWithOffset(blockEntity.getBlockPos(), 1, 1, 1));
+                sink.submitNameTag(matrices, Vec3.ZERO, 0, cardText,
+                    distToTableCenterSqr <= 5 * 5,
+                    LightCoordsUtil.FULL_BRIGHT, distToTableCenterSqr, camera
+                );
+//                FormattedCharSequence cardTextSequence = cardText.getVisualOrderText();
+//                sink.submitText(matrices, h, 0, cardTextSequence, false, Font.DisplayMode.SEE_THROUGH, LightCoordsUtil.FULL_BRIGHT,
+//                    553648127, k, 0);
+//                sink.submitText(matrices, h, 0, cardTextSequence, false, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT,
+//                    -1, 0, 0);
+//                matrices.mulPose(Axis.YP.rotation((float)Math.PI));
+//                sink.submitText(matrices, h, 0, cardTextSequence, false, Font.DisplayMode.SEE_THROUGH, LightCoordsUtil.FULL_BRIGHT,
+//                    553648127, k, 0);
+//                sink.submitText(matrices, h, 0, cardTextSequence, false, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT,
+//                    -1, 0, 0);
                 //? }
             }
+            matrices.popPose();
             matrices.popPose();
         }
         matrices.popPose();

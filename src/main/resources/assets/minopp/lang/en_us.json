@@ -132,7 +132,7 @@
   "gui.minopp.table_rules.draw_until_match.desc": "Instead of drawing one card, keep drawing until a playable card is found.",
   "gui.minopp.table_rules.force_play": "Force Play",
   "gui.minopp.table_rules.force_play.desc": "If you draw a playable card, you must play it immediately.",
-  "gui.minopp.table_rules.wd4_free": "Wild Draw Four Free Use",
+  "gui.minopp.table_rules.wd4_free": "Wild +4 Free Use",
   "gui.minopp.table_rules.wd4_free.desc": "Wild Draw Four can be played at any time, without the restriction of having no matching color cards.",
   "gui.minopp.table_rules.locked": "The rules of this table have been locked by an administrator.",
 
