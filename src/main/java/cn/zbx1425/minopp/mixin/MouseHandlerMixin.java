@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(MouseHandler.class)
 public class MouseHandlerMixin {
 
+//? if >=26.1 {
     @WrapOperation(method = "onScroll", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;setSelectedSlot(I)V"))
     public void onScroll(Inventory instance, int i, Operation<Void> original, @Local(name = "wheel") int wheel) {
         if (ItemHandCards.Client.handleScrollWheel(wheel)) {
@@ -20,4 +21,5 @@ public class MouseHandlerMixin {
             original.call(instance, i);
         }
     }
+//? }
 }

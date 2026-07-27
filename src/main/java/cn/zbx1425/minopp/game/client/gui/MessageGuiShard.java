@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.game.client.gui;
 
+import cn.zbx1425.minopp.platform.multiver.GuiShim;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -25,7 +26,7 @@ public class MessageGuiShard extends ActionReportGuiShard {
         int backdropAlpha = (int)(0.4f * alpha);
         g.fill(x - 2, y, x + font.width(message) + 2, y + font.lineHeight, backdropAlpha << 24);
         int textColor = (tintColor & 0x00FFFFFF) | (alpha << 24);
-        g.text(font, message, x, y, textColor, true);
+        GuiShim.drawString(g, font, message, x, y, textColor, true);
     }
 
     public long getEphemeralDurationMs() {

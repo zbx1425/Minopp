@@ -1,8 +1,8 @@
 package cn.zbx1425.minopp.render;
 
 //? if <26.1 {
-/*
-import cn.zbx1425.minopp.Mino;
+
+/*import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.game.CardPlayer;
@@ -35,7 +35,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
         super(blockEntityRenderDispatcher, entityModelSet);
     }
 
-    private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_MODEL_PLACEHOLDER.get()));
+    private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_NO_BEWLR.get()));
 
     @Override
     public void renderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, int packedOverlay) {

@@ -39,7 +39,7 @@ public class ServerPlatform {
 
     public static <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ServerPlatform.BlockEntitySupplier<T> supplier, Block block) {
         //? if <26.1
-        // return BlockEntityType.Builder.of(supplier::supplier, block).build(null);
+         //return BlockEntityType.Builder.of(supplier::supplier, block).build(null);
         //? if >=26.1
         return FabricBlockEntityTypeBuilder.create(supplier::supplier, block).build();
     }

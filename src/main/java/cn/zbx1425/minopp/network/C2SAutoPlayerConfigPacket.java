@@ -31,13 +31,10 @@ public class C2SAutoPlayerConfigPacket {
             if (player.level().getEntity(entityId) instanceof EntityAutoPlayer autoPlayer) {
                 if (autoPlayer.getConfigEditRestricted() && !PlayerShim.hasPermissions(player, 2)) return;
                 if (shouldDelete) {
-                    autoPlayer.dropFromLootTable(
-                        player.level(),
-                        new DamageSource(player.level().registryAccess()
-                            .lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageTypes.PLAYER_ATTACK), player),
-                        true,
-                        autoPlayer.getLootTable().orElseThrow()
-                    );
+                    //? if <26.1
+                    //if (!player.isCreative()) autoPlayer.kill();
+                    //? if >=26.1
+                    if (!player.isCreative()) autoPlayer.kill((net.minecraft.server.level.ServerLevel) player.level());
                     autoPlayer.remove(Entity.RemovalReason.KILLED);
                 } else {
                     autoPlayer.applyConfig(NbtIOShim.decode(EntityAutoPlayer.Config.CODEC, config));

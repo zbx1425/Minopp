@@ -25,6 +25,9 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+//? if <26.1
+//import net.minecraft.client.gui.components.PlayerFaceRenderer;
+//? if >=26.1
 import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -41,16 +44,17 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 //? if <26.1 {
-/*import net.minecraft.client.gui.LayeredDraw;
+/*import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.util.FastColor;
 *///? } else {
 
 //? }
 
-//? if neoforge
+//? if >=26.1 && neoforge
 //import net.neoforged.neoforge.client.gui.GuiLayer;
 
 import java.util.*;
@@ -84,7 +88,7 @@ public class GameOverlayLayer {
 
     //? if <26.1
     //@Override
-    public void render(@NonNull GuiGraphicsExtractor guiGraphics, @NonNull DeltaTracker deltaTracker) {
+    public void render(@NotNull GuiGraphicsExtractor guiGraphics, @NotNull DeltaTracker deltaTracker) {
         LocalPlayer player = Minecraft.getInstance().player;
         BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
         ClientLevel level = Minecraft.getInstance().level;
@@ -224,8 +228,8 @@ public class GameOverlayLayer {
     private static final long MAX_EPHEMERAL_DURATION_MS = 8000;
 
     private int renderShardPanel(GuiGraphicsExtractor g, Font font, int x, int y,
-                                  @NonNull BlockEntityMinoTable tableEntity, @Nullable CardGame game,
-                                  @NonNull List<CardPlayer> players, @Nullable CardPlayer currentPlayer,
+                                  @NotNull BlockEntityMinoTable tableEntity, @Nullable CardGame game,
+                                  @NotNull List<CardPlayer> players, @Nullable CardPlayer currentPlayer,
                                   UUID selfUuid, Function<UUID, String> nameResolver) {
 
         int nameWidth = font.width(NAME_MEASURE) + NAME_PAD_X * 2;
@@ -314,7 +318,7 @@ public class GameOverlayLayer {
                             game.isAntiClockwise ? 208 : 218, 25, 10, 10, 256, 128);
                         // Draw count
                         if (game.drawCount > 1) {
-                            g.centeredText(font, "+" + game.drawCount, x + (16 / 2), y + (game.isAntiClockwise ? (12 - font.lineHeight / 2) : (4 - font.lineHeight / 2)), 0xFFFFAAAA);
+                            GuiShim.drawCenteredString(g, font, "+" + game.drawCount, x + (16 / 2), y + (game.isAntiClockwise ? (12 - font.lineHeight / 2) : (4 - font.lineHeight / 2)), 0xFFFFAAAA);
                         }
                     }
                     rowX += 16;
@@ -324,12 +328,15 @@ public class GameOverlayLayer {
                     g.fill(rowX - 1, y - 1, rowX + AVATAR_SIZE + 1, y + AVATAR_SIZE + 1, highlightColor);
                 }
                 Identifier skinTexture = resolveSkinTexture(p.uuid, tableEntity);
+                //? if <26.1
+                //PlayerFaceRenderer.draw(g, skinTexture, rowX, y, AVATAR_SIZE, true, false);
+                //? if >=26.1
                 PlayerFaceExtractor.extractRenderState(g, skinTexture, rowX, y, AVATAR_SIZE, true, false, -1);
                 rowX += AVATAR_SIZE;
 
                 Component nameComp = truncateName(p.name, font, nameWidth - NAME_PAD_X * 2);
                 g.fill(rowX + (isCurrent ? 1 : 0), y, rowX + nameWidth, y + AVATAR_SIZE, BACKDROP_ALPHA << 24);
-                g.text(font, nameComp, rowX + NAME_PAD_X, y + (AVATAR_SIZE - font.lineHeight) / 2,
+                GuiShim.drawString(g, font, nameComp, rowX + NAME_PAD_X, y + (AVATAR_SIZE - font.lineHeight) / 2,
                         isCurrent ? 0xFFFFFFFF : 0xFFAAAAAA, true);
                 rowX += nameWidth;
 
@@ -410,9 +417,9 @@ public class GameOverlayLayer {
                     int msgHeight = isShouting ? font.lineHeight * 2 : font.lineHeight;
                     y -= msgHeight / 2;
                     g.fill(x, y - 2, x + msgWidth + 8, y + msgHeight + 3, bgColor);
-                    g.text(font, cursorMessage, x + 4, y, textColor);
+                    GuiShim.drawString(g, font, cursorMessage, x + 4, y, textColor);
                     if (isShouting) {
-                        g.text(font, shoutMessage, x + 4, y + font.lineHeight, textColor);
+                        GuiShim.drawString(g, font, shoutMessage, x + 4, y + font.lineHeight, textColor);
                     }
                     y += msgHeight + 6;
                 }
@@ -472,7 +479,7 @@ public class GameOverlayLayer {
         int textYOffset = (RULE_SQUARE_SIZE - font.lineHeight) / 2;
 
         if (leftSide) {
-            g.text(font, title, x, y, 0xFF7090FF, true);
+            GuiShim.drawString(g, font, title, x, y, 0xFF7090FF, true);
             y += 12 + RULE_ROW_SPACING;
             for (int i = 0; i < RULE_KEYS.length; i++) {
                 boolean enabled = values[i];
@@ -480,12 +487,12 @@ public class GameOverlayLayer {
                 g.fill(x + 1, y + 1, x + 1 + RULE_SQUARE_SIZE, y + 1 + RULE_SQUARE_SIZE, 0xFF000000);
                 g.fill(x, y, x + RULE_SQUARE_SIZE, y + RULE_SQUARE_SIZE, squareColor);
                 int textColor = enabled ? 0xFFFFFFFF : 0xFF888888;
-                g.text(font, Component.translatable(RULE_KEYS[i]),
+                GuiShim.drawString(g, font, Component.translatable(RULE_KEYS[i]),
                     x + RULE_SQUARE_SIZE + RULE_SQUARE_TEXT_GAP, y + textYOffset, textColor, true);
                 y += RULE_ROW_HEIGHT;
             }
         } else {
-            g.text(font, title, x - font.width(title), y, 0xFF7090FF, true);
+            GuiShim.drawString(g, font, title, x - font.width(title), y, 0xFF7090FF, true);
             y += 12 + RULE_ROW_SPACING;
             for (int i = 0; i < RULE_KEYS.length; i++) {
                 boolean enabled = values[i];
@@ -495,7 +502,7 @@ public class GameOverlayLayer {
                 g.fill(squareX, y, squareX + RULE_SQUARE_SIZE, y + RULE_SQUARE_SIZE, squareColor);
                 int textColor = enabled ? 0xFFFFFFFF : 0xFF888888;
                 Component text = Component.translatable(RULE_KEYS[i]);
-                g.text(font, text, squareX - RULE_SQUARE_TEXT_GAP - font.width(text), y + textYOffset, textColor, true);
+                GuiShim.drawString(g, font, text, squareX - RULE_SQUARE_TEXT_GAP - font.width(text), y + textYOffset, textColor, true);
                 y += RULE_ROW_HEIGHT;
             }
         }
@@ -550,6 +557,9 @@ public class GameOverlayLayer {
         if (connection != null) {
             PlayerInfo info = connection.getPlayerInfo(uuid);
             if (info != null) {
+                //? if <26.1
+                //return info.getSkin().texture();
+                //? if >=26.1
                 return info.getSkin().body().texturePath();
             }
         }
@@ -559,11 +569,17 @@ public class GameOverlayLayer {
             AABB searchArea = AABB.ofSize(Vec3.atCenterOf(tableEntity.getBlockPos()), 20, 20, 20);
             for (EntityAutoPlayer autoPlayer : level.getEntitiesOfClass(EntityAutoPlayer.class, searchArea)) {
                 if (autoPlayer.getUUID().equals(uuid)) {
+                    //? if <26.1
+                    //return EntityAutoPlayerRenderer.resolveClientSkin(autoPlayer).texture();
+                    //? if >=26.1
                     return EntityAutoPlayerRenderer.resolveClientSkin(autoPlayer).body().texturePath();
                 }
             }
         }
 
+        //? if <26.1
+        //return DefaultPlayerSkin.get(uuid).texture();
+        //? if >=26.1
         return DefaultPlayerSkin.get(uuid).body().texturePath();
     }
 
@@ -630,7 +646,7 @@ public class GameOverlayLayer {
             if (i == clientHandIndex) {
                 Card card = realPlayer.hand.get(i);
                 Component cardName = card.getDisplayName();
-                g.text(font, cardName, x - font.width(cardName) - 10, y + 10, 0xFFFFFFDD);
+                GuiShim.drawString(g, font, cardName, x - font.width(cardName) - 10, y + 10, 0xFFFFFFDD);
             }
             boolean isNewlyDrawn = newlyDrawnCardHashes.contains(handCardHashes.getLong(i));
             if (isNewlyDrawn) {
@@ -673,7 +689,7 @@ public class GameOverlayLayer {
                 Component cardName = card.getCardFaceName().copy()
                         .withStyle(Style.EMPTY.withFont(GuiShim.getMinecraftyFontDesc()));
                 int colorA = (int)(0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
-                g.text(font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
+                GuiShim.drawString(g, font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
             }
 
             GuiShim.popMatrix(g);

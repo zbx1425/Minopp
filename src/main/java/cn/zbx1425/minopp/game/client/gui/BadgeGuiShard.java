@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.game.client.gui;
 
+import cn.zbx1425.minopp.platform.multiver.GuiShim;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -22,7 +23,7 @@ public class BadgeGuiShard extends ActionReportGuiShard {
         int textX = x + (WIDTH - textW) / 2;
         int textY = y + (HEIGHT - font.lineHeight) / 2;
         int textColor = 0xFFFFFF | (alpha << 24);
-        g.text(font, label, textX, textY, textColor, true);
+        GuiShim.drawString(g, font, label, textX, textY, textColor, true);
     }
 
     public long getEphemeralDurationMs() {

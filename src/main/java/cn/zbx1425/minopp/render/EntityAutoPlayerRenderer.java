@@ -7,22 +7,25 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
+//? if >=26.1 {
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.client.resources.SkinManager;
 import net.minecraft.core.ClientAsset;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
+//? }
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+//? if <26.1
+//import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
+import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.client.resources.SkinManager;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
 
 //? if <26.1 {
@@ -78,7 +81,7 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
     @Override
     //? if <26.1
     //public void render(EntityAutoPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-    // if >=26.1
+    //? if >=26.1
     public void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
         //? if <26.1 {
         /*Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
@@ -102,7 +105,16 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         //? }
     }
 
-    //? if >=26.1 {
+    //? if <26.1 {
+    /*public static PlayerSkin resolveClientSkin(EntityAutoPlayer entity) {
+        Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        if (result.isPresent()) {
+            SkinManager skinManager = Minecraft.getInstance().getSkinManager();
+            return skinManager.getInsecureSkin(result.get());
+        }
+        return DefaultPlayerSkin.get(entity.getUUID());
+    }
+    *///? } else {
 
 
     @Override

@@ -6,7 +6,6 @@ import cn.zbx1425.minopp.gui.GameOverlayLayer;
 import cn.zbx1425.minopp.platform.multiver.GuiShim;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 
 public class PassBadgeGuiShard extends BadgeGuiShard {

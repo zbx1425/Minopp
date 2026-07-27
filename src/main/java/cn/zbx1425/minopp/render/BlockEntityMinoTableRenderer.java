@@ -13,23 +13,27 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+//? if >=26.1 {
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.util.LightCoordsUtil;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+//? }
+//? if <26.1
+//import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 //? if <26.1 {
 /*import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -173,55 +177,32 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                     .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color);
 
             if (ci == blockEntity.game.discardDeck.size()) {
-//                itemRenderer.render(HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER.get(), ItemDisplayContext.FIXED, false,
-//                        poseStack, multiBufferSource, i, j, model);
-                Font font = Minecraft.getInstance().font;
-                matrices.mulPose(Axis.XP.rotation((float)Math.PI / 2));
-                matrices.translate(0, 1f, 0);
-
-//                poseStack.translate(0, 0, 1f);
-//                poseStack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
-                matrices.scale(0.03F, -0.03F, 0.03F);
-                Matrix4f matrix4f = matrices.last().pose();
-                float g = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
-                int k = (int)(g * 255.0F) << 24;
                 Component cardText = (card.suit == Card.Suit.WILD)
                     ? card.getDisplayName().copy().append(" ").append(Component.translatable("game.minopp.card.suit." + card.getEquivSuit().name().toLowerCase()))
                     : card.getDisplayName();
-                float h = (float)(-font.width(cardText) / 2);
                 //? if <26.1 {
-                /*font.drawInBatch(cardText, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
-                font.drawInBatch(cardText, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-                matrices.mulPose(Axis.YP.rotation((float)Math.PI));
-                font.drawInBatch(cardText, h, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, k, LightTexture.FULL_BRIGHT);
-                font.drawInBatch(cardText, h, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+                /*matrices.popPose();
+                matrices.pushPose();
+                matrices.translate(0, 0.2f, 0);
+                matrices.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
+                matrices.scale(0.4f, 0.4f, 0.4f);
+                matrices.scale(0.025F, -0.025F, 0.025F);
+                Matrix4f matrix4f = matrices.last().pose();
+                Font font = Minecraft.getInstance().font;
+                float bgOpacity = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
+                int bgColor = (int)(bgOpacity * 255.0F) << 24;
+                float textX = (float)(-font.width(cardText) / 2);
+                font.drawInBatch(cardText, textX, 0, 553648127, false, matrix4f, multiBufferSource, Font.DisplayMode.SEE_THROUGH, bgColor, LightTexture.FULL_BRIGHT);
+                font.drawInBatch(cardText, textX, 0, -1, false, matrix4f, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
                 *///? } else {
-
-                //public void drawInBatch(final String str, final float x, final float y, final int color, final boolean dropShadow,
-                // final Matrix4fc pose, final MultiBufferSource bufferSource, final DisplayMode displayMode,
-                // final int backgroundColor, final int packedLightCoords) {
-                //
-                // void submitText(PoseStack poseStack, float x, float y, FormattedCharSequence string, boolean dropShadow,
-                // Font.DisplayMode displayMode, int lightCoords, int color, int backgroundColor, int outlineColor);
-
                 matrices.popPose();
                 matrices.pushPose();
-                matrices.scale(0.3f, 0.3f, 0.3f);
+                matrices.scale(0.4f, 0.4f, 0.4f);
                 double distToTableCenterSqr = camera.pos.distanceToSqr(Vec3.atLowerCornerWithOffset(blockEntity.getBlockPos(), 1, 1, 1));
                 sink.submitNameTag(matrices, Vec3.ZERO, 0, cardText,
                     distToTableCenterSqr <= 5 * 5,
                     LightCoordsUtil.FULL_BRIGHT, distToTableCenterSqr, camera
                 );
-//                FormattedCharSequence cardTextSequence = cardText.getVisualOrderText();
-//                sink.submitText(matrices, h, 0, cardTextSequence, false, Font.DisplayMode.SEE_THROUGH, LightCoordsUtil.FULL_BRIGHT,
-//                    553648127, k, 0);
-//                sink.submitText(matrices, h, 0, cardTextSequence, false, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT,
-//                    -1, 0, 0);
-//                matrices.mulPose(Axis.YP.rotation((float)Math.PI));
-//                sink.submitText(matrices, h, 0, cardTextSequence, false, Font.DisplayMode.SEE_THROUGH, LightCoordsUtil.FULL_BRIGHT,
-//                    553648127, k, 0);
-//                sink.submitText(matrices, h, 0, cardTextSequence, false, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT,
-//                    -1, 0, 0);
                 //? }
             }
             matrices.popPose();

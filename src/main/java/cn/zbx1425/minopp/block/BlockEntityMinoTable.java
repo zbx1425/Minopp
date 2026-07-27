@@ -15,6 +15,8 @@ import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CActionEphemeralPacket;
 import cn.zbx1425.minopp.network.S2CEffectListPacket;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
+//? if <26.1
+//import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

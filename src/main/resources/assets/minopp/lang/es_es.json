@@ -3,6 +3,7 @@
   "item.minopp.hand_cards": "Cartas de Mino++",
   "item.minopp.coupon": "Cupón",
   "item.minopp.coupon.description": "Compártelo con tus amigos.",
+  "item.minopp.auto_player": "Pik-A-Mino",
   "entity.minopp.mino_auto_player": "Pik-A-Mino",
 
   "game.minopp.play.no_player": "No eres parte del juego.",

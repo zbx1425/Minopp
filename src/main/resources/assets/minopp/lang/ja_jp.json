@@ -3,6 +3,7 @@
   "item.minopp.hand_cards": "Mino++カード",
   "item.minopp.coupon": "クーポン",
   "item.minopp.coupon.description": "友達と共有",
+  "item.minopp.auto_player": "MinoBot",
   "entity.minopp.mino_auto_player": "MinoBot",
 
   "game.minopp.play.no_player": "あなたはこの対局に参加していない。",

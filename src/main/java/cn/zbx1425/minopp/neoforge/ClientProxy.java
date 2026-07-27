@@ -5,14 +5,13 @@ package cn.zbx1425.minopp.neoforge;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.game.client.shard.ShardResources;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
-//? if neoforge && 1.21.1
-//import cn.zbx1425.minopp.neoforge.compat.signmeup.MinimapVisibility;
 import cn.zbx1425.minopp.platform.ClientPlatform;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+//? if >=26.1
 import net.minecraft.data.AtlasIds;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -86,9 +85,15 @@ public class ClientProxy {
 
         @SubscribeEvent
         public static void onTextureAtlasStitched(TextureAtlasStitchedEvent event) {
+            //? if <26.1 {
+            /^if (event.getAtlas() == Minecraft.getInstance().getModelManager().getAtlas(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)) {
+                ShardResources.INSTANCE.onResourceReload();
+            }
+            ^///? } else {
             if (event.getAtlas() == Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.ITEMS)) {
                 ShardResources.INSTANCE.onResourceReload();
             }
+            //? }
         }
     }
 
@@ -102,9 +107,6 @@ public class ClientProxy {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Pre event) {
             MinoClient.tick();
-
-            //? if neoforge && 1.21.1
-            //MinimapVisibility.tick();
         }
 
     }

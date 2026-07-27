@@ -6,11 +6,12 @@ package cn.zbx1425.minopp.neoforge.platform;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+//? if >=1.21.2
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 //? if <1.21.2
 //import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
-// if >=1.21.2
+//? if >=1.21.2
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 

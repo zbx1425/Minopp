@@ -6,6 +6,7 @@ import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.gui.GameOverlayLayer;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
+//? if >=26.1
 import cn.zbx1425.minopp.render.HandCardsSpecialRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;

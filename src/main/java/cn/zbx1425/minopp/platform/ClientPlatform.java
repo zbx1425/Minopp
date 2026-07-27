@@ -11,7 +11,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 //? if <26.1
 //import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-// if >=26.1
+//? if >=26.1
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 //? } else if neoforge {
 /*import cn.zbx1425.minopp.neoforge.MinoNeoForge;
