@@ -9,23 +9,16 @@ import net.minecraft.world.item.Item;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class GroupedItem extends Item {
+public interface GroupedItem {
 
-    public final Identifier id;
-    public final Supplier<ResourceKey<CreativeModeTab>> tabSupplier;
+    ResourceKey<CreativeModeTab> getTab();
 
-    public GroupedItem(
-            Function<Properties, Properties> properties,
-            Identifier id,
-            Supplier<ResourceKey<CreativeModeTab>> tabSupplier
-            ) {
-        super(properties.apply(
-            new Properties()
-            //? if >=1.21.2
+    static Item.Properties buildProperties(Function<Item.Properties, Item.Properties> properties, Identifier id) {
+        return properties.apply(
+            new Item.Properties()
+                //? if >=1.21.2
                 .setId(ResourceKey.create(Registries.ITEM, id))
-        ));
-        this.id = id;
-        this.tabSupplier = tabSupplier;
+        );
     }
 }
 

@@ -139,5 +139,7 @@
   "game.minopp.play.rotate_hands": "全員の手札が回転した（%s）！",
   "game.minopp.play.force_play": "引いたカードを出さなければならない。",
   "game.minopp.play.force_play_only_drawn": "引いたカードのみ出すことができる。",
-  "game.minopp.play.seven_must_swap": "7 を出した場合、手札を交換するプレイヤーを選ばなければならない。"
+  "game.minopp.play.seven_must_swap": "7 を出した場合、手札を交換するプレイヤーを選ばなければならない。",
+  "gui.minopp.bot_config.misc": "その他",
+  "gui.minopp.bot_config.config_edit_restricted": "編集を管理者のみに制限"
 }

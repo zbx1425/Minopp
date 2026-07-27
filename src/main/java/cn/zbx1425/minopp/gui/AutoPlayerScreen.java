@@ -3,12 +3,14 @@ package cn.zbx1425.minopp.gui;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.game.AutoPlayer;
 import cn.zbx1425.minopp.network.C2SAutoPlayerConfigPacket;
+import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
 import dev.isxander.yacl3.api.controller.FloatSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.StringControllerBuilder;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -18,7 +20,7 @@ public class AutoPlayerScreen {
         ConfigCategory.Builder categoryBuilder = ConfigCategory.createBuilder();
         putEntityPreferences(categoryBuilder, target);
         putAIPreferences(categoryBuilder, target);
-        putDismantlePreferences(categoryBuilder, target);
+        putMiscPreferences(categoryBuilder, target);
         return YetAnotherConfigLib.createBuilder()
                 .title(Component.translatable("gui.minopp.bot_config.title"))
                 .category(categoryBuilder.name(Component.translatable("gui.minopp.bot_config.title")).build())
@@ -117,9 +119,19 @@ public class AutoPlayerScreen {
         builder.group(aiOpts).group(aiMetaOpts);
     }
 
-    private static void putDismantlePreferences(ConfigCategory.Builder builder, EntityAutoPlayer target) {
-        OptionGroup dismantleOpts = OptionGroup.createBuilder()
-                .name(Component.translatable("gui.minopp.bot_config.remove"))
+    private static void putMiscPreferences(ConfigCategory.Builder builder, EntityAutoPlayer target) {
+        OptionGroup.Builder dismantleOpts = OptionGroup.createBuilder()
+                .name(Component.translatable("gui.minopp.bot_config.misc"));
+        if (PlayerShim.hasPermissions(Minecraft.getInstance().player, 2)) {
+            dismantleOpts = dismantleOpts
+                .option(Option.<Boolean>createBuilder()
+                    .name(Component.translatable("gui.minopp.bot_config.config_edit_restricted"))
+                    .binding(false, target::getConfigEditRestricted, target::setConfigEditRestricted)
+                    .controller(opt -> BooleanControllerBuilder.create(opt).yesNoFormatter())
+                    .build()
+                );
+        }
+        dismantleOpts = dismantleOpts
                 .option(ButtonOption.createBuilder()
                         .name(Component.translatable("gui.minopp.bot_config.remove").withStyle(ChatFormatting.RED))
                         .action((screen, opt) -> {
@@ -127,8 +139,7 @@ public class AutoPlayerScreen {
                             screen.onClose();
                         })
                         .build()
-                )
-                .build();
-        builder.group(dismantleOpts);
+                );
+        builder.group(dismantleOpts.build());
     }
 }

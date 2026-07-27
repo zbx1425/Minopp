@@ -5,6 +5,7 @@ import cn.zbx1425.minopp.block.BlockMinoTable;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.game.ActionReport;
 import cn.zbx1425.minopp.game.CardPlayer;
+import cn.zbx1425.minopp.item.ItemAutoPlayer;
 import cn.zbx1425.minopp.item.ItemCoupon;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.item.ItemHandCardsNoBewlr;
@@ -29,6 +30,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,13 +51,14 @@ public final class Mino {
     public static final RegistryObject<BlockEntityType<BlockEntityMinoTable>> BLOCK_ENTITY_TYPE_MINO_TABLE = new RegistryObject<>(() ->
             ServerPlatform.createBlockEntityType(BlockEntityMinoTable::new, BLOCK_MINO_TABLE.get()));
 
-    public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS = new RegistryObject<>(ItemHandCards::new);
+    public static final RegistryObject<Item> ITEM_HAND_CARDS = new RegistryObject<>(ItemHandCards::new);
     public static final RegistryObject<DataComponentType<ItemHandCards.CardGameBindingComponent>> DATA_COMPONENT_TYPE_CARD_GAME_BINDING = new RegistryObject<>(() ->
             ServerPlatform.createDataComponentType(ItemHandCards.CardGameBindingComponent.CODEC, ItemHandCards.CardGameBindingComponent.STREAM_CODEC));
     public static final RegistryObject<DataComponentType<Integer>> DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX = new RegistryObject<>(() ->
             ServerPlatform.createDataComponentType(Codec.INT, ByteBufCodecs.INT));
 
-    public static final RegistryObject<GroupedItem> ITEM_COUPON = new RegistryObject<>(ItemCoupon::new);
+    public static final RegistryObject<Item> ITEM_AUTO_PLAYER = new RegistryObject<>(ItemAutoPlayer::new);
+    public static final RegistryObject<Item> ITEM_COUPON = new RegistryObject<>(ItemCoupon::new);
 
     public static final RegistryObject<EntityType<EntityAutoPlayer>> ENTITY_AUTO_PLAYER = new RegistryObject<>(() ->
             EntityType.Builder.of(EntityAutoPlayer::new, MobCategory.CREATURE).sized(0.6f, 1.8f)
@@ -64,7 +68,7 @@ public final class Mino {
                 .build(ResourceKey.create(Registries.ENTITY_TYPE, id("mino_auto_player")))
     );
 
-    public static final RegistryObject<GroupedItem> ITEM_HAND_CARDS_NO_BEWLR = new RegistryObject<>(ItemHandCardsNoBewlr::new);
+    public static final RegistryObject<Item> ITEM_HAND_CARDS_NO_BEWLR = new RegistryObject<>(ItemHandCardsNoBewlr::new);
 
     public static void init(RegistriesWrapper registries) {
         registries.registerBlockAndItem("mino_table", BLOCK_MINO_TABLE);
@@ -73,6 +77,7 @@ public final class Mino {
         registries.registerItem("hand_cards_nobewlr", ITEM_HAND_CARDS_NO_BEWLR);
         registries.registerDataComponentType("card_game_binding", DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
         registries.registerDataComponentType("client_hand_index", DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX);
+        registries.registerItem("auto_player", ITEM_AUTO_PLAYER);
         registries.registerItem("coupon", ITEM_COUPON);
 
         registries.registerEntityType("mino_auto_player", ENTITY_AUTO_PLAYER);

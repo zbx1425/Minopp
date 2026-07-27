@@ -113,6 +113,8 @@
   "gui.minopp.bot_config.seven_zero_strategy.1": "Random",
   "gui.minopp.bot_config.seven_zero_strategy.2": "Prefer",
   "gui.minopp.bot_config.seven_zero_strategy.3": "Never",
+  "gui.minopp.bot_config.misc": "Misc",
+  "gui.minopp.bot_config.config_edit_restricted": "Restrict Editing to Admins",
   "gui.minopp.bot_config.remove": "Dismantle",
   "gui.minopp.bot_config.yacl_missing": "YetAnotherConfigLib is required to show the configuration screen. Please install it and then try again.",
 

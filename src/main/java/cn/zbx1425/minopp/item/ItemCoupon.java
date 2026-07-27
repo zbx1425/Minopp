@@ -6,6 +6,9 @@ import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
@@ -13,10 +16,10 @@ import net.minecraft.world.item.component.TooltipDisplay;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ItemCoupon extends GroupedItem {
+public class ItemCoupon extends Item implements GroupedItem {
 
     public ItemCoupon() {
-        super(p -> p, Mino.id("coupon"), () -> null);
+        super(GroupedItem.buildProperties(p -> p, Mino.id("coupon")));
     }
 
     @Override
@@ -31,5 +34,10 @@ public class ItemCoupon extends GroupedItem {
         //super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
         //? if >=26.1
         super.appendHoverText(stack, context, display, builder, tooltipFlag);
+    }
+
+    @Override
+    public ResourceKey<CreativeModeTab> getTab() {
+        return null;
     }
 }

@@ -139,5 +139,7 @@
   "game.minopp.play.rotate_hands": "所有人的手牌發生了輪轉（%s）！",
   "game.minopp.play.force_play": "你必須出剛抽到的牌。",
   "game.minopp.play.force_play_only_drawn": "你只能出剛抽到的牌。",
-  "game.minopp.play.seven_must_swap": "打出 7 時，必須選擇一位玩家進行手牌交換。"
+  "game.minopp.play.seven_must_swap": "打出 7 時，必須選擇一位玩家進行手牌交換。",
+  "gui.minopp.bot_config.misc": "雜項",
+  "gui.minopp.bot_config.config_edit_restricted": "限制僅管理員可編輯"
 }

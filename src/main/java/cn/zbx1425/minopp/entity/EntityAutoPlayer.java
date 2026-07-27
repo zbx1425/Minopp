@@ -68,6 +68,7 @@ public class EntityAutoPlayer extends LivingEntity {
     public CardPlayer cardPlayer;
     public BlockPos tablePos = null;
     private boolean noPush;
+    private boolean configEditRestricted;
 
     public EntityAutoPlayer(EntityType<? extends LivingEntity> entityType, Level level) {
         super(entityType, level);
@@ -188,8 +189,8 @@ public class EntityAutoPlayer extends LivingEntity {
                     ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules);
                     if (result.isFail()) {
                         for (var shard : result.shards) {
-                            if (shard instanceof cn.zbx1425.minopp.game.shard.RejectionShard rejection) {
-                                Mino.LOGGER.warn("AutoPlayer Failed! {}: {}", realPlayer.name, rejection.message().getString());
+                            if (shard instanceof cn.zbx1425.minopp.game.shard.RejectionShard(Component message)) {
+                                Mino.LOGGER.warn("AutoPlayer Failed! {}: {}", realPlayer.name, message.getString());
                             }
                         }
                         autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules, true);
@@ -236,13 +237,13 @@ public class EntityAutoPlayer extends LivingEntity {
     //? if >=26.1
     public InteractionResult interact(final Player player, final InteractionHand hand, final Vec3 location) {
         if (WorldShim.isClientSide(level())) {
-            if (PlayerShim.hasPermissions(player, 2) && player.isShiftKeyDown()) {
+            if ((!configEditRestricted || PlayerShim.hasPermissions(player, 2)) && player.isShiftKeyDown()) {
                 return InteractionResult.SUCCESS;
             } else if (getActive() && !player.isShiftKeyDown()) {
                 return InteractionResult.SUCCESS;
             }
         } else {
-            if (PlayerShim.hasPermissions(player, 2) && player.isShiftKeyDown()) {
+            if ((!configEditRestricted || PlayerShim.hasPermissions(player, 2)) && player.isShiftKeyDown()) {
                 S2CAutoPlayerScreenPacket.sendS2C((ServerPlayer) player, this);
                 return InteractionResult.SUCCESS;
             } else if (!getActive() && !player.isShiftKeyDown()) {
@@ -389,11 +390,20 @@ public class EntityAutoPlayer extends LivingEntity {
         entityData.set(SKIN, skin);
     }
 
+    public boolean getConfigEditRestricted() {
+        return configEditRestricted;
+    }
+
+    public void setConfigEditRestricted(boolean configEditRestricted) {
+        this.configEditRestricted = configEditRestricted;
+    }
+
     public Config getConfig() {
         return new Config(
             getActive(), getNoPush(), getSkin(),
             autoPlayer,
-            Optional.ofNullable(this.getCustomName())
+            Optional.ofNullable(this.getCustomName()),
+            getConfigEditRestricted()
         );
     }
 
@@ -403,12 +413,14 @@ public class EntityAutoPlayer extends LivingEntity {
         setSkin(config.skin());
         this.autoPlayer = config.aiConfig().copy();
         config.customName().ifPresent(this::setCustomName);
+        setConfigEditRestricted(config.configEditRestricted());
     }
 
     public record Config(
         boolean active, boolean noPush, String skin,
         AutoPlayer aiConfig,
-        Optional<Component> customName
+        Optional<Component> customName,
+        boolean configEditRestricted
     ) {
         private static final Codec<Component> JSON_STRING_COMPONENT_CODEC = Codec.STRING.xmap(
             s -> ComponentSerialization.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(s)).getOrThrow(),
@@ -420,18 +432,11 @@ public class EntityAutoPlayer extends LivingEntity {
             Codec.BOOL.optionalFieldOf("NoPush", false).forGetter(Config::noPush),
             Codec.STRING.optionalFieldOf("Skin", "").forGetter(Config::skin),
             AutoPlayer.CODEC.optionalFieldOf("AI", new AutoPlayer()).forGetter(Config::aiConfig),
-            JSON_STRING_COMPONENT_CODEC.optionalFieldOf("CustomName").forGetter(Config::customName)
+            JSON_STRING_COMPONENT_CODEC.optionalFieldOf("CustomName").forGetter(Config::customName),
+            Codec.BOOL.optionalFieldOf("ConfigEditRestricted", false).forGetter(Config::configEditRestricted)
         ).apply(instance, Config::new));
 
         public static final Codec<Config> CODEC = MAP_CODEC.codec();
-    }
-
-
-    private static class Client {
-
-        public static void openAutoPlayerScreen(EntityAutoPlayer autoPlayer) {
-            Minecraft.getInstance().setScreen(AutoPlayerScreen.create(autoPlayer, Minecraft.getInstance().screen));
-        }
     }
 }
 

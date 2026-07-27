@@ -23,6 +23,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
@@ -39,10 +40,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class ItemHandCards extends GroupedItem {
+public class ItemHandCards extends Item {
     
     public ItemHandCards() {
-        super(p -> p.stacksTo(1), Mino.id("hand_cards"), () -> null);
+        super(GroupedItem.buildProperties(p -> p.stacksTo(1), Mino.id("hand_cards")));
     }
 
     @Override

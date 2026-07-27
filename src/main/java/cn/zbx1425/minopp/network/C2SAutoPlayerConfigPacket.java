@@ -6,11 +6,16 @@ import cn.zbx1425.minopp.platform.ClientPlatform;
 import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
 import io.netty.buffer.Unpooled;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 
 public class C2SAutoPlayerConfigPacket {
@@ -23,9 +28,16 @@ public class C2SAutoPlayerConfigPacket {
         CompoundTag config = shouldDelete ? null : packet.readNbt();
 
         server.execute(() -> {
-            if (!PlayerShim.hasPermissions(player, 2)) return; // Re-check permission on server side
             if (player.level().getEntity(entityId) instanceof EntityAutoPlayer autoPlayer) {
+                if (autoPlayer.getConfigEditRestricted() && !PlayerShim.hasPermissions(player, 2)) return;
                 if (shouldDelete) {
+                    autoPlayer.dropFromLootTable(
+                        player.level(),
+                        new DamageSource(player.level().registryAccess()
+                            .lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageTypes.PLAYER_ATTACK), player),
+                        true,
+                        autoPlayer.getLootTable().orElseThrow()
+                    );
                     autoPlayer.remove(Entity.RemovalReason.KILLED);
                 } else {
                     autoPlayer.applyConfig(NbtIOShim.decode(EntityAutoPlayer.Config.CODEC, config));

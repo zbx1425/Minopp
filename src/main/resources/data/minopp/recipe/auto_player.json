@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minopp:mino_table",
+    "minecraft:iron_helmet",
+    "minecraft:redstone_torch"
+  ],
+  "result": { "id": "minopp:auto_player", "count": 1 }
+}

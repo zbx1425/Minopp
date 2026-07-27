@@ -50,13 +50,13 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
     }
 
     @Override
-    public void registerItem(String id, RegistryObject<GroupedItem> item) {
+    public void registerItem(String id, RegistryObject<Item> item) {
         Registry.register(BuiltInRegistries.ITEM, Mino.id(id), item.get());
-        if (item.get().tabSupplier == null) return;
+        if (!(item.get() instanceof GroupedItem groupedItem)) return;
         //? if <26.1
-        //ItemGroupEvents.modifyEntriesEvent(item.get().tabSupplier.get()).register(consumer -> consumer.accept(item.get()));
+        //ItemGroupEvents.modifyEntriesEvent(groupedItem.getTab()).register(consumer -> consumer.accept(item.get()));
         //? if >=26.1
-        CreativeModeTabEvents.modifyOutputEvent(item.get().tabSupplier.get()).register(consumer -> consumer.accept(item.get()));
+        CreativeModeTabEvents.modifyOutputEvent(groupedItem.getTab()).register(consumer -> consumer.accept(item.get()));
     }
 
     @Override

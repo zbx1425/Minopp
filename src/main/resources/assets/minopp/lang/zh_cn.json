@@ -113,6 +113,8 @@
   "gui.minopp.bot_config.seven_zero_strategy.1": "随机",
   "gui.minopp.bot_config.seven_zero_strategy.2": "偏好",
   "gui.minopp.bot_config.seven_zero_strategy.3": "避免",
+  "gui.minopp.bot_config.misc": "杂项",
+  "gui.minopp.bot_config.config_edit_restricted": "限制仅管理员可编辑",
   "gui.minopp.bot_config.remove": "拆除",
   "gui.minopp.bot_config.yacl_missing": "需要安装 YetAnotherConfigLib 模组才能显示配置界面，请安装后再重新打开。",
 

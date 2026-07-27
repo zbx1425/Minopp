@@ -139,5 +139,7 @@
   "game.minopp.play.rotate_hands": "¡Todas las manos rotaron (%s)!",
   "game.minopp.play.force_play": "Debes jugar la carta robada.",
   "game.minopp.play.force_play_only_drawn": "Solo puedes jugar la carta robada.",
-  "game.minopp.play.seven_must_swap": "Al jugar un 7, debes elegir un jugador para intercambiar manos."
+  "game.minopp.play.seven_must_swap": "Al jugar un 7, debes elegir un jugador para intercambiar manos.",
+  "gui.minopp.bot_config.misc": "Varios",
+  "gui.minopp.bot_config.config_edit_restricted": "Restringir edición a administradores"
 }

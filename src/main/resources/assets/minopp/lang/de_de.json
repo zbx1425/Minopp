@@ -138,5 +138,7 @@
   "game.minopp.play.rotate_hands": "Alle Hände wurden rotiert (%s)!",
   "game.minopp.play.force_play": "Du musst die gezogene Karte spielen.",
   "game.minopp.play.force_play_only_drawn": "Du kannst nur die gezogene Karte spielen.",
-  "game.minopp.play.seven_must_swap": "Beim Spielen einer 7 muss ein Spieler zum Handtausch gewählt werden."
+  "game.minopp.play.seven_must_swap": "Beim Spielen einer 7 muss ein Spieler zum Handtausch gewählt werden.",
+  "gui.minopp.bot_config.misc": "Sonstiges",
+  "gui.minopp.bot_config.config_edit_restricted": "Bearbeitung auf Admins beschränken"
 }
