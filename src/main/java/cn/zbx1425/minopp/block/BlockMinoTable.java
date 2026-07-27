@@ -82,7 +82,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
                 if (tableEntity.game != null) {
                     if (gameBinding == null || !gameBinding.tablePos().equals(corePos)) {
-                        PlayerShim.sendSystemMessage(player, Component.translatable("game.minopp.play.no_player"));
+                        PlayerShim.sendOverlayMessage(player, Component.translatable("game.minopp.play.no_player"));
                         return InteractionResult.FAIL;
                     }
                     TurnDeadMan.pedal();
@@ -203,7 +203,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
         if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
             CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
             if (tableEntity.demo) {
-                PlayerShim.sendSystemMessage(player, Component.translatable("game.minopp.play.table_in_demo"));
+                PlayerShim.sendOverlayMessage(player, Component.translatable("game.minopp.play.table_in_demo"));
                 return InteractionResult.FAIL;
             }
             if (WorldShim.isClientSide(level)) {

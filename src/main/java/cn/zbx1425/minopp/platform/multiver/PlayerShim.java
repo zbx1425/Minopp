@@ -16,6 +16,14 @@ public class PlayerShim {
         //? if >=26.1 {
         player.sendSystemMessage(message);
         //? } else {
+        /*player.displayClientMessage(message, false);
+         *///? }
+    }
+
+    public static void sendOverlayMessage(Player player, Component message) {
+        //? if >=26.1 {
+        player.sendOverlayMessage(message);
+        //? } else {
         /*player.displayClientMessage(message, true);
          *///? }
     }
