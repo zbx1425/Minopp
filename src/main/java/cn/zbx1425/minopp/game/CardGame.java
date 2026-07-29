@@ -312,10 +312,6 @@ public class CardGame {
             Card drawn = deck.removeLast();
             cardPlayer.hand.add(drawn);
             count++;
-            report.sound(Mino.id("game.draw"), 500 * (count - 1));
-            if (count > 1) {
-                report.sound(Mino.id("game.draw_multi"), 500 * (count - 1) + 200);
-            }
             if (drawn.canPlayOn(topCard)) {
                 if (!rules.wildDrawFourFreeUse()
                         && drawn.suit == Card.Suit.WILD && drawn.family == Card.Family.DRAW) {
@@ -326,6 +322,7 @@ public class CardGame {
                 break;
             }
         }
+        fillDrawSfx(count, report);
         return count;
     }
 
@@ -341,6 +338,18 @@ public class CardGame {
         return drawn;
     }
 
+    private void fillDrawSfx(int drawCount, ActionReport report) {
+        final int SOUND_INTERVAL = 200;
+        for (int i = 0; i < drawCount; i++) {
+            report.sound(Mino.id("game.draw"), SOUND_INTERVAL * i);
+        }
+        if (drawCount > 1) {
+            for (int i = drawCount - 1; i >= 0; i -= 4) {
+                report.sound(Mino.id("game.draw_multi"), SOUND_INTERVAL * i + SOUND_INTERVAL / 2);
+            }
+        }
+    }
+
     public boolean doDrawCard(CardPlayer cardPlayer, int drawCount, ActionReport report) {
         if (deck.size() < drawCount) {
             Collections.shuffle(discardDeck);
@@ -352,11 +361,8 @@ public class CardGame {
         }
         for (int i = 0; i < drawCount; i++) {
             cardPlayer.hand.add(deck.removeLast());
-            report.sound(Mino.id("game.draw"), 500 * i);
-            if (drawCount > 1) {
-                report.sound(Mino.id("game.draw_multi"), 500 * i + 200);
-            }
         }
+        fillDrawSfx(drawCount, report);
         return true;
     }
 

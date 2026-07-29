@@ -5,7 +5,9 @@
   "game.draw": { "sounds": [
     "dig/sand1", "dig/sand2", "dig/sand3"
   ], "subtitle": "subtitles.minopp.draw" },
-  "game.draw_multi": { "sounds": [ "minopp:draw_multi" ], "subtitle": "subtitles.minopp.sigh" },
+  "game.draw_multi": { "sounds": [
+    "mob/villager/no1", "mob/villager/no2"
+  ], "subtitle": "subtitles.minopp.sigh" },
   "game.pass": { "sounds": [
     "entity/player/attack/weak1"
   ], "subtitle": "subtitles.minopp.pass" },
