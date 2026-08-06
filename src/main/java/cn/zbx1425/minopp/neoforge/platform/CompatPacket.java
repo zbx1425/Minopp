@@ -2,6 +2,7 @@ package cn.zbx1425.minopp.neoforge.platform;
 //? if neoforge {
 
 /*import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -40,8 +41,14 @@ public class CompatPacket {
 
         @Override
         public Payload decode(ByteBuf src) {
-            ByteBuf data = src.retainedDuplicate();
-            src.readerIndex(src.writerIndex());
+            ByteBuf data;
+            if (src.isDirect()) {
+                data = Unpooled.buffer(src.readableBytes(), src.readableBytes());
+                src.readBytes(data);
+            } else {
+                data = src.retainedDuplicate();
+                src.readerIndex(src.readerIndex() + src.readableBytes());
+            }
             return new Payload(new FriendlyByteBuf(data));
         }
     };

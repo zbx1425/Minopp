@@ -46,18 +46,26 @@ public class CompatPacketRegistry {
             CompatPacket packet = packets.getValue();
 //? if >=1.21.2 {
             registrar.playBidirectional(packet.TYPE, packet.STREAM_CODEC,
-                    (arg, iPayloadContext) -> handlerC2S.handlePacket(
+                (payload, iPayloadContext) -> {
+                    handlerC2S.handlePacket(
                         //? if <26.1
                         //iPayloadContext.player().getServer(),
                         //? if >=26.1
                         iPayloadContext.player().level().getServer(),
-                        (ServerPlayer)iPayloadContext.player(), arg.buffer)
-            );
+                        (ServerPlayer)iPayloadContext.player(), payload.buffer);
+                    payload.buffer.release();
+            });
 //? } else {
             /^registrar.playBidirectional(packet.TYPE, packet.STREAM_CODEC, new DirectionalPayloadHandler<>(
-                    (arg, iPayloadContext) -> handlerS2C.accept(arg.buffer),
-                    (arg, iPayloadContext) -> handlerC2S.handlePacket(
-                            iPayloadContext.player().getServer(), (ServerPlayer)iPayloadContext.player(), arg.buffer)
+                (payload, iPayloadContext) -> {
+                    handlerS2C.accept(payload.buffer);
+                    payload.buffer.release();
+                },
+                (payload, iPayloadContext) -> {
+                    handlerC2S.handlePacket(
+                        iPayloadContext.player().getServer(), (ServerPlayer)iPayloadContext.player(), payload.buffer);
+                    payload.buffer.release();
+                }
             ));
 ^///? }
         }
