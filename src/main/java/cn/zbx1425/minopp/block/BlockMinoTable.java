@@ -92,37 +92,38 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
                     if (Client.isCursorHittingPile()) {
                         C2SPlayCardPacket.Client.sendPlayNoCardC2S(corePos, playerWithoutHand);
                     } else {
-                        Card selectedCard = realPlayer.hand.get(Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1));
+                        int idx = Mth.clamp(handIndex, 0, realPlayer.hand.size() - 1);
+                        Card selectedCard = realPlayer.hand.get(idx);
                         boolean shout = Client.isShoutModifierHeld();
+
+                        boolean willFail = tableEntity.game.validatePlayCard(realPlayer, selectedCard, tableEntity.rules) != null;
+                        boolean willWin = !willFail && (realPlayer.hand.size() == 1);
+
                         if (selectedCard.suit == Card.Suit.WILD) {
-                            // Client-side pre-check for WD4
-                            if (selectedCard.family == Card.Family.DRAW && !tableEntity.rules.wildDrawFourFreeUse()) {
-                                boolean hasOtherPlayable = false;
-                                for (Card other : realPlayer.hand) {
-                                    if (other.equals(selectedCard)) continue;
-                                    if (other.canPlayOn(tableEntity.game.topCard)) { hasOtherPlayable = true; break; }
-                                }
-                                if (hasOtherPlayable) {
-                                    C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, Card.Suit.RED, shout);
-                                } else {
-                                    Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, shout);
-                                }
+                            if (willFail || willWin) {
+                                C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard,
+                                        tableEntity.game.topCard.getEquivSuit(), shout);
                             } else {
                                 Client.openWildSelectionScreen(corePos, playerWithoutHand, selectedCard, shout);
                             }
                         } else if (tableEntity.rules.sevenRuleEnabled()
                                 && selectedCard.family == Card.Family.NUMBER && selectedCard.number == 7) {
-                            // Client-side pre-check for 7 rule
-                            boolean canPlay = selectedCard.canPlayOn(tableEntity.game.topCard)
-                                    && (tableEntity.rules.stackingEnabled() || tableEntity.game.drawCount == 0);
-                            if (canPlay) {
-                                Client.openSwapSelectionScreen(corePos, playerWithoutHand, selectedCard, shout, tableEntity.game.players);
-                            } else {
+                            if (willFail || willWin) {
                                 C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, null, shout);
+                            } else {
+                                Client.openSwapSelectionScreen(corePos, playerWithoutHand, selectedCard, shout, tableEntity.game.players);
                             }
                         } else {
-                            C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard,
-                                    null, shout);
+                            C2SPlayCardPacket.Client.sendPlayCardC2S(corePos, playerWithoutHand, selectedCard, null, shout);
+                        }
+
+                        if (!willFail && !willWin && tableEntity.rules.jumpInEnabled() && selectedCard.suit != Card.Suit.WILD) {
+                            //noinspection StatementWithEmptyBody
+                            if (idx + 1 < realPlayer.hand.size() && realPlayer.hand.get(idx + 1).equals(selectedCard)) {
+                                // Next card is identical; after removal it shifts to idx
+                            } else if (idx - 1 >= 0 && realPlayer.hand.get(idx - 1).equals(selectedCard)) {
+                                player.getMainHandItem().set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), idx - 1);
+                            }
                         }
                     }
                     return InteractionResult.SUCCESS;

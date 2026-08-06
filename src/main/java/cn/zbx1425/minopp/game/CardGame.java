@@ -9,6 +9,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -82,37 +83,38 @@ public class CardGame {
         return report;
     }
 
-    public ActionReport playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection, boolean shout,
-                                  TableRuleConfig rules, UUID swapTarget) {
-        ActionReport report = ActionReport.builder(this, cardPlayer);
+    public @Nullable Component validatePlayCard(CardPlayer cardPlayer, Card card, TableRuleConfig rules) {
         int playerIndex = players.indexOf(cardPlayer);
-        if (playerIndex == -1) return report.reject(Component.translatable("game.minopp.play.no_player"));
-        if (!cardPlayer.hand.contains(card)) return report.reject(Component.translatable("game.minopp.play.not_your_card"));
+        if (playerIndex == -1) return Component.translatable("game.minopp.play.no_player");
+        if (!cardPlayer.hand.contains(card)) return Component.translatable("game.minopp.play.not_your_card");
+        if (!rules.stackingEnabled() && drawCount > 0) return Component.translatable("game.minopp.play.must_draw");
 
-        if (!rules.stackingEnabled() && drawCount > 0) {
-            return report.reject(Component.translatable("game.minopp.play.must_draw"));
-        }
+        boolean isCut = rules.jumpInEnabled() && topCard.equals(card)
+                && playerIndex != currentPlayerIndex && topCard.suit != Card.Suit.WILD;
+        if (!isCut && playerIndex != currentPlayerIndex) return Component.translatable("game.minopp.play.not_your_turn");
 
-        boolean isCut = false;
-        if (rules.jumpInEnabled() && topCard.equals(card) && playerIndex != currentPlayerIndex && topCard.suit != Card.Suit.WILD) {
-            isCut = true;
-        } else {
-            if (playerIndex != currentPlayerIndex) return report.reject(Component.translatable("game.minopp.play.not_your_turn"));
-        }
-
-        if (!card.canPlayOn(topCard)) return report.reject(Component.translatable("game.minopp.play.invalid_card"));
+        if (!card.canPlayOn(topCard)) return Component.translatable("game.minopp.play.invalid_card");
         if (currentPlayerPhase == PlayerActionPhase.DISCARD_DRAWN
-                && forcePlayCard != null && !card.equals(forcePlayCard)) {
-            return report.reject(Component.translatable("game.minopp.play.force_play_only_drawn"));
-        }
+                && forcePlayCard != null && !card.equals(forcePlayCard))
+            return Component.translatable("game.minopp.play.force_play_only_drawn");
         if (!rules.wildDrawFourFreeUse() && card.suit == Card.Suit.WILD && card.family == Card.Family.DRAW) {
             for (Card otherCard : cardPlayer.hand) {
                 if (otherCard.equals(card)) continue;
-                if (otherCard.canPlayOn(topCard)) {
-                    return report.reject(Component.translatable("game.minopp.play.rule_forbid"));
-                }
+                if (otherCard.canPlayOn(topCard)) return Component.translatable("game.minopp.play.rule_forbid");
             }
         }
+        return null;
+    }
+
+    public ActionReport playCard(CardPlayer cardPlayer, Card card, Card.Suit wildSelection, boolean shout,
+                                  TableRuleConfig rules, UUID swapTarget) {
+        ActionReport report = ActionReport.builder(this, cardPlayer);
+        Component rejection = validatePlayCard(cardPlayer, card, rules);
+        if (rejection != null) return report.reject(rejection);
+
+        int playerIndex = players.indexOf(cardPlayer);
+        boolean isCut = rules.jumpInEnabled() && topCard.equals(card)
+                && playerIndex != currentPlayerIndex && topCard.suit != Card.Suit.WILD;
         if (isCut) currentPlayerIndex = playerIndex;
         doDiscardCard(cardPlayer, card, report);
         topCardPlayer = cardPlayer.uuid;
