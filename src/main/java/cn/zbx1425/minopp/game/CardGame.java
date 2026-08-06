@@ -169,12 +169,12 @@ public class CardGame {
                     cardPlayer.swapGeneration = roundId;
                     targetPlayer.swapGeneration = roundId;
                     report.shard(new HandSwapShard(cardPlayer.uuid, targetPlayer.uuid));
-                    report.sound(Mino.id("game.hand_swap"), 0);
+                    report.sound(Mino.id("game.swap_hand"), 300);
                 }
             } else if (rules.zeroRuleEnabled() && card.number == 0) {
                 rotateHands();
                 report.shard(new HandRotateShard(isAntiClockwise));
-                report.sound(Mino.id("game.hand_swap"), 0);
+                report.sound(Mino.id("game.swap_hand"), 300);
             }
         }
 

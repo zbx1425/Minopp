@@ -82,6 +82,7 @@
   "subtitles.minopp.mino_shout_invalid": "Mino shout proven invalid",
   "subtitles.minopp.doubt_success": "Mino doubt proven successful",
   "subtitles.minopp.hand_swap": "Mino: Hands swapped",
+  "subtitles.minopp.swap_hand": "Mino: Hands swapped",
 
   "key.category.minopp.common": "Mino++",
   "key.minopp.shout_modifier": "Shout Mino while Playing",

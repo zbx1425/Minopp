@@ -78,6 +78,7 @@
   "subtitles.minopp.mino_shout": "Mino！",
   "subtitles.minopp.mino_shout_invalid": "Mino：叫びが無効と認定されました。",
   "subtitles.minopp.doubt_success": "Mino：疑いが成功しました。",
+  "subtitles.minopp.swap_hand": "Mino：手札が交換された",
 
   "key.category.minopp.common": "Mino++",
   "key.minopp.shout_modifier": "プレイ中に「Mino！」と叫ぶ",

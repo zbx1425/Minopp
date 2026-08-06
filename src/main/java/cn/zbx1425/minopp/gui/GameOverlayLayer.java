@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.block.BlockMinoTable;
+import cn.zbx1425.minopp.block.MinoTableClientData;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import cn.zbx1425.minopp.render.EntityAutoPlayerRenderer;
 import cn.zbx1425.minopp.game.*;
@@ -76,15 +77,6 @@ public class GameOverlayLayer {
     private static final int ROW_HEIGHT = 20;
     private static final String NAME_MEASURE = "WWW…WWW";
 
-    private double zoomAnimationProgress = 0;
-    private double zoomAnimationTarget = 0;
-    private final Long2FloatArrayMap handCardCurrentXOff = new Long2FloatArrayMap();
-
-    private final Set<Long> newlyDrawnCardHashes = new HashSet<>();
-    private int lastSwapGeneration = -1;
-    private CardGame.PlayerActionPhase lastPhase = null;
-    private int lastRoundId = -1;
-    private LongArrayList lastHandCardHashes = new LongArrayList();
 
     //? if <26.1
     //@Override
@@ -97,31 +89,27 @@ public class GameOverlayLayer {
         if (gamePos == null) {
             TurnDeadMan.setOutsideGame();
             MinoClient.handCardOverlayActive = false;
-            handCardCurrentXOff.clear();
             return;
         }
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         if (tableEntity == null) {
             TurnDeadMan.setOutsideGame();
             MinoClient.handCardOverlayActive = false;
-            handCardCurrentXOff.clear();
             return;
         }
 
         if (tableEntity.game == null) {
             renderGameInactive(guiGraphics, deltaTracker, tableEntity);
             TurnDeadMan.setOutsideGame();
-            zoomAnimationProgress = 0;
-            zoomAnimationTarget = 0;
+            tableEntity.clientData.setZoomTarget(0);
         } else {
             TurnDeadMan.tick(tableEntity.game, deltaTracker);
             if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
                 renderGameActive(guiGraphics, deltaTracker, tableEntity);
             } else {
-                zoomAnimationTarget = 0;
+                tableEntity.clientData.setZoomTarget(0);
             }
         }
-        performZoomAnimation(deltaTracker, tableEntity);
         MinoClient.handCardOverlayActive = renderHandCards(guiGraphics, deltaTracker);
     }
 
@@ -170,18 +158,19 @@ public class GameOverlayLayer {
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
+        MinoTableClientData clientData = tableEntity.clientData;
         if (currentPlayer.equals(cardPlayer)) {
             if (tableEntity.game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND) {
-                zoomAnimationTarget = 1;
+                clientData.setZoomTarget(1);
             } else {
-                if (zoomAnimationTarget < 1.01) {
-                    zoomAnimationTarget = 1.5;
-                } else if (zoomAnimationProgress >= 1.5) {
-                    zoomAnimationTarget = 1.05;
+                if (clientData.getZoomTarget() < 1.01) {
+                    clientData.setZoomTarget(1.5);
+                } else if (clientData.getZoomProgress() >= 1.5) {
+                    clientData.setZoomTarget(1.05);
                 }
             }
         } else {
-            zoomAnimationTarget = 0;
+            clientData.setZoomTarget(0);
         }
 
         if (Minecraft.getInstance().options.hideGui) return;
@@ -297,7 +286,8 @@ public class GameOverlayLayer {
 
         // --- Render player rows ---
         int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        int handCardWidth = (int)(100.0 * Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1.5), 0.93, 1.0));
+        double zoomProg = tableEntity.clientData.getZoomProgress();
+        int handCardWidth = (int)(100.0 * Mth.lerp(Mth.clamp(zoomProg, 0, 1.5), 0.93, 1.0));
         int badgeRightLimit = screenWidth - 10 - handCardWidth - 35;
 
         boolean isFirstDiscard = game != null && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_HAND;
@@ -604,61 +594,85 @@ public class GameOverlayLayer {
         BlockEntityMinoTable tableEntity = (BlockEntityMinoTable)level.getBlockEntity(gamePos);
         CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
 
-        final int CARD_V_SPACING = 20;
-        final int CARD_WIDTH = (int)(100.0 * Mth.lerp(zoomAnimationProgress, 0.93, 1.0));
-        final int CARD_HEIGHT = (int)(CARD_WIDTH * 8.9 / 5.6);
-
         if (tableEntity.game == null) return false;
         CardPlayer realPlayer = tableEntity.game.players.stream().filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
         if (realPlayer == null) return false;
-        int clientHandIndex = Mth.clamp(ItemHandCards.getClientHandIndex(player), 0, realPlayer.hand.size() - 1);
-
         realPlayer.hand.sort(Card::compareTo);
-        LongArrayList handCardHashes = new LongArrayList();
-        for (Card card : realPlayer.hand) {
-            if (!handCardHashes.isEmpty() && card.hashCode() == (handCardHashes.getLast() & 0xFFFFFFFFL)) {
-                handCardHashes.add(handCardHashes.getLast() + 0x100000000L);
-            } else {
-                handCardHashes.add(card.hashCode());
-            }
-        }
+        int clientHandIndex = Mth.clamp(ItemHandCards.getClientHandIndex(player), 0, Math.max(realPlayer.hand.size() - 1, 0));
 
-        updateDrawnCardTracking(tableEntity, realPlayer, handCardHashes);
-        handCardCurrentXOff.keySet().removeIf(hash -> !handCardHashes.contains(hash));
+        MinoTableClientData clientData = tableEntity.clientData;
+        float delta = deltaTracker.getGameTimeDeltaPartialTick(false);
+        clientData.tickAnimations(delta);
+
+        MinoTableClientData.HandRenderState state = clientData.getHandRenderState(realPlayer, clientHandIndex);
+
+        int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+
+        renderCardList(g, font, state, clientData, width, height, delta);
+
+        MinoClient.globalFovModifier = Mth.lerp(Mth.clamp(clientData.getZoomProgress(), 0, 1), 1.0, 0.97);
+        return true;
+    }
+
+    private void renderCardList(GuiGraphicsExtractor g, Font font,
+                                MinoTableClientData.HandRenderState state,
+                                MinoTableClientData clientData,
+                                int screenWidth, int screenHeight, float deltaPartialTick) {
+        List<Card> cards = state.cards();
+        LongArrayList cardHashes = state.cardHashes();
+        double zoomProg = state.zoomProgress();
+        float yOffset = state.yOffset();
+        float spacingMul = state.spacingMultiplier();
+        int selectedIndex = state.selectedIndex();
+        Set<Long> highlightHashes = state.highlightHashes();
+        boolean useXOff = state.useXOffAnimation();
+
+        final float cardSpacing = 20f * spacingMul;
+        final int CARD_WIDTH = (int)(100.0 * Mth.lerp(zoomProg, 0.93, 1.0));
+        final int CARD_HEIGHT = (int)(CARD_WIDTH * 8.9 / 5.6);
+
+        Long2FloatArrayMap xOffMap = useXOff ? clientData.getHandCardXOff() : null;
+        if (xOffMap != null) {
+            xOffMap.keySet().removeIf(hash -> !cardHashes.contains(hash));
+        }
 
         //? if <26.1
         //RenderSystem.enableBlend();
 
-        int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
-        int handSize = realPlayer.hand.size();
-        int selectedCardYRaw = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - clientHandIndex));
+        int handSize = cards.size();
+        if (handSize == 0) return;
+        int selectedCardYRaw = screenHeight - (int)((CARD_HEIGHT / 2f) + cardSpacing * (handSize - Math.max(selectedIndex, 0)));
         int cardDrawOffset = selectedCardYRaw < 20 ? 20 - selectedCardYRaw : 0;
         Random cardRandom = new Random(handSize);
         for (int i = 0; i < handSize; i++) {
-            int targetXOff = (i == clientHandIndex ? -30 : 0) + cardRandom.nextInt(-3, 4);
-            float currentXOff = handCardCurrentXOff.computeIfAbsent(handCardHashes.getLong(i), ignored -> CARD_WIDTH + 10);
-            int x = width - 10 - CARD_WIDTH + (int)currentXOff;
-            handCardCurrentXOff.put(handCardHashes.getLong(i),
-                    (float)Mth.lerp(8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false),
-                            currentXOff, targetXOff));
-            int y = height - ((CARD_HEIGHT / 2) + CARD_V_SPACING * (handSize - i)) + cardDrawOffset;
-            if (i == clientHandIndex) {
-                Card card = realPlayer.hand.get(i);
+            int targetXOff = (i == selectedIndex ? -30 : 0) + cardRandom.nextInt(-3, 4);
+            float currentXOff;
+            if (xOffMap != null) {
+                currentXOff = xOffMap.computeIfAbsent(cardHashes.getLong(i), ignored -> CARD_WIDTH + 10);
+                xOffMap.put(cardHashes.getLong(i),
+                        (float) Mth.lerp(8 * 0.05 * deltaPartialTick, currentXOff, targetXOff));
+            } else {
+                currentXOff = targetXOff;
+            }
+            int x = screenWidth - 10 - CARD_WIDTH + (int) currentXOff;
+            int y = screenHeight - (int)((CARD_HEIGHT / 2f) + cardSpacing * (handSize - i)) + cardDrawOffset + (int) yOffset;
+            if (i == selectedIndex) {
+                Card card = cards.get(i);
                 Component cardName = card.getDisplayName();
                 GuiShim.drawString(g, font, cardName, x - font.width(cardName) - 10, y + 10, 0xFFFFFFDD);
             }
-            boolean isNewlyDrawn = newlyDrawnCardHashes.contains(handCardHashes.getLong(i));
-            if (isNewlyDrawn) {
-                float pulse = (float)(Math.sin(System.currentTimeMillis() * 0.006) + 1) / 2f;
-                int r = (int)(0xFF * (1 - pulse) + 0xCC * pulse);
+            boolean isHighlighted = highlightHashes.contains(cardHashes.getLong(i));
+            if (isHighlighted) {
+                float pulse = (float) (Math.sin(System.currentTimeMillis() * 0.006) + 1) / 2f;
+                int r = (int) (0xFF * (1 - pulse) + 0xCC * pulse);
                 int borderColor = 0xFF000000 | (r << 16);
                 g.fill(x - 3, y - 3, x + CARD_WIDTH + 3, y + CARD_HEIGHT + 3, borderColor);
             }
             g.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0xFF222222);
             g.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1, 0xFFDDDDDD);
 
-            Card card = realPlayer.hand.get(i);
+            Card card = cards.get(i);
             float cardU = switch (card.family) {
                 case NUMBER -> Math.abs(card.number) * 16;
                 case SKIP -> 160;
@@ -669,7 +683,7 @@ public class GameOverlayLayer {
             int cardUW = 16;
             int cardVH = 25;
 
-            float shadowAlpha = (float) Math.max(Mth.lerp(zoomAnimationProgress, 0.5, 0), 0);
+            float shadowAlpha = (float) Math.max(Mth.lerp(zoomProg, 0.5, 0), 0);
 
             GuiShim.blit(g,
                 ATLAS_LOCATION,
@@ -688,88 +702,18 @@ public class GameOverlayLayer {
             } else {
                 Component cardName = card.getCardFaceName().copy()
                         .withStyle(Style.EMPTY.withFont(GuiShim.getMinecraftyFontDesc()));
-                int colorA = (int)(0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
+                int colorA = (int) (0x22 * shadowAlpha + 0xFF * (1 - shadowAlpha));
                 GuiShim.drawString(g, font, cardName, 0, 0, 0xFF000000 + colorA * 0x10101);
             }
 
             GuiShim.popMatrix(g);
             GuiShim.pushMatrix(g);
-            g.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0x222222 | ((int)(0xFF * shadowAlpha) << 24));
+            g.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, 0x222222 | ((int) (0xFF * shadowAlpha) << 24));
             GuiShim.popMatrix(g);
         }
 
         //? if <26.1
         //RenderSystem.disableBlend();
-
-        return true;
-    }
-
-    // ========== Drawn Card Tracking ==========
-
-    private void updateDrawnCardTracking(BlockEntityMinoTable tableEntity, CardPlayer realPlayer, LongArrayList currentHashes) {
-        CardGame game = tableEntity.game;
-        if (game == null) {
-            newlyDrawnCardHashes.clear();
-            lastPhase = null;
-            lastRoundId = -1;
-            lastSwapGeneration = -1;
-            lastHandCardHashes.clear();
-            return;
-        }
-
-        if (lastSwapGeneration != realPlayer.swapGeneration) {
-            newlyDrawnCardHashes.clear();
-            lastHandCardHashes = new LongArrayList(currentHashes);
-            lastSwapGeneration = realPlayer.swapGeneration;
-            lastPhase = game.currentPlayerPhase;
-            lastRoundId = game.roundId;
-            return;
-        }
-
-        if (game.roundId != lastRoundId) {
-            CardPlayer currentPlayer = game.players.get(game.currentPlayerIndex);
-            boolean isOurTurn = currentPlayer.equals(realPlayer);
-
-            if (isOurTurn && lastPhase == CardGame.PlayerActionPhase.DISCARD_HAND
-                    && game.currentPlayerPhase == CardGame.PlayerActionPhase.DISCARD_DRAWN) {
-                newlyDrawnCardHashes.clear();
-                int i = 0, j = 0;
-                while (i < currentHashes.size() && j < lastHandCardHashes.size()) {
-                    long curr = currentHashes.getLong(i);
-                    long prev = lastHandCardHashes.getLong(j);
-                    if (curr == prev) {
-                        i++; j++;
-                    } else if (curr < prev) {
-                        newlyDrawnCardHashes.add(curr);
-                        i++;
-                    } else {
-                        j++;
-                    }
-                }
-                while (i < currentHashes.size()) {
-                    newlyDrawnCardHashes.add(currentHashes.getLong(i++));
-                }
-            } else {
-                newlyDrawnCardHashes.clear();
-            }
-
-            lastHandCardHashes = new LongArrayList(currentHashes);
-            lastPhase = game.currentPlayerPhase;
-            lastRoundId = game.roundId;
-            return;
-        }
-
-        lastHandCardHashes = new LongArrayList(currentHashes);
-        lastPhase = game.currentPlayerPhase;
-    }
-
-    private void performZoomAnimation(DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
-        if (Math.abs(zoomAnimationTarget - zoomAnimationProgress) < 0.01) {
-            zoomAnimationProgress = zoomAnimationTarget;
-        } else {
-            zoomAnimationProgress += (zoomAnimationTarget - zoomAnimationProgress) * 8 * 0.05 * deltaTracker.getGameTimeDeltaPartialTick(false);
-        }
-        MinoClient.globalFovModifier = Mth.lerp(Mth.clamp(zoomAnimationProgress, 0, 1), 1.0, 0.97);
     }
 
     public static final GameOverlayLayer INSTANCE = new GameOverlayLayer();

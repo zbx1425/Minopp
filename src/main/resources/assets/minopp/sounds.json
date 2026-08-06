@@ -11,6 +11,10 @@
   "game.pass": { "sounds": [
     "entity/player/attack/weak1"
   ], "subtitle": "subtitles.minopp.pass" },
+  "game.swap_hand": { "sounds": [
+    "ui/stonecutter/cut1",
+    "ui/stonecutter/cut2"
+  ], "subtitle": "subtitles.minopp.swap_hand" },
   "game.turn_notice": { "sounds": [
     "block/amethyst/resonate1", "block/amethyst/resonate2", "block/amethyst/resonate3"
   ], "subtitle": "subtitles.minopp.turn_notice" },

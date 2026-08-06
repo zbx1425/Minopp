@@ -82,6 +82,7 @@
   "subtitles.minopp.mino_shout_invalid": "Mino: 喊叫无效",
   "subtitles.minopp.doubt_success": "Mino: 怀疑成功",
   "subtitles.minopp.hand_swap": "Mino: 手牌交换",
+  "subtitles.minopp.swap_hand": "Mino: 手牌交换",
 
   "key.category.minopp.common": "Mino++",
   "key.minopp.shout_modifier": "出牌同时喊出 Mino",
