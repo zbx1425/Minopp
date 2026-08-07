@@ -69,8 +69,13 @@ public class SwapSelectionScreen extends Screen {
     }
 
     @Override
+    //? if <1.20.5 {
+    /*public void extractBackground(GuiGraphicsExtractor guiGraphics) {
+        super.extractBackground(guiGraphics);
+    *///? } else {
     public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
+    //? }
 
         int xOff = (width - PANEL_WIDTH) / 2;
         int yOff = (height - PANEL_HEIGHT) / 2;

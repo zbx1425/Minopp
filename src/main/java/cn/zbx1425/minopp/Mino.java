@@ -20,9 +20,11 @@ import cn.zbx1425.minopp.platform.*;
 import cn.zbx1425.minopp.platform.multiver.WorldShim;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
+//? if >=1.20.5 {
 import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
+//? }
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,19 +45,35 @@ public final class Mino {
     public static final String MOD_ID = "minopp";
     public static final Logger LOGGER = LoggerFactory.getLogger("Mino++");
 
+    //? if <1.21 {
+    /*public static Identifier id(String path) {
+        return new Identifier(MOD_ID, path);
+    }
+
+    public static Identifier vanillaId(String path) {
+        return new Identifier(path);
+    }
+    *///? } else {
     public static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
+
+    public static Identifier vanillaId(String path) {
+        return Identifier.withDefaultNamespace(path);
+    }
+    //? }
 
     public static final RegistryObject<GroupedBlock> BLOCK_MINO_TABLE = new RegistryObject<>(BlockMinoTable::new);
     public static final RegistryObject<BlockEntityType<BlockEntityMinoTable>> BLOCK_ENTITY_TYPE_MINO_TABLE = new RegistryObject<>(() ->
             ServerPlatform.createBlockEntityType(BlockEntityMinoTable::new, BLOCK_MINO_TABLE.get()));
 
     public static final RegistryObject<Item> ITEM_HAND_CARDS = new RegistryObject<>(ItemHandCards::new);
+    //? if >=1.20.5 {
     public static final RegistryObject<DataComponentType<ItemHandCards.CardGameBindingComponent>> DATA_COMPONENT_TYPE_CARD_GAME_BINDING = new RegistryObject<>(() ->
             ServerPlatform.createDataComponentType(ItemHandCards.CardGameBindingComponent.CODEC, ItemHandCards.CardGameBindingComponent.STREAM_CODEC));
     public static final RegistryObject<DataComponentType<Integer>> DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX = new RegistryObject<>(() ->
             ServerPlatform.createDataComponentType(Codec.INT, ByteBufCodecs.INT));
+    //? }
 
     public static final RegistryObject<Item> ITEM_AUTO_PLAYER = new RegistryObject<>(ItemAutoPlayer::new);
     public static final RegistryObject<Item> ITEM_COUPON = new RegistryObject<>(ItemCoupon::new);
@@ -75,8 +93,10 @@ public final class Mino {
         registries.registerBlockEntityType("mino_table", BLOCK_ENTITY_TYPE_MINO_TABLE);
         registries.registerItem("hand_cards", ITEM_HAND_CARDS);
         registries.registerItem("hand_cards_nobewlr", ITEM_HAND_CARDS_NO_BEWLR);
+        //? if >=1.20.5 {
         registries.registerDataComponentType("card_game_binding", DATA_COMPONENT_TYPE_CARD_GAME_BINDING);
         registries.registerDataComponentType("client_hand_index", DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX);
+        //? }
         registries.registerItem("auto_player", ITEM_AUTO_PLAYER);
         registries.registerItem("coupon", ITEM_COUPON);
 

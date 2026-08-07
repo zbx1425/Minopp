@@ -8,8 +8,6 @@ import cn.zbx1425.minopp.platform.RegistryObject;
 import cn.zbx1425.minopp.platform.multiver.RenderShim;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -27,13 +25,10 @@ import org.jspecify.annotations.Nullable;
 //? if <26.1
 //import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
 
 //? if <26.1 {
 /*import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -156,25 +151,15 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
             float cardVH = 25 / 128f;
             int color = (ci == blockEntity.game.discardDeck.size())
                     ? 0xFFFFFFFF : 0xFFAAAAAA;
-            vertexConsumer
-                    .addVertex(matrices.last(), -0.52f, 0.8f, 0).setNormal(matrices.last(), 0, 0, 1)
-                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(matrices.last(), -0.52f, -0.8f, 0).setNormal(matrices.last(), 0, 0, 1)
-                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(matrices.last(), 0.52f, -0.8f, 0).setNormal(matrices.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000)
-                    .addVertex(matrices.last(), 0.52f, 0.8f, 0).setNormal(matrices.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(0xFF000000);
+            RenderShim.fillVertEntity(vertexConsumer, matrices.last(), -0.52f, 0.8f, 0, 0, 0, 1, cardU, cardV, OverlayTexture.NO_OVERLAY, packedLight, 0xFF000000);
+            RenderShim.fillVertEntity(vertexConsumer, matrices.last(), -0.52f, -0.8f, 0, 0, 0, 1, cardU, cardV + cardVH, OverlayTexture.NO_OVERLAY, packedLight, 0xFF000000);
+            RenderShim.fillVertEntity(vertexConsumer, matrices.last(), 0.52f, -0.8f, 0, 0, 0, 1, cardU + cardUW, cardV + cardVH, OverlayTexture.NO_OVERLAY, packedLight, 0xFF000000);
+            RenderShim.fillVertEntity(vertexConsumer, matrices.last(), 0.52f, 0.8f, 0, 0, 0, 1, cardU + cardUW, cardV, OverlayTexture.NO_OVERLAY, packedLight, 0xFF000000);
             matrices.translate(0, 0, 1 / 64f);
-            vertexConsumer
-                    .addVertex(matrices.last(), -0.5f, 0.78f, 0).setNormal(matrices.last(), 0, 0, 1)
-                    .setUv(cardU, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(matrices.last(), -0.5f, -0.78f, 0).setNormal(matrices.last(), 0, 0, 1)
-                    .setUv(cardU, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(matrices.last(), 0.5f, -0.78f, 0).setNormal(matrices.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV + cardVH).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color)
-                    .addVertex(matrices.last(), 0.5f, 0.78f, 0).setNormal(matrices.last(), 0, 0, 1)
-                    .setUv(cardU + cardUW, cardV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setColor(color);
+            RenderShim.fillVertEntity(vertexConsumer, matrices.last(), -0.5f, 0.78f, 0, 0, 0, 1, cardU, cardV, OverlayTexture.NO_OVERLAY, packedLight, color);
+            RenderShim.fillVertEntity(vertexConsumer, matrices.last(), -0.5f, -0.78f, 0, 0, 0, 1, cardU, cardV + cardVH, OverlayTexture.NO_OVERLAY, packedLight, color);
+            RenderShim.fillVertEntity(vertexConsumer, matrices.last(), 0.5f, -0.78f, 0, 0, 0, 1, cardU + cardUW, cardV + cardVH, OverlayTexture.NO_OVERLAY, packedLight, color);
+            RenderShim.fillVertEntity(vertexConsumer, matrices.last(), 0.5f, 0.78f, 0, 0, 0, 1, cardU + cardUW, cardV, OverlayTexture.NO_OVERLAY, packedLight, color);
 
             if (ci == blockEntity.game.discardDeck.size()) {
                 Component cardText = (card.suit == Card.Suit.WILD)
@@ -223,11 +208,6 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
     }
 
     private static final RegistryObject<ItemStack> HAND_CARDS_MODEL_PLACEHOLDER = new RegistryObject<>(() -> new ItemStack(Mino.ITEM_HAND_CARDS_NO_BEWLR.get()));
-    private static final RegistryObject<ItemStack> HAND_CARDS_ENCHANTED_MODEL_PLACEHOLDER = new RegistryObject<>(() -> {
-        ItemStack stack = new ItemStack(Mino.ITEM_HAND_CARDS_NO_BEWLR.get());
-        stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
-        return stack;
-    });
 
     //? if >=26.1 {
 

@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.platform;
 
+//? if >=1.20.5
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
@@ -25,6 +26,7 @@ public interface RegistriesWrapper {
 
     void registerSoundEvent(String id, SoundEvent soundEvent);
 
+    //? if >=1.20.5
     <T> void registerDataComponentType(String id, RegistryObject<DataComponentType<T>> componentType);
 
 }

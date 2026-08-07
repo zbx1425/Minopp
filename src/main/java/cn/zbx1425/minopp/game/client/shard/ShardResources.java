@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.game.client.shard;
 
+import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.Card;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -25,10 +26,10 @@ public class ShardResources {
         *///? } else {
         ITEM_ATLAS = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.ITEMS);
         //? }
-        SPRITE_REDSTONE = ITEM_ATLAS.getSprite(Identifier.withDefaultNamespace("item/redstone"));
-        SPRITE_EMERALD = ITEM_ATLAS.getSprite(Identifier.withDefaultNamespace("item/emerald"));
-        SPRITE_DIAMOND = ITEM_ATLAS.getSprite(Identifier.withDefaultNamespace("item/diamond"));
-        SPRITE_GOLD = ITEM_ATLAS.getSprite(Identifier.withDefaultNamespace("item/gold_ingot"));
+        SPRITE_REDSTONE = ITEM_ATLAS.getSprite(Mino.vanillaId("item/redstone"));
+        SPRITE_EMERALD = ITEM_ATLAS.getSprite(Mino.vanillaId("item/emerald"));
+        SPRITE_DIAMOND = ITEM_ATLAS.getSprite(Mino.vanillaId("item/diamond"));
+        SPRITE_GOLD = ITEM_ATLAS.getSprite(Mino.vanillaId("item/gold_ingot"));
     }
 
     public TextureAtlasSprite getSpriteForSuit(Card.Suit suit) {
@@ -38,7 +39,7 @@ public class ShardResources {
             case BLUE -> SPRITE_DIAMOND;
             case YELLOW -> SPRITE_GOLD;
             //? if <26.1
-            //default -> ITEM_ATLAS.getSprite(Identifier.withDefaultNamespace("missingno"));
+            //default -> ITEM_ATLAS.getSprite(Mino.vanillaId("missingno"));
             //? if >=26.1
             default -> ITEM_ATLAS.missingSprite();
         };

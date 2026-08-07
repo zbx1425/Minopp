@@ -2,11 +2,8 @@ package cn.zbx1425.minopp.game.effect;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.gui.TurnDeadMan;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -17,12 +14,19 @@ import java.util.UUID;
 
 public record SoundEffectEvent(int timeOffset, Optional<UUID> target, SoundEvent sound) implements EffectEvent {
 
-    public static StreamCodec<ByteBuf, SoundEffectEvent> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.INT, SoundEffectEvent::timeOffset,
-            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), SoundEffectEvent::target,
-            SoundEvent.DIRECT_STREAM_CODEC, SoundEffectEvent::sound,
-            SoundEffectEvent::new
-    );
+    public static SoundEffectEvent streamDecode(FriendlyByteBuf buf) {
+        int timeOffset = buf.readInt();
+        Optional<UUID> target = buf.readOptional(FriendlyByteBuf::readUUID);
+        SoundEvent sound = SoundEvent.readFromNetwork(buf);
+        return new SoundEffectEvent(timeOffset, target, sound);
+    }
+
+    @Override
+    public void streamEncode(FriendlyByteBuf buf) {
+        buf.writeInt(timeOffset);
+        buf.writeOptional(target, FriendlyByteBuf::writeUUID);
+        sound.writeToNetwork(buf);
+    }
 
     @Override
     public Type<SoundEffectEvent> type() {
@@ -33,8 +37,6 @@ public record SoundEffectEvent(int timeOffset, Optional<UUID> target, SoundEvent
     public void summonClient(Level level, BlockPos origin, boolean selfPartOfSourceGame) {
         level.playLocalSound(origin, sound, SoundSource.PLAYERS, 1, 1, false);
         if (selfPartOfSourceGame) {
-            // Something's happening, so reset the idle timer
-            // This is chosen as most actions have a sound effect associated with them
             TurnDeadMan.pedal();
         }
     }

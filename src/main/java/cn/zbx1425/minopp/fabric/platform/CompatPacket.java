@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.fabric.platform;
-//? if fabric {
+//? if fabric && >=1.20.5 {
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

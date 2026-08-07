@@ -8,6 +8,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+//? if <1.20.3
+//import net.minecraft.network.chat.Style;
 
 public class WildSelectionScreen extends Screen {
 
@@ -41,6 +43,9 @@ public class WildSelectionScreen extends Screen {
 
         for (Card.Suit suit : Card.Suit.values()) {
             if (suit == Card.Suit.WILD) continue;
+            //? if <1.20.3
+            //addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(), "").withStyle(Style.EMPTY.withColor(suit.color)), e -> {
+            //? if >=1.20.3
             addRenderableWidget(Button.builder(Component.translatable("game.minopp.card.suit." + suit.name().toLowerCase(), "").withColor(suit.color), e -> {
                 C2SPlayCardPacket.Client.sendPlayCardC2S(gamePos, player, handCard, suit, shout);
                 onClose();
@@ -52,8 +57,13 @@ public class WildSelectionScreen extends Screen {
     }
 
     @Override
+    //? if <1.20.5 {
+    /*public void extractBackground(GuiGraphicsExtractor guiGraphics) {
+        super.extractBackground(guiGraphics);
+    *///? } else {
     public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
+    //? }
 
         int xOff = (width - PANEL_WIDTH) / 2;
         int yOff = (height - PANEL_HEIGHT) / 2;

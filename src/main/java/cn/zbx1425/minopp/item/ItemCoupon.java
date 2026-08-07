@@ -13,6 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 //? if >=26.1
 import net.minecraft.world.item.component.TooltipDisplay;
+//? if <1.20.5
+//import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -24,14 +26,18 @@ public class ItemCoupon extends Item implements GroupedItem {
     }
 
     @Override
-    //? if <26.1
+    //? if <1.20.5
+    //public void appendHoverText(ItemStack stack, Level level, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    //? if >=1.20.5 <26.1
     //public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
     //? if >=26.1
     public void appendHoverText(final ItemStack stack, final TooltipContext context, final TooltipDisplay display, final Consumer<Component> builder, final TooltipFlag tooltipFlag) {
         //~ if >=26.1 'tooltipComponents.add(' -> 'builder.accept(' {
         builder.accept(Component.translatable("item.minopp.coupon.description"));
         //~ }
-        //? if <26.1
+        //? if <1.20.5
+        //super.appendHoverText(stack, level, tooltipComponents, tooltipFlag);
+        //? if >=1.20.5 <26.1
         //super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
         //? if >=26.1
         super.appendHoverText(stack, context, display, builder, tooltipFlag);

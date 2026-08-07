@@ -2,6 +2,8 @@ package cn.zbx1425.minopp.game;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+//? if <1.20.5
+//import net.minecraft.util.ExtraCodecs;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -156,6 +158,9 @@ public class Card implements Comparable<Card> {
         DRAW
     }
 
+    //? if <1.20.5
+    //public static final Codec<Card> CODEC = ExtraCodecs.lazyInitializedCodec(() ->
+    //? if >=1.20.5
     public static final Codec<Card> CODEC = Codec.recursive("Card", self ->
         RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.xmap(Family::valueOf, Family::name)
@@ -163,6 +168,7 @@ public class Card implements Comparable<Card> {
             Codec.STRING.xmap(Suit::valueOf, Suit::name)
                 .optionalFieldOf("suit", Suit.BLUE).forGetter(c -> c.suit),
             Codec.INT.optionalFieldOf("number", 0).forGetter(c -> c.number),
+            //~ if >= 1.20.5 'Card.CODEC' -> 'self'
             self.optionalFieldOf("actualCard").forGetter(c -> Optional.ofNullable(c.equivCard))
         ).apply(instance, Card::new))
     );

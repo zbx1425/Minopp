@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.platform.multiver;
 
+import cn.zbx1425.minopp.Mino;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 //? if >=26.1 {
@@ -161,7 +162,7 @@ public class GuiShim {
     }
 //? } else {
     /*public static Identifier getMinecraftyFontDesc() {
-        return Identifier.withDefaultNamespace("include/default");
+        return Mino.vanillaId("include/default");
     }
-*///? }
+    *///? }
 }

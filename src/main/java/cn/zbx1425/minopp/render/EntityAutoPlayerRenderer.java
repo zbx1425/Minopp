@@ -1,5 +1,6 @@
 package cn.zbx1425.minopp.render;
 
+import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.entity.EntityAutoPlayer;
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -28,12 +29,15 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
 
-//? if <26.1 {
+//? if <1.20.2 {
 /*import net.minecraft.client.model.PlayerModel;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
+*///? } else if <26.1 {
+/*/^¹import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.resources.PlayerSkin;
-*///? } else {
+¹^///? } else {
 import net.minecraft.client.model.player.PlayerModel;
-//? }
+*///? }
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -63,19 +67,26 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
     //public Identifier getTextureLocation(EntityAutoPlayer entity) {
     //? if >=26.1
     public Identifier getTextureLocation(AvatarRenderState state) {
-        //? if <26.1 {
+        //? if <1.20.2 {
         /*Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        if (result.isPresent()) {
+            SkinManager skinManager = Minecraft.getInstance().getSkinManager();
+            return skinManager.getInsecureSkinLocation(result.get());
+        }
+        return Mino.vanillaId("textures/entity/player/slim/alex.png");
+        *///? } else if <26.1 {
+        /*/^¹Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
             return skinManager.getInsecureSkin(result.get()).texture();
         }
-        return Identifier.withDefaultNamespace("textures/entity/player/slim/alex.png");
-        *///? } else {
+        return Mino.vanillaId("textures/entity/player/slim/alex.png");
+        ¹^///? } else {
         // Note that this function won't get actually called on 26.1, due to a special check that forces
         // vanilla AvatarRenderer on AvatarRenderState in EntityRenderDispatcher.
         // But the vanilla impl will yield the right result basing on what we've filled into AvatarRenderState.
         return state.skin.body().texturePath();
-        //? }
+        *///? }
     }
 
     @Override
@@ -83,8 +94,25 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
     //public void render(EntityAutoPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
     //? if >=26.1
     public void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        //? if <26.1 {
+        //? if <1.20.2 {
         /*Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        model = wideModel;
+        if (result.isPresent()) {
+            var info = Minecraft.getInstance().getSkinManager().getInsecureSkinInformation(result.get());
+            if (info.containsKey(MinecraftProfileTexture.Type.SKIN)
+                    && "slim".equals(info.get(MinecraftProfileTexture.Type.SKIN).getMetadata("model"))) {
+                model = slimModel;
+            }
+        } else {
+            model = slimModel;
+        }
+        PlayerModel playerModel = this.getModel();
+        playerModel.setAllVisible(true);
+        ItemStack handStack = entity.getMainHandItem();
+        playerModel.rightArmPose = !handStack.isEmpty() ? HumanoidModel.ArmPose.ITEM : HumanoidModel.ArmPose.EMPTY;
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        *///? } else if <26.1 {
+        /*/^¹Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
             model = skinManager.getInsecureSkin(result.get()).model() == PlayerSkin.Model.SLIM ? slimModel : wideModel;
@@ -96,17 +124,26 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         ItemStack handStack = entity.getMainHandItem();
         playerModel.rightArmPose = !handStack.isEmpty() ? HumanoidModel.ArmPose.ITEM : HumanoidModel.ArmPose.EMPTY;
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
-        *///? } else {
+        ¹^///? } else {
         // Note that this function won't get actually called on 26.1, due to a special check that forces
         // vanilla AvatarRenderer on AvatarRenderState in EntityRenderDispatcher.
         // But the vanilla impl will yield the right result basing on what we've filled into AvatarRenderState.
         model = state.skin.model() == PlayerModelType.SLIM ? slimModel : wideModel;
         super.submit(state, poseStack, submitNodeCollector, camera);
-        //? }
+        *///? }
     }
 
-    //? if <26.1 {
-    /*public static PlayerSkin resolveClientSkin(EntityAutoPlayer entity) {
+    //? if <1.20.2 {
+
+    /*public static Identifier resolveClientSkinTexture(EntityAutoPlayer entity) {
+        Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
+        if (result.isPresent()) {
+            return Minecraft.getInstance().getSkinManager().getInsecureSkinLocation(result.get());
+        }
+        return DefaultPlayerSkin.getDefaultSkin(entity.getUUID());
+    }
+    *///? } else if <26.1 {
+    /*/^¹public static PlayerSkin resolveClientSkin(EntityAutoPlayer entity) {
         Optional<GameProfile> result = entity.clientSkinGameProfile.getNow(Optional.empty());
         if (result.isPresent()) {
             SkinManager skinManager = Minecraft.getInstance().getSkinManager();
@@ -114,7 +151,11 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         }
         return DefaultPlayerSkin.get(entity.getUUID());
     }
-    *///? } else {
+
+    public static Identifier resolveClientSkinTexture(EntityAutoPlayer entity) {
+        return resolveClientSkin(entity).texture();
+    }
+    ¹^///? } else {
 
 
     @Override
@@ -132,6 +173,10 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
             .orElseGet(() -> DefaultPlayerSkin.get(Util.NIL_UUID));
     }
 
+    public static Identifier resolveClientSkinTexture(EntityAutoPlayer entity) {
+        return resolveClientSkin(entity).body().texturePath();
+    }
+
     @Override
     public void extractRenderState(EntityAutoPlayer entity, AvatarRenderState state, float partialTicks) {
         super.extractRenderState(entity, state, partialTicks);
@@ -142,7 +187,7 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         state.id = entity.getId();
     }
 
-    //? }
+    *///? }
 }
 
 //~ }

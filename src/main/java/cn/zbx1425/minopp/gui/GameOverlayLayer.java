@@ -22,6 +22,7 @@ import cn.zbx1425.minopp.platform.multiver.GuiShim;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.longs.Long2FloatArrayMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+//? if >=1.21
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 
 //? if <26.1 {
 /*import com.mojang.blaze3d.systems.RenderSystem;
+//? if >=1.21
 import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.util.FastColor;
 *///? } else {
@@ -61,7 +63,9 @@ import net.minecraft.util.FastColor;
 import java.util.*;
 import java.util.function.Function;
 
-//? if <26.1
+//? if <1.21
+//public class GameOverlayLayer {
+//? if >=1.21 <26.1
 //public class GameOverlayLayer implements LayeredDraw.Layer {
 //? if >=26.1 && neoforge
 //public class GameOverlayLayer implements GuiLayer {
@@ -78,9 +82,14 @@ public class GameOverlayLayer {
     private static final String NAME_MEASURE = "WWW…WWW";
 
 
-    //? if <26.1
+    //? if >=1.21 <26.1
     //@Override
+    //? if <1.21 {
+    /*public void render(@NotNull GuiGraphicsExtractor guiGraphics, float partialTick) {
+    *///? } else {
     public void render(@NotNull GuiGraphicsExtractor guiGraphics, @NotNull DeltaTracker deltaTracker) {
+        float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
+    //? }
         LocalPlayer player = Minecraft.getInstance().player;
         BlockPos handCardGamePos = ItemHandCards.getHandCardGamePos(player);
         ClientLevel level = Minecraft.getInstance().level;
@@ -99,23 +108,23 @@ public class GameOverlayLayer {
         }
 
         if (tableEntity.game == null) {
-            renderGameInactive(guiGraphics, deltaTracker, tableEntity);
+            renderGameInactive(guiGraphics, tableEntity);
             TurnDeadMan.setOutsideGame();
             tableEntity.clientData.setZoomTarget(0);
         } else {
-            TurnDeadMan.tick(tableEntity.game, deltaTracker);
+            TurnDeadMan.tick(tableEntity.game, partialTick);
             if (handCardGamePos == null || hitResultGamePos == null || Objects.equals(handCardGamePos, hitResultGamePos)) {
-                renderGameActive(guiGraphics, deltaTracker, tableEntity);
+                renderGameActive(guiGraphics, tableEntity);
             } else {
                 tableEntity.clientData.setZoomTarget(0);
             }
         }
-        MinoClient.handCardOverlayActive = renderHandCards(guiGraphics, deltaTracker);
+        MinoClient.handCardOverlayActive = renderHandCards(guiGraphics, partialTick);
     }
 
     // ========== Game Inactive ==========
 
-    private void renderGameInactive(GuiGraphicsExtractor g, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    private void renderGameInactive(GuiGraphicsExtractor g, BlockEntityMinoTable tableEntity) {
         if (Minecraft.getInstance().options.hideGui) return;
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
@@ -154,7 +163,7 @@ public class GameOverlayLayer {
 
     // ========== Game Active ==========
 
-    private void renderGameActive(GuiGraphicsExtractor g, DeltaTracker deltaTracker, BlockEntityMinoTable tableEntity) {
+    private void renderGameActive(GuiGraphicsExtractor g, BlockEntityMinoTable tableEntity) {
         LocalPlayer player = Minecraft.getInstance().player;
         CardPlayer cardPlayer = ItemHandCards.getCardPlayer(player);
         CardPlayer currentPlayer = tableEntity.game.players.get(tableEntity.game.currentPlayerIndex);
@@ -547,7 +556,9 @@ public class GameOverlayLayer {
         if (connection != null) {
             PlayerInfo info = connection.getPlayerInfo(uuid);
             if (info != null) {
-                //? if <26.1
+                //? if <1.20.2
+                //return info.getSkinLocation();
+                //? if >=1.20.2 <26.1
                 //return info.getSkin().texture();
                 //? if >=26.1
                 return info.getSkin().body().texturePath();
@@ -560,14 +571,16 @@ public class GameOverlayLayer {
             for (EntityAutoPlayer autoPlayer : level.getEntitiesOfClass(EntityAutoPlayer.class, searchArea)) {
                 if (autoPlayer.getUUID().equals(uuid)) {
                     //? if <26.1
-                    //return EntityAutoPlayerRenderer.resolveClientSkin(autoPlayer).texture();
+                    //return EntityAutoPlayerRenderer.resolveClientSkinTexture(autoPlayer);
                     //? if >=26.1
-                    return EntityAutoPlayerRenderer.resolveClientSkin(autoPlayer).body().texturePath();
+                    return EntityAutoPlayerRenderer.resolveClientSkinTexture(autoPlayer);
                 }
             }
         }
 
-        //? if <26.1
+        //? if <1.20.2
+        //return DefaultPlayerSkin.getDefaultSkin(uuid);
+        //? if >=1.20.2 <26.1
         //return DefaultPlayerSkin.get(uuid).texture();
         //? if >=26.1
         return DefaultPlayerSkin.get(uuid).body().texturePath();
@@ -583,7 +596,7 @@ public class GameOverlayLayer {
 
     public static final Identifier ATLAS_LOCATION = Mino.id("textures/gui/deck.png");
 
-    private boolean renderHandCards(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
+    private boolean renderHandCards(GuiGraphicsExtractor g, float partialTick) {
         if (Minecraft.getInstance().options.hideGui) return false;
 
         Font font = Minecraft.getInstance().font;
@@ -601,7 +614,7 @@ public class GameOverlayLayer {
         int clientHandIndex = Mth.clamp(ItemHandCards.getClientHandIndex(player), 0, Math.max(realPlayer.hand.size() - 1, 0));
 
         MinoTableClientData clientData = tableEntity.clientData;
-        float delta = deltaTracker.getGameTimeDeltaPartialTick(false);
+        float delta = partialTick;
         clientData.tickAnimations(delta);
 
         MinoTableClientData.HandRenderState state = clientData.getHandRenderState(realPlayer, clientHandIndex);

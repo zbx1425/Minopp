@@ -9,7 +9,6 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -20,13 +19,12 @@ public class S2CEffectListPacket {
 
     public static final Identifier ID = Mino.id("effect_list");
 
-    @SuppressWarnings("unchecked, rawtypes")
     public static void sendS2C(ServerPlayer target, List<EffectEvent> sounds, BlockPos origin, boolean playerPartOfSourceGame) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
         packet.writeInt(sounds.size());
         for (EffectEvent event : sounds) {
             packet.writeIdentifier(event.type().id());
-            ((StreamCodec)event.type().streamCodec()).encode(packet, event);
+            event.streamEncode(packet);
         }
         packet.writeBlockPos(origin);
         packet.writeBoolean(playerPartOfSourceGame);
@@ -41,7 +39,7 @@ public class S2CEffectListPacket {
             for (int i = 0; i < size; i++) {
                 Identifier id = packet.readIdentifier();
                 EffectEvent.Type<?> type = EffectEvents.REGISTRY.get(id);
-                sounds.add(type.streamCodec().decode(packet));
+                sounds.add(type.reader().read(packet));
             }
             BlockPos origin = packet.readBlockPos();
             boolean playerPartOfSourceGame = packet.readBoolean();

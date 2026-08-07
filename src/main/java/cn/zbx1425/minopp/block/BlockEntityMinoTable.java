@@ -22,6 +22,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+//? if >=1.20.5
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -100,7 +101,11 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
-    //? if <26.1 {
+    //? if <1.20.5 {
+    /*protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.merge(NbtIOShim.encode(MinoTableState.CODEC, getSerializableState()));
+    *///? } else if <26.1 {
     /*protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
         tag.merge(NbtIOShim.encode(MinoTableState.CODEC, getSerializableState(), provider));
@@ -113,11 +118,15 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
-    //? if <26.1 {
+    //? if <1.20.5 {
+    /*public void load(CompoundTag tag) {
+        super.load(tag);
+        applyLoadedState(NbtIOShim.decode(MinoTableState.CODEC, tag));
+    *///? } else if <26.1 {
     /*protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         applyLoadedState(NbtIOShim.decode(MinoTableState.CODEC, tag, provider));
-    *///? } else if >= 26.1 {
+    *///? } else if >=26.1 {
     @SuppressWarnings("deprecation")
     protected void loadAdditional(final ValueInput input) {
         super.loadAdditional(input);
@@ -176,7 +185,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                         ItemStack handCard = new ItemStack(Mino.ITEM_HAND_CARDS.get());
                         ItemHandCards.CardGameBindingComponent newBinding =
                                 new ItemHandCards.CardGameBindingComponent(getBlockPos(), cardPlayer.uuid);
-                        handCard.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), newBinding);
+                        ItemHandCards.setCardGameBinding(handCard, newBinding);
                         //~ if >=26.1 '.selected' -> '.getSelectedSlot()'
                         if (Inventory.isHotbarSlot(mcPlayer.getInventory().getSelectedSlot())
                             //~ if >=26.1 '.getSelected()' -> '.getSelectedItem()'
@@ -236,7 +245,7 @@ public class BlockEntityMinoTable extends BlockEntity {
             for (int i = 0; i < mcPlayer.getInventory().getContainerSize(); i++) {
                 ItemStack invItem =  mcPlayer.getInventory().getItem(i);
                 if (!invItem.is(Mino.ITEM_HAND_CARDS.get())) continue;
-                ItemHandCards.CardGameBindingComponent gameBinding = invItem.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+                ItemHandCards.CardGameBindingComponent gameBinding = ItemHandCards.getCardGameBinding(invItem);
                 if (gameBinding != null && gameBinding.tablePos().equals(getBlockPos())) {
                     mcPlayer.getInventory().setItem(i, ItemStack.EMPTY);
                 }
@@ -348,9 +357,17 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     @Override
+    //? if <1.20.5 {
+    /*public @NotNull CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag);
+        return tag;
+    }
+    *///? } else {
     public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider provider) {
         return saveWithoutMetadata(provider);
     }
+    //? }
 
     @Nullable @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
@@ -375,6 +392,9 @@ public class BlockEntityMinoTable extends BlockEntity {
             CardGame.CODEC.optionalFieldOf("game").forGetter(s -> Optional.ofNullable(s.game)),
             ActionReportShards.DISPATCH_CODEC.listOf()
                 .optionalFieldOf("stateShards", DEFAULT_STATE_SHARDS).forGetter(MinoTableState::stateShards),
+            //? if <1.20.5
+            //ItemStack.CODEC.optionalFieldOf("award", ItemStack.EMPTY).forGetter(MinoTableState::award),
+            //? if >=1.20.5
             ItemStack.OPTIONAL_CODEC.optionalFieldOf("award", ItemStack.EMPTY).forGetter(MinoTableState::award),
             Codec.BOOL.optionalFieldOf("demo", false).forGetter(MinoTableState::demo),
             Codec.BOOL.optionalFieldOf("rulesLocked", false).forGetter(MinoTableState::rulesLocked),

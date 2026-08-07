@@ -37,7 +37,7 @@ import net.minecraft.world.item.SpawnEggItem;
 public class ItemAutoPlayer extends SpawnEggItem implements GroupedItem {
 
     private static final ResourceKey<CreativeModeTab> SPAWN_EGGS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
-        Identifier.withDefaultNamespace("spawn_eggs"));
+        Mino.vanillaId("spawn_eggs"));
 
     public ItemAutoPlayer() {
         //? if <26.1 {
@@ -109,6 +109,9 @@ public class ItemAutoPlayer extends SpawnEggItem implements GroupedItem {
         if (entity == null) {
             return InteractionResultHolder.pass(itemStack);
         }
+        //? if <1.20.5
+        //itemStack.shrink(1);
+        //? if >=1.20.5
         itemStack.consume(1, player);
         player.awardStat(Stats.ITEM_USED.get(this));
         level.gameEvent(player, GameEvent.ENTITY_PLACE, entity.position());

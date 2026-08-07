@@ -67,8 +67,13 @@ public class SeatControlScreen extends Screen {
     }
 
     @Override
+    //? if <1.20.5 {
+    /*public void extractBackground(GuiGraphicsExtractor guiGraphics) {
+        super.extractBackground(guiGraphics);
+    *///? } else {
     public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
+    //? }
 
         if (minecraft.level.getBlockEntity(gamePos) instanceof BlockEntityMinoTable tableEntity) {
             startButton.active = tableEntity.game == null && tableEntity.getPlayersList().size() >= 2;

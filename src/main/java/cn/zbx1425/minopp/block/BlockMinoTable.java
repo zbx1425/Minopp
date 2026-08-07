@@ -28,7 +28,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-//? if <26.1
+//? if >=1.20.5 <26.1
 //import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -59,7 +59,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
     public static final EnumProperty<TablePartType> PART = EnumProperty.create("part", TablePartType.class);
 
     private static final ResourceKey<CreativeModeTab> FUNCTIONAL_BLOCKS = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
-        Identifier.withDefaultNamespace("functional_blocks"));
+        Mino.vanillaId("functional_blocks"));
 
     public BlockMinoTable() {
         super(p -> p
@@ -71,12 +71,18 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
     }
 
     @Override
-    //~ if >=26.1 'ItemInteractionResult' -> 'InteractionResult' {
+    //? if <1.20.5 {
+    /*public @NotNull InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+        ItemStack itemStack = player.getItemInHand(interactionHand);
+    *///? } else {
+    //~ if >=26.1 'ItemInteractionResult' -> 'InteractionResult'
     protected @NotNull InteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+    //? }
+    //~ if >=1.20.5 <26.1 'InteractionResult' -> 'ItemInteractionResult' {
         if (WorldShim.isClientSide(level) && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockPos corePos = getCore(blockState, blockPos);
-            ItemHandCards.CardGameBindingComponent gameBinding = itemStack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
-            int handIndex = itemStack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
+            ItemHandCards.CardGameBindingComponent gameBinding = ItemHandCards.getCardGameBinding(itemStack);
+            int handIndex = ItemHandCards.getClientHandIndexComponent(itemStack);
             CardPlayer playerWithoutHand = ItemHandCards.getCardPlayer(player);
             BlockEntity blockEntity = level.getBlockEntity(corePos);
             if (blockEntity instanceof BlockEntityMinoTable tableEntity) {
@@ -122,7 +128,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
                             if (idx + 1 < realPlayer.hand.size() && realPlayer.hand.get(idx + 1).equals(selectedCard)) {
                                 // Next card is identical; after removal it shifts to idx
                             } else if (idx - 1 >= 0 && realPlayer.hand.get(idx - 1).equals(selectedCard)) {
-                                player.getMainHandItem().set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), idx - 1);
+                                ItemHandCards.setClientHandIndexComponent(player.getMainHandItem(), idx - 1);
                             }
                         }
                     }
@@ -130,6 +136,9 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
                 }
             }
         }
+        //? if <1.20.5
+        /*return super.use(blockState, level, blockPos, player, interactionHand, blockHitResult);*/
+        //? if >=1.20.5
         return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
     }
     //~ }
@@ -179,8 +188,12 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
                 if (tableEntity.game == null) return false;
                 AABB pileAabb = getPileAabb(tableEntity);
                 Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
+                //? if <1.21
+                //float partialTicks = Minecraft.getInstance().getFrameTime();
+                //? if >=1.21 {
                 //~ if >=26.1 'getTimer' -> 'getDeltaTracker'
                 float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+                //? }
                 float hitDistance = 20;
                 Vec3 rayBegin = cameraEntity.getEyePosition(partialTicks);
                 Vec3 rayDir = cameraEntity.getViewVector(partialTicks);
@@ -197,6 +210,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
         }
     }
 
+    //? if >=1.20.5 {
     @Override
     protected @NotNull InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
         BlockPos corePos = getCore(blockState, blockPos);
@@ -220,6 +234,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
         }
         return InteractionResult.FAIL;
     }
+    //? }
 
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext blockPlaceContext) {
@@ -248,7 +263,9 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
     }
 
     @Override
-    //?if <26.1
+    //? if <1.20.5
+    //public @NotNull BlockState updateShape(BlockState blockState, Direction directionToNeighbour, BlockState neighbourState, LevelAccessor level, BlockPos blockPos, BlockPos neighbourPos) {
+    //? if >=1.20.5 <26.1
     //protected @NotNull BlockState updateShape(BlockState blockState, Direction directionToNeighbour, BlockState neighbourState, LevelAccessor level, BlockPos blockPos, BlockPos neighbourPos) {
     //? if >=26.1
     protected BlockState updateShape(BlockState blockState, LevelReader level, ScheduledTickAccess ticks, BlockPos blockPos, Direction directionToNeighbour, BlockPos neighbourPos, BlockState neighbourState, RandomSource random) {
@@ -267,7 +284,11 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
     }
 
     @Override
+    //? if <1.20.5 {
+    /*public void playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+    *///? } else {
     public @NotNull BlockState playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+    //? }
         if (!WorldShim.isClientSide(level) && player.isCreative()) {
             BlockPos firstPartPos = getCore(blockState, blockPos);
             for (int i = 0; i < 4; i++) {
@@ -277,6 +298,9 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
                         Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
             }
         }
+        //? if <1.20.5
+        //super.playerWillDestroy(level, blockPos, blockState, player);
+        //? if >=1.20.5
         return super.playerWillDestroy(level, blockPos, blockState, player);
     }
 
@@ -319,12 +343,15 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
     }
 
     @Override
+    //~ if >=1.20.5 'public' -> 'protected'
     protected float getShadeBrightness(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
         return 1.0F;
     }
 
     @Override
-    //? if <26.1
+    //? if <1.20.5
+    //public boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+    //? if >=1.20.5 <26.1
     //protected boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
     //? if >=26.1
     protected boolean propagatesSkylightDown(BlockState state) {
@@ -334,6 +361,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
     private static final VoxelShape VOXEL_SHAPE = Block.box(0, 0, 0, 16, 14.9, 16);
 
     @Override
+    //~ if >=1.20.5 'public' -> 'protected'
     protected @NotNull VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return VOXEL_SHAPE;
     }

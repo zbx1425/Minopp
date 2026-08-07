@@ -1,11 +1,8 @@
 package cn.zbx1425.minopp.game.effect;
 
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -19,11 +16,17 @@ import java.util.UUID;
 
 public record PlayerGlowEffectEvent(UUID targetPlayer, int duration) implements EffectEvent {
 
-    public static StreamCodec<ByteBuf, PlayerGlowEffectEvent> STREAM_CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC, PlayerGlowEffectEvent::targetPlayer,
-            ByteBufCodecs.INT, PlayerGlowEffectEvent::duration,
-            PlayerGlowEffectEvent::new
-    );
+    public static PlayerGlowEffectEvent streamDecode(FriendlyByteBuf buf) {
+        UUID targetPlayer = buf.readUUID();
+        int duration = buf.readInt();
+        return new PlayerGlowEffectEvent(targetPlayer, duration);
+    }
+
+    @Override
+    public void streamEncode(FriendlyByteBuf buf) {
+        buf.writeUUID(targetPlayer);
+        buf.writeInt(duration);
+    }
 
     @Override
     public Optional<UUID> target() {

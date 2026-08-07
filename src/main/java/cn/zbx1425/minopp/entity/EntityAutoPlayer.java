@@ -7,6 +7,7 @@ import cn.zbx1425.minopp.game.AutoPlayer;
 import cn.zbx1425.minopp.game.CardGame;
 import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.game.ActionReport;
+import cn.zbx1425.minopp.game.shard.RejectionShard;
 import cn.zbx1425.minopp.gui.AutoPlayerScreen;
 import cn.zbx1425.minopp.item.ItemHandCards;
 import cn.zbx1425.minopp.network.S2CAutoPlayerScreenPacket;
@@ -25,6 +26,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+//? if >=1.20.5
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -41,6 +43,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+//? if >=26.1
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -93,7 +96,14 @@ public class EntityAutoPlayer extends LivingEntity {
                 clientSkinGameProfileValidFor = entityData.get(SKIN);
                 try {
                     UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
-                    //? if <26.1 {
+                    //? if <1.20.5 {
+                    /*{
+                        CompletableFuture<Optional<GameProfile>> future = new CompletableFuture<>();
+                        SkullBlockEntity.updateGameprofile(new GameProfile(skinAsUUID, null), profile ->
+                            future.complete(Optional.ofNullable(profile)));
+                        clientSkinGameProfile = future;
+                    }
+                    *///? } else if <26.1 {
                     /*clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
                     *///? } else {
                     clientSkinGameProfile = ResolvableProfile.createUnresolved(skinAsUUID)
@@ -101,7 +111,14 @@ public class EntityAutoPlayer extends LivingEntity {
                         .thenApply(Optional::of);
                     //? }
                 } catch (IllegalArgumentException e) {
-                    //? if <26.1 {
+                    //? if <1.20.5 {
+                    /*{
+                        CompletableFuture<Optional<GameProfile>> future = new CompletableFuture<>();
+                        SkullBlockEntity.updateGameprofile(new GameProfile(null, clientSkinGameProfileValidFor), profile ->
+                            future.complete(Optional.ofNullable(profile)));
+                        clientSkinGameProfile = future;
+                    }
+                    *///? } else if <26.1 {
                     /*clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
                     *///? } else {
                     clientSkinGameProfile = ResolvableProfile.createUnresolved(clientSkinGameProfileValidFor)
@@ -143,7 +160,7 @@ public class EntityAutoPlayer extends LivingEntity {
                                 tablePos = corePos;
                                 tableFound = true;
                                 ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                                handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+                                ItemHandCards.setCardGameBinding(handStack, new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
                                 entityData.set(HAND_STACK, handStack);
                                 break;
                             }
@@ -189,13 +206,18 @@ public class EntityAutoPlayer extends LivingEntity {
                     ActionReport result = autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules);
                     if (result.isFail()) {
                         for (var shard : result.shards) {
-                            if (shard instanceof cn.zbx1425.minopp.game.shard.RejectionShard(Component message)) {
-                                Mino.LOGGER.warn("AutoPlayer Failed! {}: {}", realPlayer.name, message.getString());
+                            // We need to support Java 17
+                            // noinspection DeconstructionCanBeUsed
+                            if (shard instanceof cn.zbx1425.minopp.game.shard.RejectionShard rejectionShard) {
+                                Mino.LOGGER.warn("AutoPlayer Failed! {}: {}", realPlayer.name, rejectionShard.message().getString());
                             }
                         }
                         autoPlayer.playAtGame(tableEntity.game, realPlayer, level().getServer(), tableEntity.rules, true);
                         try {
                             var gameJson = CardGame.CODEC.encodeStart(JsonOps.INSTANCE, tableEntity.game);
+                            //? if <1.20.5
+                            //Mino.LOGGER.warn("Game state: {}", gameJson.getOrThrow(false, s -> { throw new RuntimeException(s); }));
+                            //? if >=1.20.5
                             Mino.LOGGER.warn("Game state: {}", gameJson.getOrThrow());
                         } catch (Exception e) {
                             Mino.LOGGER.warn("Failed to encode game state", e);
@@ -336,7 +358,7 @@ public class EntityAutoPlayer extends LivingEntity {
         // Try fix hand stack
         if (tablePos != null && cardPlayer != null) {
             ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-            handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
+            ItemHandCards.setCardGameBinding(handStack, new ItemHandCards.CardGameBindingComponent(tablePos, cardPlayer.uuid));
             entityData.set(HAND_STACK, handStack);
         } else {
             entityData.set(HAND_STACK, ItemStack.EMPTY);
@@ -353,12 +375,21 @@ public class EntityAutoPlayer extends LivingEntity {
     private static final EntityDataAccessor<String> SKIN = SynchedEntityData.defineId(EntityAutoPlayer.class, EntityDataSerializers.STRING);
 
     @Override
+    //? if <1.20.5 {
+    /*protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(HAND_STACK, ItemStack.EMPTY);
+        this.entityData.define(ACTIVE, false);
+        this.entityData.define(SKIN, "");
+    }
+    *///? } else {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(HAND_STACK, ItemStack.EMPTY);
         builder.define(ACTIVE, false);
         builder.define(SKIN, "");
     }
+    //? }
 
     public static AttributeSupplier createAttributes() {
         return LivingEntity.createLivingAttributes()
@@ -422,10 +453,17 @@ public class EntityAutoPlayer extends LivingEntity {
         Optional<Component> customName,
         boolean configEditRestricted
     ) {
+        //? if <1.20.5 {
+        /*private static final Codec<Component> JSON_STRING_COMPONENT_CODEC = Codec.STRING.xmap(
+            s -> Component.Serializer.fromJson(s),
+            c -> Component.Serializer.toJson(c)
+        );
+        *///? } else {
         private static final Codec<Component> JSON_STRING_COMPONENT_CODEC = Codec.STRING.xmap(
             s -> ComponentSerialization.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(s)).getOrThrow(),
             c -> ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, c).getOrThrow().toString()
         );
+        //? }
 
         public static final MapCodec<Config> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.BOOL.optionalFieldOf("Active", false).forGetter(Config::active),

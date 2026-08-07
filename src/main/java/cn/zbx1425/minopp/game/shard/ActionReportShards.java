@@ -58,6 +58,9 @@ public class ActionReportShards {
     @SuppressWarnings("unchecked")
     private static final Codec<MapCodec<? extends ActionReportShard>> TYPE_CODEC = Codec.STRING.xmap(
             idStr -> {
+                //? if <1.21
+                //Identifier id = new Identifier(idStr);
+                //? if >=1.21
                 Identifier id = Identifier.parse(idStr);
                 ShardType<?> type = REGISTRY.get(id);
                 if (type == null) throw new IllegalArgumentException("Unknown shard type: " + idStr);
@@ -76,6 +79,9 @@ public class ActionReportShards {
     public static final Codec<ActionReportShard> DISPATCH_CODEC = TYPE_CODEC.dispatch(
             "shard_type",
             shard -> shard.shardType().codec(),
+            //? if <1.20.5
+            //mapCodec -> mapCodec.codec()
+            //? if >=1.20.5
             Function.identity()
     );
 }

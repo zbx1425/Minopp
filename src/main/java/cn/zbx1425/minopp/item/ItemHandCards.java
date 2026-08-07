@@ -7,18 +7,24 @@ import cn.zbx1425.minopp.game.CardPlayer;
 import cn.zbx1425.minopp.gui.TurnDeadMan;
 import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.multiver.PlayerShim;
+//? if <1.20.5
+//import cn.zbx1425.minopp.platform.multiver.NbtIOShim;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+//? if <1.20.5
+//import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+//? if >=1.20.5 {
+import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+//? }
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -75,7 +81,7 @@ public class ItemHandCards extends Item {
 
     public static BlockPos getHandCardGamePos(Player player) {
         if (!player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) return null;
-        CardGameBindingComponent binding = player.getMainHandItem().get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+        CardGameBindingComponent binding = getCardGameBinding(player.getMainHandItem());
         if (binding == null) return null;
         BlockPos tablePos = binding.tablePos();
         BlockState blockState = player.level().getBlockState(tablePos);
@@ -85,18 +91,20 @@ public class ItemHandCards extends Item {
 
     public static int getClientHandIndex(Player player) {
         if (player.getMainHandItem().is(Mino.ITEM_HAND_CARDS.get())) {
-            return player.getMainHandItem().getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
+            return getClientHandIndexComponent(player.getMainHandItem());
         } else {
             return 0;
         }
     }
 
     @Override
-    //? if <26.1
+    //? if <1.20.5
+    //public void appendHoverText(ItemStack stack, Level level, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    //? if >=1.20.5 <26.1
     //public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
     //? if >=26.1
     public void appendHoverText(final ItemStack stack, final TooltipContext context, final TooltipDisplay display, final Consumer<Component> builder, final TooltipFlag tooltipFlag) {
-        CardGameBindingComponent binding = stack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+        CardGameBindingComponent binding = getCardGameBinding(stack);
         //~ if >=26.1 'tooltipComponents.add(' -> 'builder.accept(' {
         if (binding != null) {
             builder.accept(Component.literal("Table: " + binding.tablePos().toShortString()));
@@ -105,25 +113,65 @@ public class ItemHandCards extends Item {
             }
         }
         //~ }
-        //? if <26.1
+        //? if <1.20.5
+        //super.appendHoverText(stack, level, tooltipComponents, tooltipFlag);
+        //? if >=1.20.5 <26.1
         //super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
         //? if >=26.1
         super.appendHoverText(stack, context, display, builder, tooltipFlag);
     }
 
     public record CardGameBindingComponent(BlockPos tablePos, UUID bearerId) {
-        // BearerId is to convey holder info into BEWLR
 
         public static final Codec<CardGameBindingComponent> CODEC = RecordCodecBuilder.create(it -> it.group(
                 BlockPos.CODEC.fieldOf("tablePos").orElse(BlockPos.ZERO).forGetter(CardGameBindingComponent::tablePos),
                 UUIDUtil.CODEC.fieldOf("bearerId").orElse(Util.NIL_UUID).forGetter(CardGameBindingComponent::bearerId)
         ).apply(it, CardGameBindingComponent::new));
 
+        //? if >=1.20.5 {
         public static final StreamCodec<ByteBuf, CardGameBindingComponent> STREAM_CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, CardGameBindingComponent::tablePos,
                 UUIDUtil.STREAM_CODEC, CardGameBindingComponent::bearerId,
                 CardGameBindingComponent::new
         );
+        //? }
+    }
+
+    public static CardGameBindingComponent getCardGameBinding(ItemStack stack) {
+        //? if <1.20.5 {
+        /*CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains("minopp_CardGameBinding")) return null;
+        return NbtIOShim.decodeNullable(CardGameBindingComponent.CODEC, tag.getCompound("minopp_CardGameBinding"));
+        *///? } else {
+        return stack.get(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get());
+        //? }
+    }
+
+    public static void setCardGameBinding(ItemStack stack, CardGameBindingComponent value) {
+        //? if <1.20.5 {
+        /*CompoundTag tag = stack.getOrCreateTag();
+        tag.put("minopp_CardGameBinding", NbtIOShim.encode(CardGameBindingComponent.CODEC, value));
+        *///? } else {
+        stack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(), value);
+        //? }
+    }
+
+    public static int getClientHandIndexComponent(ItemStack stack) {
+        //? if <1.20.5 {
+        /*CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains("minopp_ClientHandIndex")) return 0;
+        return tag.getInt("minopp_ClientHandIndex");
+        *///? } else {
+        return stack.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
+        //? }
+    }
+
+    public static void setClientHandIndexComponent(ItemStack stack, int value) {
+        //? if <1.20.5 {
+        /*stack.getOrCreateTag().putInt("minopp_ClientHandIndex", value);
+        *///? } else {
+        stack.set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), value);
+        //? }
     }
 
     public static class Client {
@@ -143,8 +191,8 @@ public class ItemHandCards extends Item {
                             .filter(p -> p.equals(playerWithoutHand)).findFirst().orElse(null);
                         if (realPlayer == null) return false;
 
-                        int handIndex = holding.getOrDefault(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(), 0);
-                        holding.set(Mino.DATA_COMPONENT_TYPE_CLIENT_HAND_INDEX.get(),
+                        int handIndex = getClientHandIndexComponent(holding);
+                        setClientHandIndexComponent(holding,
                             Mth.clamp(handIndex - direction, 0, realPlayer.hand.size() - 1));
 
                         TurnDeadMan.pedal();

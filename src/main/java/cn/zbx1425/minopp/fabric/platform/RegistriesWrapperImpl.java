@@ -11,6 +11,7 @@ import cn.zbx1425.minopp.platform.RegistryObject;
 //? if >=26.1
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.Registry;
+//? if >=1.20.5
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -74,10 +75,12 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
         Registry.register(BuiltInRegistries.SOUND_EVENT, Mino.id(id), soundEvent);
     }
 
+    //? if >=1.20.5 {
     @Override
     public <T> void registerDataComponentType(String id, RegistryObject<DataComponentType<T>> componentType) {
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Mino.id(id), componentType.get());
     }
+    //? }
 }
 
 //? }
