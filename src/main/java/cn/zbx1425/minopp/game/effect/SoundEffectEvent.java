@@ -16,16 +16,24 @@ public record SoundEffectEvent(int timeOffset, Optional<UUID> target, SoundEvent
 
     public static SoundEffectEvent streamDecode(FriendlyByteBuf buf) {
         int timeOffset = buf.readInt();
-        Optional<UUID> target = buf.readOptional(FriendlyByteBuf::readUUID);
-        SoundEvent sound = SoundEvent.readFromNetwork(buf);
+        Optional<UUID> target = buf.readOptional(b -> b.readUUID());
+        //? if <1.20.5 {
+        /*SoundEvent sound = SoundEvent.readFromNetwork(buf);
+        *///? } else {
+        SoundEvent sound = SoundEvent.DIRECT_STREAM_CODEC.decode(buf);
+        //? }
         return new SoundEffectEvent(timeOffset, target, sound);
     }
 
     @Override
     public void streamEncode(FriendlyByteBuf buf) {
         buf.writeInt(timeOffset);
-        buf.writeOptional(target, FriendlyByteBuf::writeUUID);
-        sound.writeToNetwork(buf);
+        buf.writeOptional(target, (b, uuid) -> b.writeUUID(uuid));
+        //? if <1.20.5 {
+        /*sound.writeToNetwork(buf);
+        *///? } else {
+        SoundEvent.DIRECT_STREAM_CODEC.encode(buf, sound);
+        //? }
     }
 
     @Override

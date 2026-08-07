@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.neoforge.platform;
-//? if neoforge {
+//? if forgelike && >=1.21 {
 
 
 /*import cn.zbx1425.minopp.platform.ServerPlatform;

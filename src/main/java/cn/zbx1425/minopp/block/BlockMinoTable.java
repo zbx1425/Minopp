@@ -78,6 +78,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
     //~ if >=26.1 'ItemInteractionResult' -> 'InteractionResult'
     protected @NotNull InteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
     //? }
+        if (itemStack.isEmpty()) return useWithoutItem(blockState, level, blockPos, player, blockHitResult);
     //~ if >=1.20.5 <26.1 'InteractionResult' -> 'ItemInteractionResult' {
         if (WorldShim.isClientSide(level) && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockPos corePos = getCore(blockState, blockPos);
@@ -137,7 +138,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
             }
         }
         //? if <1.20.5
-        /*return super.use(blockState, level, blockPos, player, interactionHand, blockHitResult);*/
+        //return super.use(blockState, level, blockPos, player, interactionHand, blockHitResult);
         //? if >=1.20.5
         return super.useItemOn(itemStack, blockState, level, blockPos, player, interactionHand, blockHitResult);
     }
@@ -210,7 +211,7 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
         }
     }
 
-    //? if >=1.20.5 {
+    //? if >=1.20.5
     @Override
     protected @NotNull InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
         BlockPos corePos = getCore(blockState, blockPos);
@@ -234,7 +235,6 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
         }
         return InteractionResult.FAIL;
     }
-    //? }
 
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext blockPlaceContext) {

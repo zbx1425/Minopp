@@ -41,9 +41,8 @@ allprojects {
             forRepository { maven("https://archive.teacon.cn/maven") }
             filter { includeGroup("org.teacon") }
         }
-        flatDir {
-            dir(rootDir.resolve("libs"))
-        }
+
+        maven("https://api.modrinth.com/maven")
 
         mavenCentral()
     }

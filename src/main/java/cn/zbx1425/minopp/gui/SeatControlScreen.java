@@ -68,7 +68,12 @@ public class SeatControlScreen extends Screen {
 
     @Override
     //? if <1.20.5 {
-    /*public void extractBackground(GuiGraphicsExtractor guiGraphics) {
+    /*public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        extractBackground(guiGraphics);
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+    @Override
+    public void extractBackground(GuiGraphicsExtractor guiGraphics) {
         super.extractBackground(guiGraphics);
     *///? } else {
     public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {

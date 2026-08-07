@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.neoforge.platform;
-//? if neoforge {
+//? if forgelike {
 
 /*import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.platform.GroupedBlock;
@@ -7,6 +7,7 @@ import cn.zbx1425.minopp.platform.GroupedItem;
 import cn.zbx1425.minopp.platform.RegistriesWrapper;
 import cn.zbx1425.minopp.platform.RegistryObject;
 import net.minecraft.client.KeyMapping;
+//? if >=1.20.5
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
@@ -25,6 +26,7 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.neoforged.neoforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,11 +35,20 @@ import java.util.Map;
 
 public class RegistriesWrapperImpl implements RegistriesWrapper {
 
-    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, Mino.MOD_ID);
+    //? if neoforge {
+    /^private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, Mino.MOD_ID);
     private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(BuiltInRegistries.BLOCK, Mino.MOD_ID);
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, Mino.MOD_ID);
     private static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, Mino.MOD_ID);
     private static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(BuiltInRegistries.SOUND_EVENT, Mino.MOD_ID);
+    ^///? } else {
+    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Mino.MOD_ID);
+    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Mino.MOD_ID);
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, Mino.MOD_ID);
+    private static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, Mino.MOD_ID);
+    private static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Mino.MOD_ID);
+    //? }
+    //? if >=1.20.5
     private static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES = DeferredRegister.create(BuiltInRegistries.DATA_COMPONENT_TYPE, Mino.MOD_ID);
 
     @Override
@@ -87,10 +98,12 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
         SOUND_EVENTS.register(id, () -> soundEvent);
     }
 
+    //? if >=1.20.5 {
     @Override
     public <T> void registerDataComponentType(String id, RegistryObject<DataComponentType<T>> componentType) {
         DATA_COMPONENT_TYPES.register(id, componentType::get);
     }
+    //? }
 
     public final List<KeyMapping> keyMappings = new ArrayList<>();
 
@@ -100,6 +113,7 @@ public class RegistriesWrapperImpl implements RegistriesWrapper {
         BLOCK_ENTITY_TYPES.register(eventBus);
         ENTITY_TYPES.register(eventBus);
         SOUND_EVENTS.register(eventBus);
+        //? if >=1.20.5
         DATA_COMPONENT_TYPES.register(eventBus);
     }
 

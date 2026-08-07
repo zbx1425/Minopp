@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.neoforge;
-//? if neoforge {
+//? if forgelike {
 
 /*import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.MinoClient;
@@ -16,9 +16,16 @@ import net.minecraft.data.AtlasIds;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.*;
+//? if >=1.21
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+//? if >=1.21
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+//? if >=1.21
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+//? if <1.21
+//import net.neoforged.neoforge.client.gui.overlay.VanillaGuiOverlay;
+//? if <1.21
+//import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.client.settings.IKeyConflictContext;
 
 //? if >=1.21.2
@@ -35,9 +42,17 @@ public class ClientProxy {
 
     public static class ModEventBusListener {
         @SubscribeEvent
+        //? if >=1.21 {
         public static void onRegisterGuiOverlays(RegisterGuiLayersEvent event) {
             event.registerAbove(VanillaGuiLayers.SCOREBOARD_SIDEBAR, Mino.id("game_overlay"), GameOverlayLayer.INSTANCE);
         }
+        //? } else {
+        /^public static void onRegisterGuiOverlays(RegisterGuiOverlaysEvent event) {
+            event.registerAbove(VanillaGuiOverlay.SCOREBOARD.id(), "game_overlay", (gui, guiGraphics, partialTick, screenWidth, screenHeight) -> {
+                GameOverlayLayer.INSTANCE.render(guiGraphics, partialTick);
+            });
+        }
+        ^///? }
 
         @SubscribeEvent
         public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
@@ -48,6 +63,7 @@ public class ClientProxy {
             }
         }
 
+        //? if >=1.21 {
         @SubscribeEvent
         public static void onRegisterClientExtension(RegisterClientExtensionsEvent event) {
             //? if <26.1 {
@@ -59,6 +75,7 @@ public class ClientProxy {
             }, Mino.ITEM_HAND_CARDS.get());
             ^///? }
         }
+        //? }
 
         //? if >=26.1 {
         @SubscribeEvent
@@ -84,7 +101,11 @@ public class ClientProxy {
         //? }
 
         @SubscribeEvent
+        //? if >=1.21 {
         public static void onTextureAtlasStitched(TextureAtlasStitchedEvent event) {
+        //? } else {
+        /^public static void onTextureAtlasStitched(TextureStitchEvent.Post event) {
+        ^///? }
             //? if <26.1 {
             /^if (event.getAtlas() == Minecraft.getInstance().getModelManager().getAtlas(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)) {
                 ShardResources.INSTANCE.onResourceReload();
@@ -105,9 +126,17 @@ public class ClientProxy {
         }
 
         @SubscribeEvent
+        //? if >=1.21 {
         public static void onClientTick(ClientTickEvent.Pre event) {
             MinoClient.tick();
         }
+        //? } else {
+        /^public static void onClientTick(TickEvent.ClientTickEvent event) {
+            if (event.phase == TickEvent.Phase.START) {
+                MinoClient.tick();
+            }
+        }
+        ^///? }
 
     }
 

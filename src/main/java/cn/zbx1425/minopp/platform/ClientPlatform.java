@@ -13,7 +13,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 //import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 //? if >=26.1
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
-//? } else if neoforge {
+//? } else if forgelike {
 /*import cn.zbx1425.minopp.neoforge.MinoNeoForge;
 *///? }
 
@@ -54,7 +54,7 @@ public class ClientPlatform {
 
     //? }
 
-    //? if neoforge {
+    //? if forgelike {
 
     /*public static List<RegistryObject<KeyMapping>> KEY_MAPPINGS = new ArrayList<>();
 

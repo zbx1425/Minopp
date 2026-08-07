@@ -1,6 +1,6 @@
 package cn.zbx1425.minopp.neoforge.mixin;
-//? if neoforge {
 
+//? if forgelike && >=1.21 {
 /*import cn.zbx1425.minopp.block.BlockEntityMinoTable;
 import cn.zbx1425.minopp.render.BlockEntityMinoTableRenderer;
 import net.minecraft.world.phys.AABB;
@@ -16,5 +16,19 @@ public class BlockEntityMinoTableRendererMixin implements IBlockEntityRendererEx
         return AABB.INFINITE;
     }
 }
-
 *///?}
+
+//? if forgelike && <1.21 {
+/*import cn.zbx1425.minopp.block.BlockEntityMinoTable;
+import net.neoforged.neoforge.common.extensions.IForgeBlockEntity;
+import org.spongepowered.asm.mixin.Mixin;
+
+@Mixin(BlockEntityMinoTable.class)
+public abstract class BlockEntityMinoTableRendererMixin implements IForgeBlockEntity {
+
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox() {
+        return INFINITE_EXTENT_AABB;
+    }
+}
+*///? }

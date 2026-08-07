@@ -53,6 +53,18 @@ public class ItemHandCards extends Item {
         super(GroupedItem.buildProperties(p -> p.stacksTo(1), Mino.id("hand_cards")));
     }
 
+    //? if forgelike && <1.21 {
+    /*@Override
+    public void initializeClient(Consumer<net.neoforged.neoforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(new net.neoforged.neoforge.client.extensions.common.IClientItemExtensions() {
+            @Override
+            public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return cn.zbx1425.minopp.render.HandCardsWithoutLevelRenderer.INSTANCE.get();
+            }
+        });
+    }
+    *///? }
+
     @Override
     //~ if >=26.1 'InteractionResultHolder<ItemStack>' -> 'InteractionResult'
     public InteractionResult use(Level level, Player player, InteractionHand usedHand) {

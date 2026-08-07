@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.neoforge.compat.touhou_little_maid;
-//? if neoforge {
+//? if forgelike {
 
 /*import cn.zbx1425.minopp.Mino;
 import net.minecraft.core.registries.Registries;

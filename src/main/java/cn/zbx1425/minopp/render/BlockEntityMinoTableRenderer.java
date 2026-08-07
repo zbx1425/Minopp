@@ -33,6 +33,9 @@ import net.minecraft.world.phys.Vec3;
 //? if <26.1 {
 /*import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import org.joml.Matrix4f;
 *///? } else {
 
 //? }

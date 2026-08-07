@@ -64,14 +64,14 @@ public class CardGame {
         Collections.shuffle(deck);
         for (int i = 0; i < initialCardCount; i++) {
             for (CardPlayer player : players) {
-                player.hand.add(deck.removeLast());
+                player.hand.add(deck.remove(deck.size() - 1));
             }
         }
-        Card tobeTopCard = deck.removeLast();
+        Card tobeTopCard = deck.remove(deck.size() - 1);
         while (tobeTopCard.family != Card.Family.NUMBER || tobeTopCard.suit == Card.Suit.WILD) {
             deck.add(tobeTopCard);
             Collections.shuffle(deck);
-            tobeTopCard = deck.removeLast();
+            tobeTopCard = deck.remove(deck.size() - 1);
         }
         topCard = tobeTopCard;
         topCardPlayer = null;
@@ -209,13 +209,13 @@ public class CardGame {
                 if (drawCount == 0) {
                     return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
                 }
-                forcePlayCard = resolveForcePlay(cardPlayer.hand.getLast(), cardPlayer, rules);
+                forcePlayCard = resolveForcePlay(cardPlayer.hand.get(cardPlayer.hand.size() - 1), cardPlayer, rules);
             } else {
                 drawCount = 1;
                 if (!doDrawCard(cardPlayer, drawCount, report)) {
                     return report.panic(Component.translatable("game.minopp.play.deck_depleted"));
                 }
-                forcePlayCard = resolveForcePlay(cardPlayer.hand.getLast(), cardPlayer, rules);
+                forcePlayCard = resolveForcePlay(cardPlayer.hand.get(cardPlayer.hand.size() - 1), cardPlayer, rules);
             }
             currentPlayerPhase = PlayerActionPhase.DISCARD_DRAWN;
             roundId++;
@@ -311,7 +311,7 @@ public class CardGame {
                 discardDeck.clear();
             }
             if (deck.isEmpty()) break;
-            Card drawn = deck.removeLast();
+            Card drawn = deck.remove(deck.size() - 1);
             cardPlayer.hand.add(drawn);
             count++;
             if (drawn.canPlayOn(topCard)) {
@@ -362,7 +362,7 @@ public class CardGame {
             return false;
         }
         for (int i = 0; i < drawCount; i++) {
-            cardPlayer.hand.add(deck.removeLast());
+            cardPlayer.hand.add(deck.remove(deck.size() - 1));
         }
         fillDrawSfx(drawCount, report);
         return true;

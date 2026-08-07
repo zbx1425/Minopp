@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.neoforge.compat.touhou_little_maid;
-//? if neoforge && <26.1 {
+//? if forgelike && <26.1 {
 
 /*import cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.task.MinoppTask;
 import com.github.tartaricacid.touhoulittlemaid.api.ILittleMaid;

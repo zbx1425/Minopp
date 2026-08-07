@@ -89,7 +89,7 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
 //? } else {
 /*public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, CompoundTag fireworkNbt) implements EffectEvent {
 
-    public static PlayerFireworkEffectEvent read(FriendlyByteBuf buf) {
+    public static PlayerFireworkEffectEvent streamDecode(FriendlyByteBuf buf) {
         int timeOffset = buf.readInt();
         UUID targetPlayer = buf.readUUID();
         CompoundTag fireworkNbt = buf.readNbt();
@@ -97,7 +97,7 @@ public record PlayerFireworkEffectEvent(int timeOffset, UUID targetPlayer, List<
     }
 
     @Override
-    public void write(FriendlyByteBuf buf) {
+    public void streamEncode(FriendlyByteBuf buf) {
         buf.writeInt(timeOffset);
         buf.writeUUID(targetPlayer);
         buf.writeNbt(fireworkNbt);

@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.task;
-//? if neoforge && <26.1 {
+//? if forgelike && <26.1 {
 
 /*import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.block.BlockEntityMinoTable;
@@ -53,8 +53,7 @@ public class PlayMinoTask extends MaidCheckRateTask {
                     CardPlayer cardPlayer = new CardPlayer(maid.getUUID(), playerName);
                     this.cardPlayer = cardPlayer;
                     ItemStack handStack = new ItemStack(Mino.ITEM_HAND_CARDS.get());
-                    handStack.set(Mino.DATA_COMPONENT_TYPE_CARD_GAME_BINDING.get(),
-                            new ItemHandCards.CardGameBindingComponent(corePos, cardPlayer.uuid));
+                    ItemHandCards.setCardGameBinding(handStack, new ItemHandCards.CardGameBindingComponent(corePos, cardPlayer.uuid));
                     maid.setItemInHand(InteractionHand.MAIN_HAND, handStack);
                     tableEntity.joinPlayerToTable(cardPlayer, maid.position());
                 }

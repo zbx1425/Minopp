@@ -24,7 +24,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
-//? } else if neoforge {
+//? } else if forgelike {
 /*import cn.zbx1425.minopp.neoforge.MinoNeoForge;
 *///? }
 
@@ -84,7 +84,7 @@ public class ServerPlatform {
 
     //? }
 
-    //? if neoforge {
+    //? if forgelike {
 
 
     /*public static boolean isFabric() {

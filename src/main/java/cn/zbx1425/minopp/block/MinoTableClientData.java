@@ -402,8 +402,8 @@ public class MinoTableClientData {
     public static LongArrayList computeCardHashes(List<Card> sortedCards) {
         LongArrayList hashes = new LongArrayList();
         for (Card card : sortedCards) {
-            if (!hashes.isEmpty() && card.hashCode() == (hashes.getLast() & 0xFFFFFFFFL)) {
-                hashes.add(hashes.getLast() + 0x100000000L);
+            if (!hashes.isEmpty() && card.hashCode() == (hashes.getLong(hashes.size() - 1) & 0xFFFFFFFFL)) {
+                hashes.add(hashes.getLong(hashes.size() - 1) + 0x100000000L);
             } else {
                 hashes.add(card.hashCode());
             }

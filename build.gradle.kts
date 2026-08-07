@@ -26,6 +26,7 @@ val loader = when {
 
 modstitch {
     minecraftVersion = mcVersion
+    javaVersion = 17
 
     parchment {
         prop("parchment.version") { mappingsVersion = it }
@@ -110,7 +111,7 @@ modstitch {
         // Most of the time you wont ever need loader specific mixins.
         // If you do, simply make the mixin file and add it like so for the respective loader:
         if (isFabric) configs.register("minopp.fabric")
-        if (isNeoforge) configs.register("minopp.neoforge")
+        if (isForgeLike) configs.register("minopp.forgelike")
     }
 }
 
@@ -144,6 +145,12 @@ stonecutter {
             replace("renderBackground", "extractBackground")
             replace("guiGraphics.drawString", "guiGraphics.text")
             replace("guiGraphics.drawCenteredString", "guiGraphics.centeredText")
+        }
+        string {
+            direction = eval(current.version, ">=1.21")
+            replace("net.minecraftforge", "net.neoforged.neoforge")
+            replace("net.minecraftforge.eventbus", "net.neoforged.bus")
+            replace("net.minecraftforge.fml", "net.neoforged.fml")
         }
     }
 }
@@ -197,8 +204,12 @@ dependencies {
 //        modstitchModRuntimeOnly("thedarkcolour:kotlinforforge-neoforge:${findProperty("deps.kotlinForForge")}")
     }
 
+    // Touhou Little Maid
     if (isNeoforge && mcSemverVersion == "1.21.1") {
-        modstitchModImplementation("libs:touhoulittlemaid:1.21-release-1.1.14")
+        modstitchModImplementation("maven.modrinth:R0bDWFAW:tXG1TkGx")
+    }
+    if (isForge && mcSemverVersion == "1.20.1") {
+        modstitchModImplementation("maven.modrinth:R0bDWFAW:g1SKoGQJ")
     }
 
     modDependency("yacl", { "dev.isxander:yet-another-config-lib:$it" })

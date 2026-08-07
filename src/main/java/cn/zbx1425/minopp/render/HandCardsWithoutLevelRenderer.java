@@ -77,18 +77,18 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                         // Transform must be somehow messed up but it works so I'm not going to fix it
                         poseStack.mulPose(Axis.YP.rotationDegrees(45));
                         poseStack.scale(0.2f, 0.2f, 1);
-                        RenderShim.addFullVertex(buffer, poseStack.last(), -1, 1, 0, 0, 1, 0, 0, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.addFullVertex(buffer, poseStack.last(), -1, -1, 0, 0, 1, 0, 0, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.addFullVertex(buffer, poseStack.last(), 1, -1, 0, 0, 1, 0, 1, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.addFullVertex(buffer, poseStack.last(), 1, 1, 0, 0, 1, 0, 1, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
+                        RenderShim.fillVertEntity(buffer, poseStack.last(), -1, 1, 0, 0, 1, 0, 0, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
+                        RenderShim.fillVertEntity(buffer, poseStack.last(), -1, -1, 0, 0, 1, 0, 0, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
+                        RenderShim.fillVertEntity(buffer, poseStack.last(), 1, -1, 0, 0, 1, 0, 1, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
+                        RenderShim.fillVertEntity(buffer, poseStack.last(), 1, 1, 0, 0, 1, 0, 1, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
                         poseStack.popPose();
                         poseStack.pushPose();
                         poseStack.mulPose(Axis.YP.rotationDegrees(-45));
                         poseStack.scale(0.2f, 0.2f, 1);
-                        RenderShim.addFullVertex(buffer, poseStack.last(), -1, 1, 0, 0, 1, 0, 0, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.addFullVertex(buffer, poseStack.last(), -1, -1, 0, 0, 1, 0, 0, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.addFullVertex(buffer, poseStack.last(), 1, -1, 0, 0, 1, 0, 1, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.addFullVertex(buffer, poseStack.last(), 1, 1, 0, 0, 1, 0, 1, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
+                        RenderShim.fillVertEntity(buffer, poseStack.last(), -1, 1, 0, 0, 1, 0, 0, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
+                        RenderShim.fillVertEntity(buffer, poseStack.last(), -1, -1, 0, 0, 1, 0, 0, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
+                        RenderShim.fillVertEntity(buffer, poseStack.last(), 1, -1, 0, 0, 1, 0, 1, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
+                        RenderShim.fillVertEntity(buffer, poseStack.last(), 1, 1, 0, 0, 1, 0, 1, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
                         poseStack.popPose();
                     }
 

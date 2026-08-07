@@ -1,5 +1,5 @@
 package cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.task;
-//? if neoforge && <26.1 {
+//? if forgelike && <26.1 {
 
 /*import cn.zbx1425.minopp.Mino;
 import com.github.tartaricacid.touhoulittlemaid.api.task.IMaidTask;
@@ -20,7 +20,7 @@ import static cn.zbx1425.minopp.neoforge.compat.touhou_little_maid.task.FindMino
 public class MinoppTask implements IMaidTask {
     @Override
     public @NotNull Identifier getUid() {
-        return Identifier.fromNamespaceAndPath(Mino.MOD_ID,"minopp_task");
+        return Mino.id("minopp_task");
     }
 
     @Override
