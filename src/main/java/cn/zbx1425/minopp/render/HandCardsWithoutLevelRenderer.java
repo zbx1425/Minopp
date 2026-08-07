@@ -12,6 +12,7 @@ import cn.zbx1425.minopp.platform.multiver.RenderShim;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -26,6 +27,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Matrix3f;
 
 public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer {
     public static RegistryObject<HandCardsWithoutLevelRenderer> INSTANCE = new RegistryObject<>(() -> new HandCardsWithoutLevelRenderer(
@@ -57,7 +59,7 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     if (realPlayer == null) return;
                     poseStack.popPose();
                     poseStack.pushPose();
-                    poseStack.translate(0.4, 0.65, 0.65);
+                    poseStack.translate(0, 0.1, 0.0);
                     poseStack.mulPose(Axis.ZP.rotationDegrees(-20));
                     poseStack.mulPose(Axis.XP.rotationDegrees(30));
                     for (int k = 0; k < realPlayer.hand.size(); k++) {
@@ -70,21 +72,18 @@ public class HandCardsWithoutLevelRenderer extends BlockEntityWithoutLevelRender
                     if (tableEntity.game.currentPlayerIndex == tableEntity.game.players.indexOf(realPlayer)) {
                         poseStack.pushPose();
                         poseStack.translate(0, 0.3, 0.3);
+                        // Transform must be somehow messed up but it works so I'm not going to fix it
                         poseStack.mulPose(Axis.XP.rotationDegrees(-110f));
                         VertexConsumer buffer = multiBufferSource.getBuffer(RenderType.entityCutout(Mino.id("textures/gui/arrow_down.png")));
-                        float v0 = ((int)(System.currentTimeMillis() / 100L) % 5) * 0.2f;
+                        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+                        Matrix3f cameraRotMat = new Matrix3f();
+                        // At some point view rotation was no longer on poseStack
+                        //? if >=1.21
+                        camera.rotation().get(cameraRotMat);
+                        poseStack.last().pose().set3x3(cameraRotMat).scale(0.2f, 0.2f, 1);
+                        poseStack.last().normal().identity();
+                        float v0 = ((int) (System.currentTimeMillis() / 100L) % 5) * 0.2f;
                         float v1 = v0 + 0.2f;
-                        // Transform must be somehow messed up but it works so I'm not going to fix it
-                        poseStack.mulPose(Axis.YP.rotationDegrees(45));
-                        poseStack.scale(0.2f, 0.2f, 1);
-                        RenderShim.fillVertEntity(buffer, poseStack.last(), -1, 1, 0, 0, 1, 0, 0, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.fillVertEntity(buffer, poseStack.last(), -1, -1, 0, 0, 1, 0, 0, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.fillVertEntity(buffer, poseStack.last(), 1, -1, 0, 0, 1, 0, 1, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        RenderShim.fillVertEntity(buffer, poseStack.last(), 1, 1, 0, 0, 1, 0, 1, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
-                        poseStack.popPose();
-                        poseStack.pushPose();
-                        poseStack.mulPose(Axis.YP.rotationDegrees(-45));
-                        poseStack.scale(0.2f, 0.2f, 1);
                         RenderShim.fillVertEntity(buffer, poseStack.last(), -1, 1, 0, 0, 1, 0, 0, v0, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
                         RenderShim.fillVertEntity(buffer, poseStack.last(), -1, -1, 0, 0, 1, 0, 0, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);
                         RenderShim.fillVertEntity(buffer, poseStack.last(), 1, -1, 0, 0, 1, 0, 1, v1, OverlayTexture.NO_OVERLAY, packedLight, 0xFFFFFFFF);

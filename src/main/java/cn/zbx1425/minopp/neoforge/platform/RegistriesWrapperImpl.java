@@ -26,6 +26,7 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+//? if forge
 import net.neoforged.neoforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;

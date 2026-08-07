@@ -280,14 +280,16 @@ public class GameOverlayLayer {
                     for (BadgeGuiShard badge : e.getValue()) {
                         long remaining = insertTime + badge.getEphemeralDurationMs() - currentTime;
                         if (remaining <= 0) continue;
-                        float alphaF = Mth.clamp((float) remaining / (badge.getEphemeralDurationMs() * 0.5f), 0f, 1f);
+                        float alphaF = Mth.clamp((float) remaining / (badge.getEphemeralDurationMs() * 0.5f), 0, 1f);
+                        if (alphaF < 0.1f) continue;
                         noteworthyBadges.get(e.getKey()).add(new Pair<>(badge, (int)(alphaF * 0xFF)));
                     }
                 }
                 for (MessageGuiShard msg : ext.extractMessages(entry.getFirst(), nameResolver)) {
                     long remaining = insertTime + msg.getEphemeralDurationMs() - currentTime;
                     if (remaining <= 0) continue;
-                    float alphaF = Mth.clamp((float) remaining / (msg.getEphemeralDurationMs() * 0.5f), 0f, 1f);
+                    float alphaF = Mth.clamp((float) remaining / (msg.getEphemeralDurationMs() * 0.5f), 0, 1f);
+                    if (alphaF < 0.1f) continue;
                     noteworthyMessages.add(new Pair<>(msg, (int)(alphaF * 0xFF)));
                 }
             }

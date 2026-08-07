@@ -74,12 +74,12 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
     //? if <1.20.5 {
     /*public @NotNull InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         ItemStack itemStack = player.getItemInHand(interactionHand);
+        if (itemStack.isEmpty()) return useWithoutItem(blockState, level, blockPos, player, blockHitResult);
     *///? } else {
     //~ if >=26.1 'ItemInteractionResult' -> 'InteractionResult'
     protected @NotNull InteractionResult useItemOn(ItemStack itemStack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
     //? }
-        if (itemStack.isEmpty()) return useWithoutItem(blockState, level, blockPos, player, blockHitResult);
-    //~ if >=1.20.5 <26.1 'InteractionResult' -> 'ItemInteractionResult' {
+        //~ if >=1.20.5 <26.1 'InteractionResult' -> 'ItemInteractionResult' {
         if (WorldShim.isClientSide(level) && itemStack.is(Mino.ITEM_HAND_CARDS.get())) {
             BlockPos corePos = getCore(blockState, blockPos);
             ItemHandCards.CardGameBindingComponent gameBinding = ItemHandCards.getCardGameBinding(itemStack);

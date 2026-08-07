@@ -26,7 +26,6 @@ val loader = when {
 
 modstitch {
     minecraftVersion = mcVersion
-    javaVersion = 17
 
     parchment {
         prop("parchment.version") { mappingsVersion = it }

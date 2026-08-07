@@ -174,7 +174,10 @@ public class BlockEntityMinoTableRenderer implements BlockEntityRenderer<BlockEn
                 matrices.translate(0, 0.2f, 0);
                 matrices.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
                 matrices.scale(0.4f, 0.4f, 0.4f);
+                //? if >=1.21
                 matrices.scale(0.025F, -0.025F, 0.025F);
+                //? if <1.21
+                //matrices.scale(-0.025F, -0.025F, 0.025F);
                 Matrix4f matrix4f = matrices.last().pose();
                 Font font = Minecraft.getInstance().font;
                 float bgOpacity = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
