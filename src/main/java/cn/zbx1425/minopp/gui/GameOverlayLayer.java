@@ -575,7 +575,7 @@ public class GameOverlayLayer {
                     //? if <26.1
                     //return EntityAutoPlayerRenderer.resolveClientSkinTexture(autoPlayer);
                     //? if >=26.1
-                    return EntityAutoPlayerRenderer.resolveClientSkinTexture(autoPlayer);
+                    return ((EntityAutoPlayerRenderer)Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(autoPlayer)).resolveClientSkinTexture(autoPlayer);
                 }
             }
         }

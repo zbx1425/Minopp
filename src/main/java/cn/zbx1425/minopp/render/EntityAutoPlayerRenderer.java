@@ -9,6 +9,7 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
 //? if >=26.1 {
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
@@ -52,6 +53,9 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
     private PlayerModel slimModel;
     private PlayerModel wideModel;
 
+    //? if >=26.1
+    private final PlayerSkinRenderCache playerSkinRenderCache;
+
     public EntityAutoPlayerRenderer(EntityRendererProvider.Context context) {
         super(context, new PlayerModel(context.bakeLayer(ModelLayers.PLAYER_SLIM), true), 0.5f);
         slimModel = model;
@@ -60,6 +64,8 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         //this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
         //? if >=26.1
         this.addLayer(new PlayerItemInHandLayer<>(this));
+        //? if >=26.1
+        this.playerSkinRenderCache = context.getPlayerSkinRenderCache();
     }
 
     @Override
@@ -154,17 +160,11 @@ public class EntityAutoPlayerRenderer extends LivingEntityRenderer<EntityAutoPla
         return new AvatarRenderState();
     }
 
-    public static PlayerSkin resolveClientSkin(EntityAutoPlayer entity) {
-        return entity.clientSkinGameProfile.thenCompose(gameProfile ->
-                gameProfile.map(gameProfileBang ->
-                    Minecraft.getInstance().getSkinManager().get(gameProfileBang)
-                ).orElse(CompletableFuture.completedFuture(Optional.empty()))
-            )
-            .getNow(Optional.empty())
-            .orElseGet(() -> DefaultPlayerSkin.get(Util.NIL_UUID));
+    public PlayerSkin resolveClientSkin(EntityAutoPlayer entity) {
+        return this.playerSkinRenderCache.getOrDefault(entity.clientSkinGameProfile).playerSkin();
     }
 
-    public static Identifier resolveClientSkinTexture(EntityAutoPlayer entity) {
+    public Identifier resolveClientSkinTexture(EntityAutoPlayer entity) {
         return resolveClientSkin(entity).body().texturePath();
     }
 

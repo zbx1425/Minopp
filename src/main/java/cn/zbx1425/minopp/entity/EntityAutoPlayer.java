@@ -32,6 +32,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Util;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -84,7 +85,10 @@ public class EntityAutoPlayer extends LivingEntity {
 
     public AutoPlayer autoPlayer = new AutoPlayer();
 
-    public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
+    //? if <26.1
+    //public CompletableFuture<Optional<GameProfile>> clientSkinGameProfile = CompletableFuture.completedFuture(Optional.empty());
+    //? if >=26.1
+    public ResolvableProfile clientSkinGameProfile = ResolvableProfile.createUnresolved(Util.NIL_UUID);
     public String clientSkinGameProfileValidFor = "";
 
     @Override
@@ -92,8 +96,11 @@ public class EntityAutoPlayer extends LivingEntity {
         super.tick();
 
         if (WorldShim.isClientSide(level())) {
-            if (!clientSkinGameProfileValidFor.equals(entityData.get(SKIN))) {
-                clientSkinGameProfileValidFor = entityData.get(SKIN);
+            String equivalentSkinConfig = entityData.get(SKIN);
+            //? if >=26.1
+            if (equivalentSkinConfig.isBlank()) equivalentSkinConfig = "00000000-0000-0000-0000-000000000000";
+            if (!clientSkinGameProfileValidFor.equals(equivalentSkinConfig)) {
+                clientSkinGameProfileValidFor = equivalentSkinConfig;
                 try {
                     UUID skinAsUUID = UUID.fromString(clientSkinGameProfileValidFor);
                     //? if <1.20.5 {
@@ -106,9 +113,7 @@ public class EntityAutoPlayer extends LivingEntity {
                     *///? } else if <26.1 {
                     /*clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(skinAsUUID);
                     *///? } else {
-                    clientSkinGameProfile = ResolvableProfile.createUnresolved(skinAsUUID)
-                        .resolveProfile(Minecraft.getInstance().services().profileResolver())
-                        .thenApply(Optional::of);
+                    clientSkinGameProfile = ResolvableProfile.createUnresolved(skinAsUUID);
                     //? }
                 } catch (IllegalArgumentException e) {
                     //? if <1.20.5 {
@@ -121,9 +126,7 @@ public class EntityAutoPlayer extends LivingEntity {
                     *///? } else if <26.1 {
                     /*clientSkinGameProfile = SkullBlockEntity.fetchGameProfile(clientSkinGameProfileValidFor);
                     *///? } else {
-                    clientSkinGameProfile = ResolvableProfile.createUnresolved(clientSkinGameProfileValidFor)
-                        .resolveProfile(Minecraft.getInstance().services().profileResolver())
-                        .thenApply(Optional::of);
+                    clientSkinGameProfile = ResolvableProfile.createUnresolved(clientSkinGameProfileValidFor);
                     //? }
                 }
             }
