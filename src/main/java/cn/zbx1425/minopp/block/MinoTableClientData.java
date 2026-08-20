@@ -239,9 +239,7 @@ public class MinoTableClientData {
             return;
         }
 
-        UUID localPlayerUuid = Minecraft.getInstance().player != null
-                ? PlayerShim.getGameProfileId(Minecraft.getInstance().player) : null;
-        if (localPlayerUuid == null) return;
+        UUID localPlayerUuid = PlayerShim.getGameProfileId(Objects.requireNonNull(Minecraft.getInstance().player));
 
         CardPlayer localPlayer = null;
         for (CardPlayer p : currentGame.players) {
