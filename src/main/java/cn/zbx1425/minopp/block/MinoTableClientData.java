@@ -28,6 +28,11 @@ public class MinoTableClientData {
     private CardGame lastGame = null;
     private List<ActionReportShard> lastStateShards = List.of();
 
+    // ========== Idle State Timeout ==========
+
+    public static final long IDLE_STATE_TIMEOUT_MS = 3 * 60 * 1000;
+    private long lastIdleStateShardsChangeTime = 0;
+
     // ========== Zoom Animation ==========
 
     private double zoomProgress = 0;
@@ -347,11 +352,17 @@ public class MinoTableClientData {
             }
             lastRoundId = -1;
             lastTopCardPlayer = null;
+            lastIdleStateShardsChangeTime = System.currentTimeMillis();
             updateLocalPlayerTracking(null);
             return;
         }
 
-        if (currentGame == null) return;
+        if (currentGame == null) {
+            if (lastIdleStateShardsChangeTime == 0 || !currentShards.equals(oldShards)) {
+                lastIdleStateShardsChangeTime = System.currentTimeMillis();
+            }
+            return;
+        }
         if (currentGame.roundId == lastRoundId) {
             updateLocalPlayerTracking(currentGame);
             return;
@@ -393,6 +404,10 @@ public class MinoTableClientData {
 
     public List<Pair<ActionReportShard, Long>> getEphemeralShards() {
         return ephemeralShards;
+    }
+
+    public long getLastIdleStateShardsChangeTime() {
+        return lastIdleStateShardsChangeTime;
     }
 
     // ========== Utility ==========

@@ -155,6 +155,8 @@ public class BlockEntityMinoTable extends BlockEntity {
     }
 
     private static final int PLAYER_RANGE = 20;
+    private static final int IDLE_STATE_TIMEOUT_TICKS = 3 * 60 * 20;
+    private long lastStateShardsChangeGameTime = 0;
 
     public void joinPlayerToTable(CardPlayer cardPlayer, Vec3 playerPos) {
         if (game != null) return;
@@ -217,6 +219,7 @@ public class BlockEntityMinoTable extends BlockEntity {
                 destroyGame(initiator);
                 stateShards = new ArrayList<>(List.of(new SystemShard(
                         Component.translatable("game.minopp.play.player_unavailable", cardPlayer.name))));
+                lastStateShardsChangeGameTime = level.getGameTime();
                 return;
             }
         }
@@ -271,6 +274,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         } });
         stateShards = new ArrayList<>(List.of(new SystemShard(
                 Component.translatable("game.minopp.play.game_destroyed", initiator.name))));
+        lastStateShardsChangeGameTime = level.getGameTime();
         sync();
     }
 
@@ -279,6 +283,7 @@ public class BlockEntityMinoTable extends BlockEntity {
         players.replaceAll((d, v) -> null);
         stateShards = new ArrayList<>(List.of(new SystemShard(
                 Component.translatable("game.minopp.play.seats_reset", initiator.name))));
+        lastStateShardsChangeGameTime = level.getGameTime();
         sync();
     }
 
@@ -348,6 +353,29 @@ public class BlockEntityMinoTable extends BlockEntity {
                 S2CEffectListPacket.sendS2C((ServerPlayer) mcPlayer, events, tableCenterPos, true);
             }
         }
+    }
+
+    public void pruneDistantPlayers() {
+        if (game != null || level == null) return;
+        BlockPos centerPos = getBlockPos().offset(1, 0, 1);
+        boolean changed = false;
+        for (Direction dir : PLAYER_ORDER) {
+            CardPlayer cp = players.get(dir);
+            if (cp == null) continue;
+            Entity entity = ((ServerLevel) level).getEntity(cp.uuid);
+            if (entity == null
+                    || entity.distanceToSqr(Vec3.atCenterOf(centerPos)) > PLAYER_RANGE * PLAYER_RANGE) {
+                players.put(dir, null);
+                changed = true;
+            }
+        }
+        if (level.getGameTime() - lastStateShardsChangeGameTime > IDLE_STATE_TIMEOUT_TICKS) {
+            stateShards = new ArrayList<>(List.of(
+                    new SystemShard(Component.translatable("game.minopp.play.no_game"))));
+            lastStateShardsChangeGameTime = level.getGameTime();
+            changed = true;
+        }
+        if (changed) sync();
     }
 
     public void sync() {

@@ -227,8 +227,10 @@ public class BlockMinoTable extends GroupedBlock implements EntityBlock {
                 return InteractionResult.SUCCESS;
             }
 
+            if (tableEntity.game == null) {
+                tableEntity.pruneDistantPlayers();
+            }
             if (tableEntity.game == null && !player.isSecondaryUseActive()) {
-                // Join player to table
                 tableEntity.joinPlayerToTable(cardPlayer, player.position());
                 return InteractionResult.SUCCESS;
             }

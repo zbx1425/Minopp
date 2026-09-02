@@ -129,18 +129,27 @@ public class GameOverlayLayer {
         int x = 20, y = 60;
         Font font = Minecraft.getInstance().font;
 
-        Function<UUID, String> nameResolver = buildNameResolver(null, tableEntity);
-        boolean hasGameWon = tableEntity.stateShards.stream().anyMatch(s -> s instanceof GameWonShard);
-        if (hasGameWon) {
-            List<CardPlayer> playerList = tableEntity.getPlayersList();
-            y = renderShardPanel(g, font, x, y, tableEntity, tableEntity.game, playerList, null, null, nameResolver);
+        long idleChangeTime = tableEntity.clientData.getLastIdleStateShardsChangeTime();
+        boolean isTimedOut = idleChangeTime > 0
+                && System.currentTimeMillis() - idleChangeTime > MinoTableClientData.IDLE_STATE_TIMEOUT_MS;
+
+        if (isTimedOut) {
+            drawStringWithBackdrop(g, font, Component.translatable("game.minopp.play.no_game"), x, y, 0xFFAAAAAA);
+            y += font.lineHeight;
         } else {
-            for (ActionReportShard shard : tableEntity.stateShards) {
-                ShardExtractor<ActionReportShard> ext = ShardExtractors.getUnchecked(shard.shardType());
-                if (ext != null) {
-                    for (MessageGuiShard msg : ext.extractMessages(shard, nameResolver)) {
-                        msg.render(g, font, x, y, msg.color, 0xFF);
-                        y += msg.getAdvance(font);
+            Function<UUID, String> nameResolver = buildNameResolver(null, tableEntity);
+            boolean hasGameWon = tableEntity.stateShards.stream().anyMatch(s -> s instanceof GameWonShard);
+            if (hasGameWon) {
+                List<CardPlayer> playerList = tableEntity.getPlayersList();
+                y = renderShardPanel(g, font, x, y, tableEntity, tableEntity.game, playerList, null, null, nameResolver);
+            } else {
+                for (ActionReportShard shard : tableEntity.stateShards) {
+                    ShardExtractor<ActionReportShard> ext = ShardExtractors.getUnchecked(shard.shardType());
+                    if (ext != null) {
+                        for (MessageGuiShard msg : ext.extractMessages(shard, nameResolver)) {
+                            msg.render(g, font, x, y, msg.color, 0xFF);
+                            y += msg.getAdvance(font);
+                        }
                     }
                 }
             }
