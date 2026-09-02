@@ -4,6 +4,7 @@ import cn.zbx1425.minopp.Mino;
 import cn.zbx1425.minopp.game.effect.GrantRewardEffectEvent;
 import cn.zbx1425.minopp.game.effect.PlayerFireworkEffectEvent;
 import cn.zbx1425.minopp.game.effect.PlayerGlowEffectEvent;
+import cn.zbx1425.minopp.game.effect.PlayerParticleEffectEvent;
 import cn.zbx1425.minopp.game.shard.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -324,7 +325,7 @@ public class CardGame {
                 break;
             }
         }
-        fillDrawSfx(count, report);
+        fillDrawSfx(count, cardPlayer, report);
         return count;
     }
 
@@ -340,7 +341,7 @@ public class CardGame {
         return drawn;
     }
 
-    private void fillDrawSfx(int drawCount, ActionReport report) {
+    private void fillDrawSfx(int drawCount, CardPlayer player, ActionReport report) {
         final int SOUND_INTERVAL = 200;
         for (int i = 0; i < drawCount; i++) {
             report.sound(Mino.id("game.draw"), SOUND_INTERVAL * i);
@@ -349,6 +350,7 @@ public class CardGame {
             for (int i = drawCount - 1; i >= 0; i -= 4) {
                 report.sound(Mino.id("game.draw_multi"), SOUND_INTERVAL * i + SOUND_INTERVAL / 2);
             }
+            report.effect(new PlayerParticleEffectEvent(0, player.uuid));
         }
     }
 
@@ -364,7 +366,7 @@ public class CardGame {
         for (int i = 0; i < drawCount; i++) {
             cardPlayer.hand.add(deck.remove(deck.size() - 1));
         }
-        fillDrawSfx(drawCount, report);
+        fillDrawSfx(drawCount, cardPlayer, report);
         return true;
     }
 
