@@ -56,7 +56,7 @@ public record PlayerParticleEffectEvent(int timeOffset, UUID targetPlayer) imple
         }
         if (entity != null) {
             for (int i = 0; i < 5; i++) {
-                //~ if <1.21 'entity.getRandom()' -> 'RandomSource.createThreadLocalInstance()'
+                //~ if <1.21 'entity.getRandom()' -> 'RandomSource.create()'
                 RandomSource random = entity.getRandom();
                 double xa = random.nextGaussian() * 0.02;
                 double ya = random.nextGaussian() * 0.02;
