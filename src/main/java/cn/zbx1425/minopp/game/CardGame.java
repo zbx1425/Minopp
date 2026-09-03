@@ -349,8 +349,8 @@ public class CardGame {
         if (drawCount > 1) {
             for (int i = drawCount - 1; i >= 0; i -= 4) {
                 report.sound(Mino.id("game.draw_multi"), SOUND_INTERVAL * i + SOUND_INTERVAL / 2);
+                report.effect(new PlayerParticleEffectEvent(SOUND_INTERVAL * i + SOUND_INTERVAL / 2, player.uuid));
             }
-            report.effect(new PlayerParticleEffectEvent(0, player.uuid));
         }
     }
 

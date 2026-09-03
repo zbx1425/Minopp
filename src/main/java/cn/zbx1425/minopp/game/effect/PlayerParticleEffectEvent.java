@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -55,9 +56,11 @@ public record PlayerParticleEffectEvent(int timeOffset, UUID targetPlayer) imple
         }
         if (entity != null) {
             for (int i = 0; i < 5; i++) {
-                double xa = entity.getRandom().nextGaussian() * 0.02;
-                double ya = entity.getRandom().nextGaussian() * 0.02;
-                double za = entity.getRandom().nextGaussian() * 0.02;
+                //~ if <1.21 'entity.getRandom()' -> 'RandomSource.createThreadLocalInstance()'
+                RandomSource random = entity.getRandom();
+                double xa = random.nextGaussian() * 0.02;
+                double ya = random.nextGaussian() * 0.02;
+                double za = random.nextGaussian() * 0.02;
                 level.addParticle(ParticleTypes.ANGRY_VILLAGER,
                         entity.getRandomX(1.0), entity.getRandomY() + 1.0, entity.getRandomZ(1.0),
                         xa, ya, za);
