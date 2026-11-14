@@ -17,19 +17,6 @@ import net.minecraft.server.level.ServerPlayer;
 public class S2CAutoPlayerScreenPacket {
 
     public static final Identifier ID = Mino.id("auto_player_screen");
-    private static Boolean yaclAvailable = null;
-
-    private static boolean isYaclAvailable() {
-        if (yaclAvailable == null) {
-            try {
-                Class.forName("dev.isxander.yacl3.api.YetAnotherConfigLib");
-                yaclAvailable = true;
-            } catch (ClassNotFoundException e) {
-                yaclAvailable = false;
-            }
-        }
-        return yaclAvailable;
-    }
 
     public static void sendS2C(ServerPlayer target, EntityAutoPlayer autoPlayer) {
         FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
@@ -47,12 +34,7 @@ public class S2CAutoPlayerScreenPacket {
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().level.getEntity(entityId) instanceof EntityAutoPlayer autoPlayer) {
                     autoPlayer.applyConfig(NbtIOShim.decode(EntityAutoPlayer.Config.CODEC, config));
-                    if (isYaclAvailable()) {
-                        Minecraft.getInstance().setScreen(AutoPlayerScreen.create(autoPlayer, Minecraft.getInstance().screen));
-                    } else {
-                        PlayerShim.sendSystemMessage(Minecraft.getInstance().player,
-                            Component.translatable("gui.minopp.bot_config.yacl_missing"));
-                    }
+                    Minecraft.getInstance().setScreen(AutoPlayerScreen.create(autoPlayer, Minecraft.getInstance().screen));
                 }
             });
         }

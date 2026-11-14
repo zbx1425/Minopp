@@ -46,6 +46,7 @@ modstitch {
         prop("meta.mcDep") { replacementProperties.put("mc", it) }
         prop("meta.loaderDep") { replacementProperties.put("loaderVersion", it) }
         prop("deps.fabricApi") { replacementProperties.put("fapi", it) }
+        prop("deps.yacl") { replacementProperties.put("yacl", it.split('+')[0]) }
 
         fun <K: Any, V: Any> MapProperty<K, V>.populate(block: MapProperty<K, V>.() -> Unit) {
             block()
