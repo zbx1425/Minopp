@@ -40,7 +40,7 @@ modstitch {
         modDescription = "Recreation of a classical card game in Minecraft"
         modVersion = "$versionWithoutMC+${stonecutter.current.project}"
         modGroup = "cn.zbx1425"
-        modLicense = "MIT"
+        modLicense = "MIT AND LicenseRef-AllRightsReserved"
         modAuthor = "Zbx1425, MalayP"
 
         prop("meta.mcDep") { replacementProperties.put("mc", it) }
@@ -237,7 +237,7 @@ publishing {
                 url = "https://github.com/zbx1425/minopp"
                 licenses {
                     license {
-                        name = "MIT"
+                        name = "MIT AND LicenseRef-AllRightsReserved"
                         url = "https://github.com/zbx1425/Minopp/blob/master/LICENSE.txt"
                     }
                 }

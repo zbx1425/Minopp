@@ -1,0 +1,20 @@
+version = 1
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024 Zbx1425"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+    "src/main/resources/assets/minopp/models/**",
+    "src/main/resources/assets/minopp/sounds/**",
+    "src/main/resources/assets/minopp/textures/**"
+]
+precedence = "override"
+SPDX-FileCopyrightText = [
+    "2024 Zbx1425",
+    "2024 MalayP"
+]
+SPDX-License-Identifier = "LicenseRef-AllRightsReserved"

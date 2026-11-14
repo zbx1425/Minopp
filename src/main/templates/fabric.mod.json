@@ -11,7 +11,7 @@
   "contact": {
     "homepage": "www.zbx1425.cn"
   },
-  "license": "MIT",
+  "license": "MIT AND LicenseRef-AllRightsReserved",
   "icon": "minopp.png",
   "environment": "*",
   "entrypoints": {
